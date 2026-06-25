@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -38,9 +39,38 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
 
     if (currentVersion !== latestVersion) {
       console.log();
-      logger.warn(`Installed CLI package is ${chalk.cyan(currentVersion)}, but latest release is ${chalk.cyan(release.tag_name)}.`);
-      logger.info(`Update the CLI package first: ${chalk.cyan(`npm install -g uipro-cli@${latestVersion}`)}`);
-      logger.info('Then rerun: uipro init --ai <platform>');
+
+      // Only auto-run with a well-formed semver, so nothing unexpected can
+      // reach the shell that npm.cmd requires on Windows.
+      if (!/^\d+\.\d+\.\d+([.-][0-9A-Za-z.-]+)?$/.test(latestVersion)) {
+        logger.warn(`Installed CLI is ${chalk.cyan(currentVersion)}; latest release is ${chalk.cyan(release.tag_name)}.`);
+        logger.info(`Update the CLI package: ${chalk.cyan(`npm install -g uipro-cli@${latestVersion}`)}`);
+        logger.info('Then rerun: uipro init --ai <platform> --force');
+        return;
+      }
+
+      logger.info(`Updating CLI from ${chalk.cyan(currentVersion)} to ${chalk.cyan(latestVersion)}...`);
+      console.log();
+
+      const isWindows = process.platform === 'win32';
+      try {
+        // execFileSync with an explicit args array — no shell string to expand.
+        // On Windows npm is npm.cmd, which Node only spawns via a shell.
+        execFileSync(
+          isWindows ? 'npm.cmd' : 'npm',
+          ['install', '-g', `uipro-cli@${latestVersion}`],
+          { stdio: 'inherit', shell: isWindows }
+        );
+      } catch {
+        console.log();
+        logger.error('Automatic update failed (you may need elevated/admin permissions).');
+        logger.info(`Update manually: ${chalk.cyan(`npm install -g uipro-cli@${latestVersion}`)}`);
+        process.exit(1);
+      }
+
+      console.log();
+      logger.success(`Updated to ${chalk.cyan(latestVersion)}.`);
+      logger.info(`Now rerun ${chalk.cyan('uipro init --ai <platform> --force')} to refresh your skill files.`);
       return;
     }
 

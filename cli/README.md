@@ -33,7 +33,7 @@ uipro init --force          # Overwrite existing files
 
 # Other commands
 uipro versions              # List available versions
-uipro update                # Refresh skill files from installed CLI package
+uipro update                # Update the global CLI to the latest release
 ```
 
 ## GitHub Authentication
@@ -63,12 +63,14 @@ uipro init
 
 ## How It Works
 
-`uipro init` generates assistant-specific files from the templates bundled with the installed CLI package. To get newer templates and data, update the package first:
+`uipro init` generates assistant-specific files from the templates bundled with the installed CLI package. To get newer templates and data, update the package, then regenerate:
 
 ```bash
-npm install -g uipro-cli@latest
-uipro init --ai codex
+uipro update                   # updates the global CLI to the latest release
+uipro init --ai codex --force  # regenerate skill files from the new package
 ```
+
+`uipro update` runs `npm install -g uipro-cli@latest` for you (it shells out to `npm` only on Windows, where `npm` is a `.cmd`). You can still run that command manually if you prefer. When the CLI is already current, `uipro update` just refreshes the installed skill files.
 
 ## Development
 
