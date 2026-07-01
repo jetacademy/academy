@@ -20,6 +20,13 @@ python3 src/ui-ux-pro-max/scripts/search.py "<query>" --domain <domain> [-n <max
 - `landing` - Page structure and CTA strategies
 - `chart` - Chart types and library recommendations
 - `ux` - Best practices and anti-patterns
+- `motion` - GSAP animation skeletons by intensity tier (hover, scroll reveal, stagger, page transition, parallax, loading)
+
+**Design dials (optional, only with `--design-system`):**
+```bash
+python3 src/ui-ux-pro-max/scripts/search.py "<query>" --design-system --variance <1-10> --motion <1-10> --density <1-10>
+```
+`--variance` biases style selection (centered/minimal → bold/asymmetric), `--motion` attaches a matching GSAP snippet from `motion.csv`, `--density` overrides the spacing-scale tokens (spacious → dense/dashboard). Any dial left unset behaves exactly as before.
 
 **Stack search:**
 ```bash
