@@ -1,0 +1,30 @@
+import Image from "next/image";
+import Icon from "@/components/Icon";
+
+export default function Footer() {
+  const waAdmin = process.env.NEXT_PUBLIC_WA_ADMIN ?? "6281234567890";
+  return (
+    <footer className="footer">
+      <div className="container">
+        <div className="footer-card">
+          <div className="brand">
+            <Image
+              src="/iconjetschool academy.png"
+              alt="Jetschool Academy"
+              width={40}
+              height={40}
+              style={{ objectFit: "contain" }}
+            />
+            Jetschool Academy
+          </div>
+          <nav className="footer-links">
+            <a href="/#program">Program</a>
+            <a href="/sertifikat">Ambil Sertifikat</a>
+            <a href={`https://wa.me/${waAdmin}`}>WhatsApp Admin</a>
+          </nav>
+          <span style={{ fontSize: ".78rem" }}>© {new Date().getFullYear()} Jetschool Academy</span>
+        </div>
+      </div>
+    </footer>
+  );
+}

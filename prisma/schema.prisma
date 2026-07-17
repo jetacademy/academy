@@ -1,0 +1,137 @@
+// ============================================================
+// JETSCHOOL ACADEMY — Skema Database (MySQL)
+// Alur: Registration → Payment (Xendit) → TestAttempt → Certificate
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Jenis program — menentukan alur pembelian
+enum ProgramType {
+  WEBINAR // gratis ikut; sertifikat berbayar (tripwire)
+  KELAS // kelas online / LMS berbayar
+  WORKSHOP // sesi live praktik berbayar
+  BOOTCAMP // program intensif multi-sesi berbayar
+}
+
+// Program pelatihan
+model Program {
+  id            String         @id @default(cuid())
+  slug          String         @unique // dipakai di URL: /program/digital-marketing-pemula
+  type          ProgramType    @default(WEBINAR)
+  title         String
+  tagline       String         @db.Text // headline penjualan yang spesifik (hasil akhir, bukan ilmu)
+  description   String         @db.Text
+  emoji         String         @default("🎓")
+  mentorName    String
+  mentorBio     String         @db.Text
+  materi        Json // array string: poin "apa yang akan dipelajari"
+  deliverables  Json // value stack: array { label, value } — "yang kamu bawa pulang"
+  guarantee     String?        @db.Text // teks garansi / risk reversal
+  scheduleAt    DateTime // jadwal mulai (webinar/workshop/bootcamp) atau tanggal akses (kelas)
+  durationLabel String         @default("2 jam") // "2 jam", "4 minggu", "6 sesi live"
+  zoomLink      String? // dikirim via WA setelah daftar/bayar
+  waGroupLink   String? // link grup WhatsApp peserta
+  lmsLink       String? // link akses LMS (kelas/bonus) — dikirim via WA
+  price         Int            @default(0) // harga program (Rp). 0 = gratis (webinar)
+  priceOld      Int? // harga coret program
+  certPrice     Int            @default(49000) // WEBINAR saja: harga paket sertifikat (tripwire)
+  certPriceOld  Int? // harga coret paket sertifikat
+  seatsLeft     Int? // sisa kursi utk scarcity (opsional, tampil jika diisi)
+  passingScore  Int            @default(60) // skor minimal lulus post-test (0-100)
+  isActive      Boolean        @default(true)
+  questions     Question[]
+  registrations Registration[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+// Pendaftar webinar (leads dari iklan Meta)
+model Registration {
+  id          String             @id @default(cuid())
+  name        String // nama lengkap — dipakai di sertifikat
+  whatsapp    String // format 08xxx, dinormalisasi ke 628xxx saat kirim WA
+  email       String
+  program     Program            @relation(fields: [programId], references: [id])
+  programId   String
+  status      RegistrationStatus @default(REGISTERED)
+  payment     Payment?
+  attempts    TestAttempt[]
+  certificate Certificate?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([whatsapp, programId]) // satu nomor WA = satu pendaftaran per program
+  @@index([email])
+}
+
+enum RegistrationStatus {
+  REGISTERED // sudah daftar webinar gratis
+  PAID // sudah bayar paket sertifikat, boleh post-test
+  PASSED // lulus post-test, sertifikat terbit
+}
+
+// Pembayaran paket sertifikat via Xendit Invoice
+model Payment {
+  id              String        @id @default(cuid())
+  registration    Registration  @relation(fields: [registrationId], references: [id])
+  registrationId  String        @unique
+  xenditInvoiceId String?       @unique // id invoice dari Xendit
+  invoiceUrl      String?       @db.Text // checkout URL Xendit
+  amount          Int
+  status          PaymentStatus @default(PENDING)
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  EXPIRED
+  FAILED
+}
+
+// Soal post-test pilihan ganda per program
+model Question {
+  id        String  @id @default(cuid())
+  program   Program @relation(fields: [programId], references: [id])
+  programId String
+  text      String  @db.Text
+  optionA   String
+  optionB   String
+  optionC   String
+  optionD   String
+  correct   String // "A" | "B" | "C" | "D" — tidak pernah dikirim ke client
+  order     Int     @default(0)
+
+  @@index([programId])
+}
+
+// Riwayat pengerjaan post-test
+model TestAttempt {
+  id             String       @id @default(cuid())
+  registration   Registration @relation(fields: [registrationId], references: [id])
+  registrationId String
+  score          Int // 0-100
+  passed         Boolean
+  createdAt      DateTime     @default(now())
+
+  @@index([registrationId])
+}
+
+// Sertifikat — terbit otomatis saat lulus post-test
+model Certificate {
+  id             String       @id @default(cuid())
+  serial         Int          @unique @default(autoincrement()) // basis nomor urut
+  number         String       @unique // format: JSA-2026-0001 — utk verifikasi publik
+  registration   Registration @relation(fields: [registrationId], references: [id])
+  registrationId String       @unique
+  issuedAt       DateTime     @default(now())
+}
