@@ -12,6 +12,7 @@ type RegistrationRow = {
   whatsapp: string;
   email: string;
   status: string;
+  institution?: string | null;
 };
 
 export default function AdminRegistrationForm({
@@ -66,6 +67,15 @@ export default function AdminRegistrationForm({
           defaultValue={registration?.email}
           placeholder="contoh: budi@gmail.com"
           required
+        />
+      </div>
+
+      <div className="field">
+        <label>Asal Lembaga / Instansi</label>
+        <input
+          name="institution"
+          defaultValue={(registration as any)?.institution ?? ""}
+          placeholder="contoh: SDN 1 Bandung / Umum"
         />
       </div>
 

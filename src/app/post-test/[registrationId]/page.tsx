@@ -39,6 +39,26 @@ export default async function PostTestPage({ params }: { params: Promise<{ regis
     );
   }
 
+  // belum mulai -> tidak boleh post-test
+  const isStarted = new Date() >= new Date(reg.program.scheduleAt);
+  if (!isStarted) {
+    const formattedDate = new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Jakarta"
+    }).format(reg.program.scheduleAt);
+    return (
+      <Blocked
+        title="Evaluasi belum dibuka."
+        msg={`Post-Test untuk program ini baru dapat dikerjakan setelah acara dimulai pada tanggal ${formattedDate} WIB.`}
+        action={<Link href="/member" className="btn btn-purple btn-lg">Kembali ke Dashboard</Link>}
+      />
+    );
+  }
+
   // belum bayar → tidak boleh post-test
   if (reg.status === "REGISTERED") {
     return (

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { isValidCallback } from "@/lib/xendit";
 import { sendWa, msgPaid, msgAccess } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
+import { sendEmail, getPaidEmailHtml } from "@/lib/email";
 
 /**
  * POST /api/webhooks/xendit — dipanggil server Xendit saat status invoice berubah.
@@ -68,6 +69,13 @@ export async function POST(req: Request) {
           // webinar gratis → yang dibayar adalah paket sertifikat, kirim link post-test
           await sendWa(reg.whatsapp, msgPaid(reg.name, reg.program.title, postTestUrl));
         }
+
+        // Kirim email pembayaran sukses — best-effort
+        await sendEmail({
+          to: reg.email,
+          subject: `Pembayaran Berhasil: Akses Pelatihan ${reg.program.title}`,
+          html: getPaidEmailHtml(reg.name, reg.program.title, postTestUrl, reg.program.zoomLink, reg.program.waGroupLink, reg.program.lmsLink),
+        }).catch((err) => console.error("Gagal mengirim email webhook lunas:", err));
       }
     } else if (event.status === "EXPIRED") {
       await prisma.payment.update({ where: { id: payment.id }, data: { status: "EXPIRED" } });

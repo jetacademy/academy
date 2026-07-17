@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendWa, msgCertificate } from "@/lib/wa";
+import { sendEmail, getCertEmailHtml } from "@/lib/email";
 
 /**
  * POST /api/post-test — nilai jawaban, dan jika lulus terbitkan sertifikat otomatis.
@@ -73,6 +74,13 @@ export async function POST(req: Request) {
 
     // kirim link sertifikat via WA — best-effort
     await sendWa(reg.whatsapp, msgCertificate(reg.name, cert.number, certUrl));
+
+    // kirim link sertifikat via Email — best-effort
+    await sendEmail({
+      to: reg.email,
+      subject: `Selamat! Sertifikat Resmi Anda Telah Terbit - ${reg.program.title}`,
+      html: getCertEmailHtml(reg.name, reg.program.title, certUrl),
+    }).catch((err) => console.error("Gagal mengirim email sertifikat:", err));
 
     return NextResponse.json({ passed: true, score, certUrl });
   } catch (err) {

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendWa, msgWelcome, msgAccess } from "@/lib/wa";
 import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 import { formatJadwal } from "@/lib/format";
+import { sendEmail, getWelcomeEmailHtml, getPaidEmailHtml } from "@/lib/email";
 
 /**
  * POST /api/register — satu pintu untuk semua tipe program.
@@ -13,7 +14,7 @@ import { formatJadwal } from "@/lib/format";
  *   Akses (grup/LMS/Zoom) dikirim via WA oleh webhook setelah lunas.
  */
 export async function POST(req: Request) {
-  let body: { name?: string; whatsapp?: string; email?: string; programSlug?: string };
+  let body: { name?: string; whatsapp?: string; email?: string; programSlug?: string; institution?: string };
   try {
     body = await req.json();
   } catch {
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
   const whatsapp = (body.whatsapp ?? "").trim();
   const email = (body.email ?? "").trim();
   const programSlug = (body.programSlug ?? "").trim();
+  const institution = (body.institution ?? "").trim();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
   if (name.length < 3) return NextResponse.json({ error: "Nama minimal 3 huruf." }, { status: 400 });
@@ -37,12 +39,12 @@ export async function POST(req: Request) {
     }
 
     // idempoten: daftar dua kali dengan nomor sama = tetap sukses
-    const reg = await prisma.registration.upsert({
+    const reg = await (prisma.registration as any).upsert({
       where: { whatsapp_programId: { whatsapp, programId: program.id } },
-      create: { name, whatsapp, email, programId: program.id },
-      update: { name, email },
+      create: { name, whatsapp, email, institution, programId: program.id },
+      update: { name, email, institution },
       include: { payment: true },
-    });
+    }) as any;
 
     // ── PROGRAM GRATIS (WEBINAR) ─────────────────────────────────
     if (program.price === 0) {
@@ -50,6 +52,12 @@ export async function POST(req: Request) {
         whatsapp,
         msgWelcome(name, program.title, formatJadwal(program.scheduleAt), program.zoomLink, program.waGroupLink)
       );
+      await sendEmail({
+        to: email,
+        subject: `Pendaftaran Berhasil: ${program.title}`,
+        html: getWelcomeEmailHtml(name, program.title, formatJadwal(program.scheduleAt), program.waGroupLink ?? "")
+      }).catch((err) => console.error("Gagal mengirim email pendaftaran gratis:", err));
+
       return NextResponse.json({ ok: true, paid: false, free: true, waGroupLink: program.waGroupLink });
     }
 
@@ -87,6 +95,12 @@ export async function POST(req: Request) {
         lmsLink: program.lmsLink,
         postTestUrl: `${baseUrl}/post-test/${reg.id}`,
       }));
+      await sendEmail({
+        to: email,
+        subject: `Pembayaran Berhasil: Akses Pelatihan ${program.title}`,
+        html: getPaidEmailHtml(name, program.title, `${baseUrl}/post-test/${reg.id}`, program.zoomLink, program.waGroupLink, program.lmsLink)
+      }).catch((err) => console.error("Gagal mengirim email pembayaran dev:", err));
+
       return NextResponse.json({ ok: true, paid: true, waGroupLink: program.waGroupLink, lmsLink: program.lmsLink });
     }
 
@@ -103,6 +117,24 @@ export async function POST(req: Request) {
       create: { registrationId: reg.id, amount: program.price, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url },
       update: { xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING", amount: program.price },
     });
+
+    await sendEmail({
+      to: email,
+      subject: `Selesaikan Pembayaran Pelatihan: ${program.title}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
+          <h2 style="color: #232176; margin-top: 0;">Satu Langkah Lagi! ⏰</h2>
+          <p>Halo ${name}, Anda terdaftar pada program <strong>${program.title}</strong>.</p>
+          <p>Untuk mengaktifkan akses kelas, silakan selesaikan pembayaran invoice sebesar <strong>${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(program.price)}</strong> di link berikut:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${invoice.invoice_url}" style="background: #f7941d; color: #ffffff; padding: 12px 24px; border-radius: 99px; text-decoration: none; font-weight: bold; display: inline-block;">Bayar Sekarang</a>
+          </div>
+          <p>Invoice ini berlaku selama 24 jam. Jika sudah lunas, Anda akan otomatis menerima email konfirmasi link akses kelas.</p>
+          <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
+          <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; 2026</p>
+        </div>
+      `
+    }).catch((err) => console.error("Gagal mengirim email invoice:", err));
 
     return NextResponse.json({ ok: true, invoiceUrl: invoice.invoice_url });
   } catch (err) {

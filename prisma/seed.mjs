@@ -16,7 +16,7 @@ function nextDay(dayOfWeek, hour) {
 }
 
 const GUARANTEE =
-  "Garansi 100% uang kembali apabila e-sertifikat tidak terbit dalam 1×24 jam setelah Anda dinyatakan lulus evaluasi. Tanpa syarat tambahan.";
+  "E-sertifikat resmi diterbitkan secara otomatis setelah Anda menyelesaikan evaluasi pasca-pelatihan.";
 
 const programs = [
   // ── 1. WEBINAR GRATIS (pintu masuk funnel iklan) ─────────────────

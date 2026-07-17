@@ -34,6 +34,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   if (!program) notFound();
 
   const isFree = program.price === 0;
+  const isTeacherProgram = program.slug === "modul-ajar-ai-untuk-guru";
   const jadwal = formatJadwal(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
 
@@ -134,7 +135,127 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
 
+      {/* ===== KHUSUS GURU: PERSUASIF & RELEVAN ===== */}
+      {isTeacherProgram && (
+        <>
+          {/* Section 1: Pain Points & Tantangan Guru */}
+          <section className="section" style={{ background: "var(--chip)", paddingBottom: "3.5rem" }}>
+            <div className="container">
+              <div className="section-head center">
+                <span className="type-tag type-kelas" style={{ marginBottom: "0.8rem" }}>Masalah &amp; Tantangan</span>
+                <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Administrasi Mengajar Menyita Waktu Anda?</h2>
+                <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+                  Sebagai pendidik, waktu berharga Anda seharusnya fokus mendampingi siswa, bukan habis di depan laptop untuk administrasi Kurikulum Merdeka.
+                </p>
+              </div>
 
+              <div className="pain-points-grid" style={{ marginTop: "2.5rem" }}>
+                <div className="pain-card problem-card">
+                  <div className="pain-icon-wrapper">
+                    <Icon name="alert-triangle" size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: "1.1rem", marginBottom: "0.4rem" }}>Beban Administrasi Modul Ajar</h3>
+                    <p style={{ fontSize: "0.88rem", color: "var(--ink-soft)", lineHeight: 1.5 }}>
+                      Menyusun CP, TP, ATP, Asesmen, hingga RPP Kurikulum Merdeka secara manual dari nol sangat menyita waktu istirahat guru.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pain-card solution-card">
+                  <div className="pain-icon-wrapper">
+                    <Icon name="check" size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: "1.1rem", marginBottom: "0.4rem" }}>Solusi Asisten AI Guru</h3>
+                    <p style={{ fontSize: "0.88rem", color: "var(--ink-soft)", lineHeight: 1.5 }}>
+                      Pangkas waktu penyusunan administrasi menjadi hanya 2 menit. Dapatkan draf utuh berformat Microsoft Word (.docx) siap pakai dan siap edit.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 2: Product Preview / Cara Kerja */}
+          <section className="section">
+            <div className="container">
+              <div className="hero-card" style={{ alignItems: "center", gap: "3rem" }}>
+                <div style={{ flex: 1 }}>
+                  <span className="type-tag type-webinar" style={{ marginBottom: "0.8rem" }}>Demo Aplikasi</span>
+                  <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)", marginBottom: "1rem" }}>
+                    Intip Kemudahan Membuat Modul Ajar RPP
+                  </h2>
+                  <p style={{ color: "var(--ink-soft)", marginBottom: "1.2rem", lineHeight: 1.6 }}>
+                    Tidak perlu lagi bingung menulis perintah prompt AI yang rumit. Cukup pilih mata pelajaran, kelas, dan topik materi pokok. Sistem AI kami akan merancang modul ajar Kurikulum Merdeka yang terstruktur lengkap.
+                  </p>
+                  <ul className="check-list" style={{ gap: "0.8rem" }}>
+                    <li>Menghasilkan Capaian &amp; Tujuan Pembelajaran secara runtun</li>
+                    <li>Menyusun skenario aktivitas pembelajaran berbasis keaktifan siswa</li>
+                    <li>Dilengkapi instrumen asesmen rubrik penilaian dan LKPD siswa</li>
+                    <li>Unduh instan format Word (.docx) langsung ke laptop/ponsel Anda</li>
+                  </ul>
+                </div>
+                <div style={{ flex: 1, position: "relative" }}>
+                  <div className="mock-browser">
+                    <div className="mock-browser-header">
+                      <span className="mock-dot mock-dot-red"></span>
+                      <span className="mock-dot mock-dot-yellow"></span>
+                      <span className="mock-dot mock-dot-green"></span>
+                      <div className="mock-browser-address">guru.jetschool.id/asisten-ai</div>
+                    </div>
+                    <div className="mock-browser-content">
+                      <Image
+                        src="/asisten_ai_guru_preview.png"
+                        alt="Preview Asisten AI Guru"
+                        width={600}
+                        height={400}
+                        style={{ width: "100%", height: "auto", display: "block" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 3: PMM Bukti Dukung Validation */}
+          <section className="section" style={{ background: "var(--chip)", paddingTop: "3rem", paddingBottom: "3rem" }}>
+            <div className="container">
+              <div className="bento pmm-validation-box" style={{ background: "var(--white)", border: "1px solid var(--border)", padding: "2.5rem" }}>
+                <div className="section-head" style={{ marginBottom: "2rem" }}>
+                  <span className="type-tag type-kelas" style={{ marginBottom: "0.8rem", background: "rgba(35, 33, 118, 0.08)", color: "var(--purple)" }}>Validasi PMM</span>
+                  <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.4rem)", marginBottom: "0.8rem" }}>
+                    Sertifikat Pelatihan Nasional 32 JP Resmi &amp; Valid
+                  </h2>
+                  <p style={{ color: "var(--ink-soft)", maxWidth: "42rem", lineHeight: 1.6 }}>
+                    Khawatir sertifikat Anda ditolak di PMM? Kami memastikan sertifikat yang Anda dapatkan memiliki kelayakan administrasi penuh untuk menunjang Sasaran Kinerja Pegawai (SKP) Anda.
+                  </p>
+                </div>
+
+                <div className="pmm-grid">
+                  <div className="pmm-card">
+                    <span className="pmm-icon-check">✓</span>
+                    <span className="pmm-text">Tanda Tangan &amp; Cap Resmi</span>
+                  </div>
+                  <div className="pmm-card">
+                    <span className="pmm-icon-check">✓</span>
+                    <span className="pmm-text">QR Code Verifikasi Online</span>
+                  </div>
+                  <div className="pmm-card">
+                    <span className="pmm-icon-check">✓</span>
+                    <span className="pmm-text">Rincian Struktur Materi Lengkap</span>
+                  </div>
+                  <div className="pmm-card">
+                    <span className="pmm-icon-check">✓</span>
+                    <span className="pmm-text">Bukti Dukung Valid PMM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
 
       {/* ===== VALUE STACK + MATERI ===== */}
       <section className="section">
@@ -171,14 +292,14 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
 
-      {/* ===== GARANSI ===== */}
+      {/* ===== JAMINAN PENERBITAN ===== */}
       {program.guarantee && !isFree && (
-        <section className="section">
+        <section className="section" style={{ paddingTop: 0 }}>
           <div className="container reveal">
-            <div className="guarantee">
-              <div className="seal">GARANSI<br />100%</div>
+            <div className="guarantee" style={{ background: "rgba(108, 92, 231, 0.05)", border: "1px solid rgba(108, 92, 231, 0.1)" }}>
+              <div className="seal" style={{ background: "var(--purple)" }}>INFO<br />RESMI</div>
               <div>
-                <h3>Tanpa risiko.</h3>
+                <h3>Penerbitan e-Sertifikat</h3>
                 <p>{program.guarantee}</p>
               </div>
             </div>
@@ -196,7 +317,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                   Amankan kursi Anda.
                 </h2>
                 <p style={{ fontWeight: 700, opacity: .85 }}>
-                  Pendaftaran satu menit. Seluruh akses dikirim melalui WhatsApp.
+                  Pendaftaran satu menit. Akses instan di web &amp; dikirim via WhatsApp.
                 </p>
               </div>
               <RegisterForm

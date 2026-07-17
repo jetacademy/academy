@@ -43,6 +43,7 @@ async function main() {
       ],
       guarantee:
         "Dapatkan pendampingan langsung di komunitas hingga Anda berhasil mengunduh sertifikat pelatihan secara resmi.",
+      imageUrl: "/asisten_ai_guru_preview.png",
       // Sabtu, 2 Agustus 2026, 19:00 WIB (UTC+7 → UTC = 12:00)
       scheduleAt: new Date("2026-08-02T12:00:00.000Z"),
       durationLabel: "32 JP",

@@ -22,6 +22,22 @@ export async function POST(req: Request) {
     const program = await prisma.program.findUnique({ where: { slug: programSlug } });
     if (!program) return NextResponse.json({ error: "Program tidak ditemukan." }, { status: 404 });
 
+    const now = new Date();
+    if (now < new Date(program.scheduleAt)) {
+      const formattedDate = new Intl.DateTimeFormat("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Asia/Jakarta"
+      }).format(program.scheduleAt);
+      return NextResponse.json(
+        { error: `Klaim sertifikat belum dibuka. Program ini baru dimulai pada tanggal ${formattedDate} WIB.` },
+        { status: 400 }
+      );
+    }
+
     const reg = await prisma.registration.findUnique({
       where: { whatsapp_programId: { whatsapp, programId: program.id } },
       include: { payment: true, certificate: true },

@@ -29,6 +29,7 @@ model Program {
   tagline       String         @db.Text // headline penjualan yang spesifik (hasil akhir, bukan ilmu)
   description   String         @db.Text
   emoji         String         @default("🎓")
+  imageUrl      String?
   mentorName    String
   mentorBio     String         @db.Text
   materi        Json // array string: poin "apa yang akan dipelajari"
@@ -46,8 +47,11 @@ model Program {
   seatsLeft     Int? // sisa kursi utk scarcity (opsional, tampil jika diisi)
   passingScore  Int            @default(60) // skor minimal lulus post-test (0-100)
   isActive      Boolean        @default(true)
+  certBgUrl     String?        @db.Text
+  certConfig    Json?
   questions     Question[]
   registrations Registration[]
+  modules       LmsModule[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -58,12 +62,14 @@ model Registration {
   name        String // nama lengkap — dipakai di sertifikat
   whatsapp    String // format 08xxx, dinormalisasi ke 628xxx saat kirim WA
   email       String
+  institution String? // asal lembaga / instansi
   program     Program            @relation(fields: [programId], references: [id])
   programId   String
   status      RegistrationStatus @default(REGISTERED)
   payment     Payment?
   attempts    TestAttempt[]
   certificate Certificate?
+  completions Completion[]
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
@@ -142,4 +148,47 @@ model Certificate {
 
   @@index([issuedAt])
 }
+
+// LMS Modules (Kumpulan modul pembelajaran)
+model LmsModule {
+  id        String   @id @default(cuid())
+  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  programId String
+  title     String
+  order     Int      @default(0)
+  lessons   Lesson[]
+
+  @@index([programId])
+}
+
+// LMS Lessons (Materi pembelajaran berupa video / teks)
+model Lesson {
+  id          String       @id @default(cuid())
+  module      LmsModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId    String
+  title       String
+  type        String       @default("VIDEO") // "VIDEO" | "TEXT"
+  videoUrl    String? // URL Video YouTube / Vimeo
+  content     String?      @db.Text // Teks materi pembelajaran
+  duration    String       @default("10 menit") // Durasi materi
+  order       Int          @default(0)
+  completions Completion[]
+
+  @@index([moduleId])
+}
+
+// LMS Completions (Status selesai pengerjaan materi oleh peserta)
+model Completion {
+  id             String       @id @default(cuid())
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  registrationId String
+  lesson         Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId       String
+  completedAt    DateTime     @default(now())
+
+  @@unique([registrationId, lessonId])
+  @@index([registrationId])
+  @@index([lessonId])
+}
+
 

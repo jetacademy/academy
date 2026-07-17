@@ -27,6 +27,7 @@ export type ProgramData = {
   certPrice: number;
   certPriceOld: number | null;
   seatsLeft: number | null;
+  imageUrl?: string | null;
 };
 
 /** Label tipe program untuk tampilan */
@@ -48,7 +49,7 @@ export function nextDay(dayOfWeek: number, hour: number): Date {
 }
 
 const GUARANTEE =
-  "Garansi 100% uang kembali apabila e-sertifikat tidak terbit dalam 1×24 jam setelah Anda dinyatakan lulus evaluasi. Tanpa syarat tambahan.";
+  "E-sertifikat resmi diterbitkan secara otomatis setelah Anda menyelesaikan evaluasi pasca-pelatihan.";
 
 export const FALLBACK_PROGRAMS: ProgramData[] = [
   {

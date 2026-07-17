@@ -75,6 +75,7 @@ export default async function AdminPendaftar({ searchParams }: {
               return (
                 <tr key={r.id}>
                   <td style={{ fontWeight: 600 }}>{r.name}
+                    {(r as any).institution && <div style={{ fontSize: "0.75rem", color: "var(--purple)", fontWeight: "normal" }}>Lembaga: {(r as any).institution}</div>}
                     <div className="muted">{new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" }).format(r.createdAt)}</div>
                   </td>
                   <td>{r.whatsapp}<div className="muted">{r.email}</div></td>

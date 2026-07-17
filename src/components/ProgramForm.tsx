@@ -3,7 +3,7 @@ import type { Deliverable } from "@/lib/fallback";
 
 type ProgramRow = {
   id: string; slug: string; type: string; title: string; tagline: string; description: string;
-  emoji: string; mentorName: string; mentorBio: string; materi: unknown; deliverables: unknown;
+  emoji: string; imageUrl?: string | null; mentorName: string; mentorBio: string; materi: unknown; deliverables: unknown;
   guarantee: string | null; scheduleAt: Date; durationLabel: string;
   zoomLink: string | null; waGroupLink: string | null; lmsLink: string | null;
   price: number; priceOld: number | null; certPrice: number; certPriceOld: number | null;
@@ -47,6 +47,13 @@ export default function ProgramForm({ program }: { program?: ProgramRow }) {
       <div className="field">
         <label>Emoji</label>
         <input name="emoji" defaultValue={program?.emoji ?? "🎓"} />
+      </div>
+      <div className="field full">
+        <label>URL Gambar Program (Opsional — untuk Card di Halaman Depan)</label>
+        <input name="imageUrl" defaultValue={program?.imageUrl ?? ""} placeholder="cth: /hero2.webp atau URL gambar kustom" />
+        <span style={{ fontSize: "0.78rem", color: "var(--ink-soft)", marginTop: "0.2rem", display: "block" }}>
+          * Biarkan kosong jika ingin menggunakan tampilan teks saja. Jika diisi, disarankan menggunakan gambar beraspek rasio <strong>16:9 (contoh: 1200x675 px atau 800x450 px)</strong> agar gambar fit penuh secara proporsional tanpa terpotong di halaman depan.
+        </span>
       </div>
 
       <div className="field full">

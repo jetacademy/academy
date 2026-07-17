@@ -7,6 +7,8 @@ import { requireAdmin, createAdminSession, destroyAdminSession } from "@/lib/adm
 import { sendWa, msgAccess, msgPaid } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
 
+import { sendEmail, getPaidEmailHtml } from "@/lib/email";
+
 // ─── Auth ────────────────────────────────────────────────────────
 
 export async function adminLogin(formData: FormData) {
@@ -55,6 +57,7 @@ export async function saveProgram(formData: FormData) {
     tagline: String(formData.get("tagline") ?? "").trim(),
     description: String(formData.get("description") ?? "").trim(),
     emoji: String(formData.get("emoji") ?? "🎓").trim() || "🎓",
+    imageUrl: optStr(formData, "imageUrl"),
     mentorName: String(formData.get("mentorName") ?? "").trim(),
     mentorBio: String(formData.get("mentorBio") ?? "").trim(),
     materi: parseLines(String(formData.get("materi") ?? "")),
@@ -177,6 +180,14 @@ export async function markPaid(formData: FormData) {
   } else {
     await sendWa(reg.whatsapp, msgPaid(reg.name, reg.program.title, postTestUrl));
   }
+
+  // Kirim email pembayaran sukses — best-effort
+  await sendEmail({
+    to: reg.email,
+    subject: `Pembayaran Berhasil: Akses Pelatihan ${reg.program.title}`,
+    html: getPaidEmailHtml(reg.name, reg.program.title, postTestUrl, reg.program.zoomLink, reg.program.waGroupLink, reg.program.lmsLink),
+  }).catch((err) => console.error("Gagal mengirim email manual markPaid:", err));
+
   revalidatePath("/webadmin/pendaftar");
   revalidatePath("/webadmin");
 }
@@ -201,6 +212,7 @@ export async function saveRegistration(formData: FormData) {
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const status = String(formData.get("status") ?? "REGISTERED") as "REGISTERED" | "PAID" | "PASSED";
+  const institution = String(formData.get("institution") ?? "").trim();
 
   if (!programId || !name || !whatsapp || !email) {
     redirect("/webadmin/pendaftar?e=lengkapi");
@@ -212,16 +224,162 @@ export async function saveRegistration(formData: FormData) {
     whatsapp,
     email,
     status,
+    institution,
   };
 
   if (id) {
-    await prisma.registration.update({ where: { id }, data });
+    await (prisma.registration as any).update({ where: { id }, data });
   } else {
-    await prisma.registration.create({ data });
+    await (prisma.registration as any).create({ data });
   }
 
   revalidatePath("/webadmin/pendaftar");
   revalidatePath("/webadmin");
   redirect("/webadmin/pendaftar?ok=1");
+}
+
+export async function saveLmsModule(formData: FormData) {
+  await requireAdmin();
+
+  const id = optStr(formData, "id");
+  const programId = String(formData.get("programId") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const order = Number(formData.get("order") ?? 0);
+
+  if (!programId || !title) {
+    redirect(`/webadmin/program/${programId || ""}?e=lengkapi`);
+  }
+
+  const data = {
+    programId,
+    title,
+    order,
+  };
+
+  const db = prisma as unknown as {
+    lmsModule: {
+      update: (args: unknown) => Promise<unknown>;
+      create: (args: unknown) => Promise<unknown>;
+    };
+  };
+
+  if (id) {
+    await db.lmsModule.update({ where: { id }, data });
+  } else {
+    await db.lmsModule.create({ data });
+  }
+
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+}
+
+export async function deleteLmsModule(formData: FormData) {
+  await requireAdmin();
+
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+
+  const db = prisma as unknown as {
+    lmsModule: {
+      delete: (args: unknown) => Promise<unknown>;
+    };
+  };
+
+  await db.lmsModule.delete({ where: { id } });
+
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+}
+
+export async function saveLmsLesson(formData: FormData) {
+  await requireAdmin();
+
+  const id = optStr(formData, "id");
+  const programId = String(formData.get("programId") ?? "").trim();
+  const moduleId = String(formData.get("moduleId") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const type = String(formData.get("type") ?? "VIDEO");
+  const videoUrl = optStr(formData, "videoUrl");
+  const content = optStr(formData, "content");
+  const duration = String(formData.get("duration") ?? "10 menit").trim();
+  const order = Number(formData.get("order") ?? 0);
+
+  if (!programId || !moduleId || !title) {
+    redirect(`/webadmin/program/${programId}?e=lengkapi`);
+  }
+
+  const data = {
+    moduleId,
+    title,
+    type,
+    videoUrl,
+    content,
+    duration,
+    order,
+  };
+
+  const db = prisma as unknown as {
+    lesson: {
+      update: (args: unknown) => Promise<unknown>;
+      create: (args: unknown) => Promise<unknown>;
+    };
+  };
+
+  if (id) {
+    await db.lesson.update({ where: { id }, data });
+  } else {
+    await db.lesson.create({ data });
+  }
+
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+}
+
+export async function deleteLmsLesson(formData: FormData) {
+  await requireAdmin();
+
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+
+  const db = prisma as unknown as {
+    lesson: {
+      delete: (args: unknown) => Promise<unknown>;
+    };
+  };
+
+  await db.lesson.delete({ where: { id } });
+
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+}
+
+export async function uploadFileAction(formData: FormData): Promise<string> {
+  const { writeFile, mkdir } = await import("fs/promises");
+  const { join } = await import("path");
+  
+  await requireAdmin();
+  const file = formData.get("file") as File;
+  if (!file || file.size === 0) throw new Error("File empty");
+  
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+  const uploadDir = join(process.cwd(), "public", "uploads");
+  await mkdir(uploadDir, { recursive: true });
+  
+  const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+  const filename = `${Date.now()}-${cleanName}`;
+  const filepath = join(uploadDir, filename);
+  await writeFile(filepath, buffer);
+  
+  return `/uploads/${filename}`;
+}
+
+export async function saveCertTemplate(programId: string, certBgUrl: string | null, certConfig: any) {
+  await requireAdmin();
+  await (prisma.program as any).update({
+    where: { id: programId },
+    data: {
+      certBgUrl,
+      certConfig: certConfig ? JSON.parse(JSON.stringify(certConfig)) : null
+    }
+  });
+  revalidatePath(`/webadmin/program/${programId}`);
+  revalidatePath(`/webadmin/program/${programId}/cert`);
 }
 
