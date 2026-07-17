@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PrintButton from "@/components/PrintButton";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
@@ -72,7 +73,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
 
           <div className="no-print" style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "2.2rem", flexWrap: "wrap" }}>
             <PrintButton />
-            <a className="btn" href="/#program">Ikut Kelas Berikutnya</a>
+            <Link className="btn" href="/#program">Ikut Kelas Berikutnya</Link>
           </div>
           <p className="reg-note no-print" style={{ textAlign: "center", marginTop: "1rem" }}>
             Simpan sebagai PDF: klik &ldquo;Cetak / Simpan PDF&rdquo; lalu pilih &ldquo;Save as PDF&rdquo;.

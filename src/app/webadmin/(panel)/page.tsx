@@ -9,35 +9,56 @@ const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
   PASSED: { cls: "g", label: "Lulus" },
 };
 
+interface ProgramStatsRaw {
+  programId: string;
+  total_regs: bigint;
+  paid_regs: bigint;
+  total_income: number | null;
+}
+
 export default async function AdminDashboard() {
-  const [regCount, revenue, certCount, programs, latest] = await Promise.all([
+  const [regCount, revenue, certCount, programs, latest, statsRaw] = await Promise.all([
     prisma.registration.count(),
     prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
     prisma.certificate.count(),
     prisma.program.findMany({
       orderBy: { scheduleAt: "asc" },
-      include: { _count: { select: { registrations: true } } },
     }),
     prisma.registration.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
       include: { program: true, payment: true },
     }),
+    prisma.$queryRaw<ProgramStatsRaw[]>`
+      SELECT 
+        r.programId, 
+        COUNT(r.id) as total_regs,
+        SUM(CASE WHEN r.status IN ('PAID', 'PASSED') THEN 1 ELSE 0 END) as paid_regs,
+        SUM(CASE WHEN p.status = 'PAID' THEN p.amount ELSE 0 END) as total_income
+      FROM Registration r
+      LEFT JOIN Payment p ON p.registrationId = r.id
+      GROUP BY r.programId
+    `,
   ]);
 
-  // rekap per program: pendaftar, lunas, pendapatan
-  const perProgram = await Promise.all(
-    programs.map(async (p) => {
-      const [paid, income] = await Promise.all([
-        prisma.registration.count({ where: { programId: p.id, status: { in: ["PAID", "PASSED"] } } }),
-        prisma.payment.aggregate({
-          _sum: { amount: true },
-          where: { status: "PAID", registration: { programId: p.id } },
-        }),
-      ]);
-      return { ...p, paid, income: income._sum.amount ?? 0 };
-    })
-  );
+  const statsMap = new Map<string, { total: number; paid: number; income: number }>();
+  for (const s of statsRaw) {
+    statsMap.set(s.programId, {
+      total: Number(s.total_regs),
+      paid: Number(s.paid_regs),
+      income: Number(s.total_income ?? 0),
+    });
+  }
+
+  const perProgram = programs.map((p) => {
+    const stats = statsMap.get(p.id) ?? { total: 0, paid: 0, income: 0 };
+    return {
+      ...p,
+      totalRegs: stats.total,
+      paid: stats.paid,
+      income: stats.income,
+    };
+  });
 
   return (
     <>
@@ -66,7 +87,7 @@ export default async function AdminDashboard() {
               <tr key={p.id}>
                 <td><Link href={`/webadmin/program/${p.id}`} style={{ fontWeight: 600 }}>{p.title}</Link></td>
                 <td><span className={`badge${p.price === 0 ? " y" : ""}`}>{TYPE_LABEL[p.type as ProgramType]}</span></td>
-                <td>{p._count.registrations}</td>
+                <td>{p.totalRegs}</td>
                 <td>{p.paid}</td>
                 <td>{rupiah(p.income)}</td>
                 <td>{p.isActive ? <span className="badge g">Aktif</span> : <span className="badge dim">Nonaktif</span>}</td>

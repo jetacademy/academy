@@ -7,7 +7,8 @@ import Faq from "@/components/Faq";
 import Icon, { TYPE_ICON } from "@/components/Icon";
 import { getPrograms } from "@/lib/programs";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
-import { formatHari, formatJam, rupiah } from "@/lib/format";
+import { formatHari, formatJam, rupiah, getDaysLeft } from "@/lib/format";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic"; // program selalu diambil segar dari MySQL
 
@@ -38,11 +39,15 @@ const FAQ_ITEMS = [
 ];
 
 export default async function Home() {
-  const { programs } = await getPrograms();
+  const [ { programs }, regCount, certCount ] = await Promise.all([
+    getPrograms(),
+    prisma.registration.count(),
+    prisma.certificate.count(),
+  ]);
   const webinarGratis = programs.find((p) => p.type === "WEBINAR" && p.price === 0);
   const programTerdekat = webinarGratis ?? programs[0] ?? null;
   const daysLeft = programTerdekat
-    ? Math.max(0, Math.ceil((new Date(programTerdekat.scheduleAt).getTime() - Date.now()) / 86_400_000))
+    ? getDaysLeft(programTerdekat.scheduleAt)
     : null;
 
   return (
@@ -69,6 +74,23 @@ export default async function Home() {
               <div className="hero-cta">
                 <a href="#program" className="btn btn-purple btn-lg">Lihat Program</a>
                 <a href="#cara" className="btn btn-line btn-lg">Cara Kerjanya</a>
+              </div>
+
+              <div className="hero-pills" style={{ marginTop: "1rem" }}>
+                <div className="hero-pill">
+                  <b>{regCount}+</b>
+                  <span>Pendaftar Aktif</span>
+                </div>
+                <div className="hero-pill-sep" />
+                <div className="hero-pill">
+                  <b>{certCount}+</b>
+                  <span>Sertifikat Terbit</span>
+                </div>
+                <div className="hero-pill-sep" />
+                <div className="hero-pill">
+                  <b className="hero-pill-free">100%</b>
+                  <span>Garansi Lulus</span>
+                </div>
               </div>
 
             </div>

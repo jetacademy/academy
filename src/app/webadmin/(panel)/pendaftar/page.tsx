@@ -10,28 +10,39 @@ const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
 };
 
 export default async function AdminPendaftar({ searchParams }: {
-  searchParams: Promise<{ q?: string; program?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; program?: string; status?: string; page?: string }>;
 }) {
-  const { q, program, status } = await searchParams;
+  const { q, program, status, page } = await searchParams;
 
-  const [programs, regs] = await Promise.all([
+  const currentPage = Number(page ?? "1") || 1;
+  const limit = 50;
+  const skip = (currentPage - 1) * limit;
+
+  const where = {
+    ...(q ? { OR: [{ name: { contains: q } }, { whatsapp: { contains: q } }, { email: { contains: q } }] } : {}),
+    ...(program ? { programId: program } : {}),
+    ...(status ? { status: status as "REGISTERED" | "PAID" | "PASSED" } : {}),
+  };
+
+  const [programs, regs, totalCount] = await Promise.all([
     prisma.program.findMany({ orderBy: { title: "asc" }, select: { id: true, title: true } }),
     prisma.registration.findMany({
-      where: {
-        ...(q ? { OR: [{ name: { contains: q } }, { whatsapp: { contains: q } }, { email: { contains: q } }] } : {}),
-        ...(program ? { programId: program } : {}),
-        ...(status ? { status: status as "REGISTERED" | "PAID" | "PASSED" } : {}),
-      },
+      where,
       orderBy: { createdAt: "desc" },
-      take: 200,
+      skip,
+      take: limit,
       include: { program: true, payment: true, certificate: true },
     }),
+    prisma.registration.count({ where }),
   ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
 
   return (
     <>
       <div className="adm-head">
-        <h1>Pendaftar <span style={{ color: "var(--ink-faint)", fontSize: "1rem" }}>({regs.length})</span></h1>
+        <h1>Pendaftar <span style={{ color: "var(--ink-faint)", fontSize: "1rem" }}>({totalCount} total)</span></h1>
+        <Link href="/webadmin/pendaftar/new" className="btn btn-yellow btn-sm">+ Pendaftar Baru</Link>
       </div>
 
       {/* filter */}
@@ -76,6 +87,7 @@ export default async function AdminPendaftar({ searchParams }: {
                   </td>
                   <td>
                     <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
+                      <Link href={`/webadmin/pendaftar/${r.id}`} className="btn btn-sm">Edit</Link>
                       {r.status === "REGISTERED" && (
                         <form action={markPaid}>
                           <input type="hidden" name="id" value={r.id} />
@@ -103,6 +115,42 @@ export default async function AdminPendaftar({ searchParams }: {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div style={{ display: "flex", gap: ".8rem", alignItems: "center", marginTop: "1.4rem", justifyContent: "center" }}>
+          {currentPage > 1 && (
+            <Link
+              href={`/webadmin/pendaftar?${new URLSearchParams({
+                ...(q ? { q } : {}),
+                ...(program ? { program } : {}),
+                ...(status ? { status } : {}),
+                page: String(currentPage - 1),
+              }).toString()}`}
+              className="btn btn-sm"
+            >
+              ← Sebelum
+            </Link>
+          )}
+          <span style={{ fontSize: ".85rem", fontWeight: 600, color: "var(--ink-soft)" }}>
+            Halaman {currentPage} dari {totalPages}
+          </span>
+          {currentPage < totalPages && (
+            <Link
+              href={`/webadmin/pendaftar?${new URLSearchParams({
+                ...(q ? { q } : {}),
+                ...(program ? { program } : {}),
+                ...(status ? { status } : {}),
+                page: String(currentPage + 1),
+              }).toString()}`}
+              className="btn btn-sm"
+            >
+              Sesudah →
+            </Link>
+          )}
+        </div>
+      )}
+
       <p className="adm-note" style={{ marginTop: ".8rem" }}>
         <b>Tandai Lunas</b> dipakai jika peserta membayar di luar Xendit (transfer manual) — status berubah, WA akses terkirim otomatis.
       </p>

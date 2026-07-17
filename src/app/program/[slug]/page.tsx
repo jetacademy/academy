@@ -1,15 +1,13 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import WaFloat from "@/components/WaFloat";
 import Faq from "@/components/Faq";
-import Countdown from "@/components/Countdown";
-import OfferTimer from "@/components/OfferTimer";
 import RegisterForm from "@/components/RegisterForm";
 import ValueStack from "@/components/ValueStack";
-import Icon, { TYPE_ICON } from "@/components/Icon";
+import Icon from "@/components/Icon";
 import { getProgramBySlug } from "@/lib/programs";
-import { prisma } from "@/lib/prisma";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 import Image from "next/image";
 import { formatJadwal, formatHari, formatJam, rupiah } from "@/lib/format";
@@ -38,13 +36,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const isFree = program.price === 0;
   const jadwal = formatJadwal(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
-  const isSelfPaced = program.type === "KELAS"; // kelas mandiri: tanpa tenggat sesi
 
-  // jumlah pendaftar RIIL dari database (tanpa angka karangan)
-  let regCount = 0;
-  try {
-    regCount = await prisma.registration.count({ where: { program: { slug: program.slug } } });
-  } catch { /* database belum terhubung — cukup tanpa angka */ }
 
   const faqItems = [
     {
@@ -238,7 +230,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               <Image src="/iconjetschool academy.png" alt="Jetschool Academy" width={44} height={44} style={{ objectFit: "contain" }} />
               Jetschool Academy
             </div>
-            <a href="/">Kembali ke Beranda</a>
+            <Link href="/">Kembali ke Beranda</Link>
             <span style={{ fontSize: ".78rem" }}>© {new Date().getFullYear()} Jetschool Academy</span>
           </div>
         </div>

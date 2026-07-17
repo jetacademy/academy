@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import Icon from "@/components/Icon";
 
 /**
  * Navbar 2 mode:
@@ -33,14 +32,14 @@ export default function Navbar({ minimal = false, ctaHref = "/#program", ctaLabe
 
         {!minimal && (
           <nav className={`nav-links${open ? " open" : ""}`} onClick={() => setOpen(false)}>
-            <a href="/#program">Program</a>
-            <a href="/#cara">Cara Kerja</a>
-            <a href="/#faq">FAQ</a>
+            <Link href="/#program">Program</Link>
+            <Link href="/#cara">Cara Kerja</Link>
+            <Link href="/#faq">FAQ</Link>
           </nav>
         )}
 
         <div style={{ display: "flex", alignItems: "center", gap: ".8rem" }}>
-          <a href={ctaHref} className="btn btn-purple">{ctaLabel}</a>
+          <Link href={ctaHref} className="btn btn-purple">{ctaLabel}</Link>
           {!minimal && (
             <button className="nav-burger" aria-label="Buka menu" onClick={() => setOpen(!open)}>☰</button>
           )}

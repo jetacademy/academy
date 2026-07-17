@@ -29,3 +29,8 @@ export function formatJam(d: Date): string {
 export function rupiah(n: number): string {
   return "Rp " + n.toLocaleString("id-ID");
 }
+
+export function getDaysLeft(scheduleAt: Date): number {
+  return Math.max(0, Math.ceil((new Date(scheduleAt).getTime() - Date.now()) / 86_400_000));
+}
+

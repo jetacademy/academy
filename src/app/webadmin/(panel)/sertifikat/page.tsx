@@ -1,16 +1,30 @@
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 
-export default async function AdminSertifikat() {
-  const certs = await prisma.certificate.findMany({
-    orderBy: { issuedAt: "desc" },
-    take: 200,
-    include: { registration: { include: { program: true } } },
-  });
+export default async function AdminSertifikat({ searchParams }: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page } = await searchParams;
+  const currentPage = Number(page ?? "1") || 1;
+  const limit = 50;
+  const skip = (currentPage - 1) * limit;
+
+  const [certs, totalCount] = await Promise.all([
+    prisma.certificate.findMany({
+      orderBy: { issuedAt: "desc" },
+      skip,
+      take: limit,
+      include: { registration: { include: { program: true } } },
+    }),
+    prisma.certificate.count(),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
 
   return (
     <>
       <div className="adm-head">
-        <h1>Sertifikat Terbit <span style={{ color: "var(--ink-faint)", fontSize: "1rem" }}>({certs.length})</span></h1>
+        <h1>Sertifikat Terbit <span style={{ color: "var(--ink-faint)", fontSize: "1rem" }}>({totalCount} total)</span></h1>
       </div>
 
       <div className="tbl-wrap">
@@ -32,6 +46,31 @@ export default async function AdminSertifikat() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div style={{ display: "flex", gap: ".8rem", alignItems: "center", marginTop: "1.4rem", justifyContent: "center" }}>
+          {currentPage > 1 && (
+            <Link
+              href={`/webadmin/sertifikat?page=${currentPage - 1}`}
+              className="btn btn-sm"
+            >
+              ← Sebelum
+            </Link>
+          )}
+          <span style={{ fontSize: ".85rem", fontWeight: 600, color: "var(--ink-soft)" }}>
+            Halaman {currentPage} dari {totalPages}
+          </span>
+          {currentPage < totalPages && (
+            <Link
+              href={`/webadmin/sertifikat?page=${currentPage + 1}`}
+              className="btn btn-sm"
+            >
+              Sesudah →
+            </Link>
+          )}
+        </div>
+      )}
     </>
   );
 }

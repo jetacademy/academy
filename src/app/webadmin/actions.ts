@@ -191,3 +191,37 @@ export async function deleteRegistration(formData: FormData) {
   revalidatePath("/webadmin/pendaftar");
   revalidatePath("/webadmin");
 }
+
+export async function saveRegistration(formData: FormData) {
+  await requireAdmin();
+
+  const id = optStr(formData, "id");
+  const programId = String(formData.get("programId") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const status = String(formData.get("status") ?? "REGISTERED") as "REGISTERED" | "PAID" | "PASSED";
+
+  if (!programId || !name || !whatsapp || !email) {
+    redirect("/webadmin/pendaftar?e=lengkapi");
+  }
+
+  const data = {
+    programId,
+    name,
+    whatsapp,
+    email,
+    status,
+  };
+
+  if (id) {
+    await prisma.registration.update({ where: { id }, data });
+  } else {
+    await prisma.registration.create({ data });
+  }
+
+  revalidatePath("/webadmin/pendaftar");
+  revalidatePath("/webadmin");
+  redirect("/webadmin/pendaftar?ok=1");
+}
+
