@@ -4,7 +4,7 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import GoogleAuthModal from "@/components/GoogleAuthModal";
 import { useRouter } from "next/navigation";
-import { memberLogin } from "@/app/member/actions";
+import { memberLogin, memberLogout } from "@/app/member/actions";
 
 declare global {
   interface Window { fbq?: (...args: unknown[]) => void }
@@ -18,22 +18,30 @@ type Result = {
   lmsLink?: string | null;
 };
 
-export default function RegisterForm({ programSlug, programTitle, jadwal, price, priceLabel }: {
+export default function RegisterForm({ programSlug, programTitle, jadwal, price, priceLabel, memberProfile }: {
   programSlug: string;
   programTitle: string;
   jadwal: string;
   price: number; // 0 = gratis
   priceLabel: string;
+  memberProfile?: {
+    name: string;
+    email: string;
+    whatsapp: string;
+    institution: string | null;
+  } | null;
 }) {
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   const [error, setError] = useState("");
   const [result, setResult] = useState<{ name: string } & Result | null>(null);
   const [googleOpen, setGoogleOpen] = useState(false);
-  const [googleSelected, setGoogleSelected] = useState(false);
+  const [googleSelected, setGoogleSelected] = useState(!!memberProfile);
   const router = useRouter();
 
-  const [nameVal, setNameVal] = useState("");
-  const [emailVal, setEmailVal] = useState("");
+  const [nameVal, setNameVal] = useState(memberProfile?.name ?? "");
+  const [emailVal, setEmailVal] = useState(memberProfile?.email ?? "");
+  const [whatsappVal, setWhatsappVal] = useState(memberProfile?.whatsapp ?? "");
+  const [institutionVal, setInstitutionVal] = useState(memberProfile?.institution ?? "");
 
   const isPaid = price > 0;
 
@@ -41,12 +49,11 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     e.preventDefault();
     setError("");
     setState("loading");
-    const form = e.currentTarget;
     const data = {
       name: nameVal.trim(),
-      whatsapp: (form.elements.namedItem("whatsapp") as HTMLInputElement).value.trim(),
+      whatsapp: whatsappVal.trim(),
       email: emailVal.trim(),
-      institution: (form.elements.namedItem("institution") as HTMLInputElement).value.trim(),
+      institution: institutionVal.trim(),
       programSlug,
     };
 
@@ -87,10 +94,17 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     setGoogleSelected(true);
   }
 
-  function handleResetGoogle() {
+  async function handleResetGoogle() {
     setNameVal("");
     setEmailVal("");
+    setWhatsappVal("");
+    setInstitutionVal("");
     setGoogleSelected(false);
+    try {
+      await memberLogout();
+    } catch (err) {
+      console.error("Gagal logout:", err);
+    }
   }
 
   if (state === "done" && result) {
@@ -213,12 +227,29 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
 
             <div className="field">
               <label htmlFor="fWa">Nomor WhatsApp Aktif</label>
-              <input id="fWa" name="whatsapp" type="tel" placeholder="Contoh: 081234567890" pattern="0[0-9]{8,13}" required />
+              <input
+                id="fWa"
+                name="whatsapp"
+                type="tel"
+                placeholder="Contoh: 081234567890"
+                pattern="0[0-9]{8,13}"
+                required
+                value={whatsappVal}
+                onChange={(e) => setWhatsappVal(e.target.value)}
+              />
             </div>
 
             <div className="field">
               <label htmlFor="fInst">Asal Lembaga / Instansi</label>
-              <input id="fInst" name="institution" type="text" placeholder="Contoh: SDN 1 Bandung / Umum" required />
+              <input
+                id="fInst"
+                name="institution"
+                type="text"
+                placeholder="Contoh: SDN 1 Bandung / Umum"
+                required
+                value={institutionVal}
+                onChange={(e) => setInstitutionVal(e.target.value)}
+              />
             </div>
 
             <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={state === "loading"} style={{ width: "100%" }}>

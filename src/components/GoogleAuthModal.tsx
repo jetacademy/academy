@@ -15,7 +15,7 @@ declare global {
   }
 }
 
-const MOCK_ACCOUNTS = [
+const MOCK_ACCOUNTS = process.env.NODE_ENV === 'production' ? [] : [
   { name: "Budi Santoso", email: "budi.santoso@gmail.com" },
   { name: "Arif Pratama", email: "arif.pratama@gmail.com" },
   { name: "Nadia Rahma", email: "nadia.rahma@gmail.com" },

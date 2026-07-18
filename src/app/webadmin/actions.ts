@@ -101,7 +101,9 @@ export async function saveProgram(formData: FormData) {
   };
 
   if (!data.slug || !data.title) redirect(id ? `/webadmin/program/${id}?e=lengkapi` : "/webadmin/program/new?e=lengkapi");
-  if (Number.isNaN(data.scheduleAt.getTime())) data.scheduleAt = new Date();
+  if (Number.isNaN(data.scheduleAt.getTime())) {
+    redirect(id ? `/webadmin/program/${id}?e=tanggaltidakvalid` : "/webadmin/program/new?e=tanggaltidakvalid");
+  }
 
   try {
     if (id) {
@@ -125,9 +127,9 @@ export async function saveProgram(formData: FormData) {
 export async function saveGraduationSettings(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
-  const completionCriteria = String(formData.get("completionCriteria") ?? "ALL_LESSONS") as
+  const completionCriteria = (formData.get("completionCriteria") ?? "ALL_LESSONS") as
     | "ALL_LESSONS" | "ALL_QUIZZES";
-  const certKind = String(formData.get("certKind") ?? "ACHIEVEMENT") as
+  const certKind = (formData.get("certKind") ?? "ACHIEVEMENT") as
     | "PARTICIPATION" | "COMPLETION" | "ACHIEVEMENT";
   const passingScore = Math.min(100, Math.max(0, num(formData, "passingScore") || 60));
   const maxTestAttempts = Math.max(0, num(formData, "maxTestAttempts"));
@@ -353,11 +355,20 @@ export async function saveLmsLesson(formData: FormData) {
   const rawType = String(formData.get("type") ?? "VIDEO");
   const type: LessonTypeStr = (LESSON_TYPES as readonly string[]).includes(rawType) ? (rawType as LessonTypeStr) : "VIDEO";
   const videoUrl = optStr(formData, "videoUrl");
+  // Validasi video URL: hanya YouTube/Vimeo yang diizinkan
+  if (videoUrl) {
+    const ytRe = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i;
+    const vimeoRe = /^(https?:\/\/)?(www\.)?vimeo\.com\/\d+/i;
+    if (!ytRe.test(videoUrl) && !vimeoRe.test(videoUrl)) {
+      redirect(`/webadmin/program/${programId}/lms/lesson/${id || "new"}?e=video`);
+    }
+  }
   const fileUrl = optStr(formData, "fileUrl");
   const content = sanitizeHtml(optStr(formData, "content"));
   const duration = String(formData.get("duration") ?? "10 menit").trim() || "10 menit";
   const passingScoreRaw = num(formData, "passingScore");
-  const passingScore = type === "QUIZ" && passingScoreRaw > 0 ? Math.min(100, passingScoreRaw) : null;
+  const hasPassingScore = formData.has("passingScore") && String(formData.get("passingScore")).trim() !== "";
+  const passingScore = type === "QUIZ" && hasPassingScore ? Math.min(100, Math.max(0, passingScoreRaw)) : null;
   const isPreview = formData.get("isPreview") === "on";
 
   if (!programId || !moduleId || !title) redirect(`/webadmin/program/${programId}/lms?e=lengkapi`);

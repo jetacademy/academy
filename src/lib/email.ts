@@ -67,6 +67,7 @@ ${html.replace(/<[^>]*>/g, " ").trim()}
   } else {
     console.warn(`[Email] Gagal kirim ke ${to} — SMTP tidak tersedia.`);
   }
+}
 
 // ─── Templates ───────────────────────────────────────────────────
 

@@ -23,7 +23,7 @@ export function formatJam(d: Date): string {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Asia/Jakarta",
-  }).format(d).replace(".", ":") + " WIB";
+  }).format(d).replace(/\\./g, ":") + " WIB";
 }
 
 export function rupiah(n: number): string {
@@ -31,6 +31,7 @@ export function rupiah(n: number): string {
 }
 
 export function getDaysLeft(scheduleAt: Date): number {
-  return Math.max(0, Math.ceil((new Date(scheduleAt).getTime() - Date.now()) / 86_400_000));
+  const diff = (new Date(scheduleAt).getTime() - Date.now()) / 86_400_000;
+  return diff < 1 && diff > -0.5 ? 0 : Math.max(0, Math.ceil(diff));
 }
 

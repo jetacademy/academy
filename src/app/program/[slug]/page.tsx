@@ -11,6 +11,8 @@ import { getProgramBySlug } from "@/lib/programs";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 import Image from "next/image";
 import { formatJadwal, formatHari, formatJam, rupiah } from "@/lib/format";
+import { getMemberSession } from "@/lib/member-auth";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +34,23 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const { program } = await getProgramBySlug(slug);
   if (!program) notFound();
+
+  const sessionVal = await getMemberSession();
+  let memberProfile = null;
+  if (sessionVal) {
+    memberProfile = await prisma.registration.findFirst({
+      where: {
+        OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
+      },
+      select: {
+        name: true,
+        email: true,
+        whatsapp: true,
+        institution: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
 
   const isFree = program.price === 0;
   const isTeacherProgram = program.slug === "modul-ajar-ai-untuk-guru";
@@ -326,6 +345,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 jadwal={jadwal}
                 price={program.price}
                 priceLabel={priceLabel}
+                memberProfile={memberProfile}
               />
             </div>
           </div>

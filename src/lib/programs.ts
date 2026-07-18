@@ -12,7 +12,7 @@ export async function getPrograms(): Promise<{ programs: ProgramData[]; demo: bo
       include: { category: true },
       orderBy: { scheduleAt: "asc" },
     });
-    if (rows.length === 0) return { programs: FALLBACK_PROGRAMS, demo: true };
+    if (rows.length === 0) return { programs: [], demo: false };
     return { programs: rows.map(toData), demo: false };
   } catch {
     console.warn("[db] MySQL belum terhubung — menampilkan data contoh.");
@@ -27,8 +27,10 @@ export async function getProgramBySlug(slug: string): Promise<{ program: Program
       include: { category: true },
     });
     if (row) return { program: toData(row), demo: false };
-    return { program: FALLBACK_PROGRAMS.find((p) => p.slug === slug) ?? null, demo: true };
+    // DB query sukses tapi tidak ditemukan — jangan pakai fallback
+    return { program: null, demo: false };
   } catch {
+    // DB error — coba pakai fallback
     return { program: FALLBACK_PROGRAMS.find((p) => p.slug === slug) ?? null, demo: true };
   }
 }
