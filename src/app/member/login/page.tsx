@@ -160,8 +160,8 @@ export default function MemberLoginPage() {
 
                 <p style={{ textAlign: "center", marginTop: "1.5rem", fontSize: "0.82rem", color: "var(--ink-soft)" }}>
                   Belum punya akun?{' '}
-                  <Link href="/#program" style={{ color: "var(--purple)", fontWeight: 700 }}>
-                    Daftar di program
+                  <Link href="/daftar" style={{ color: "var(--purple)", fontWeight: 700 }}>
+                    Daftar akun baru
                   </Link>
                 </p>
               </>

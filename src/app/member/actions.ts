@@ -306,3 +306,54 @@ export async function claimLessonsCertificate(registrationId: string) {
   revalidatePath("/member");
   return { ok: true, certUrl: cert.url };
 }
+
+/** Daftar akun baru (tanpa perlu program) — via OTP WhatsApp */
+export async function registerUser(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const whatsappRaw = String(formData.get("whatsapp") ?? "").trim();
+
+  if (name.length < 3) return { error: "Nama minimal 3 huruf." };
+  if (!/^[a-zA-Z0-9\s'.,&-]+$/.test(name)) return { error: "Nama mengandung karakter tidak valid." };
+  if (!/^08[0-9]{8,13}$/.test(whatsappRaw)) return { error: "Nomor WhatsApp tidak valid (08xxx)." };
+  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Email tidak valid." };
+
+  const hdrs = await headers();
+  const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "register";
+  const limit = checkRateLimit(`register-user:${ip}`, 3, 300_000);
+  if (!limit.ok) return { error: "Terlalu banyak permintaan. Coba 5 menit lagi." };
+
+  // Cek apakah email/WA sudah terdaftar sebagai user
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ email }, { whatsapp: whatsappRaw }] },
+  });
+  if (existing) {
+    return { error: "Email atau nomor WhatsApp sudah terdaftar. Silakan login." };
+  }
+
+  // Cek apakah sudah ada registrasi dengan data ini (backfill)
+  const regs = await prisma.registration.findMany({
+    where: { OR: [{ email }, { whatsapp: whatsappRaw }] },
+  });
+
+  // Buat user
+  const user = await prisma.user.create({
+    data: { name, email, whatsapp: whatsappRaw, role: "STUDENT" },
+  });
+
+  // Hubungkan registrasi yang ada ke user ini
+  if (regs.length > 0) {
+    await prisma.registration.updateMany({
+      where: { id: { in: regs.map((r) => r.id) } },
+      data: { userId: user.id },
+    });
+  }
+
+  // Kirim OTP untuk verifikasi + langsung login
+  const otpResult = await sendOtp(email);
+  if (!otpResult.ok) {
+    return { error: otpResult.error ?? "Gagal mengirim OTP." };
+  }
+
+  return { ok: true, userId: user.id };
+}
