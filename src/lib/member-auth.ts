@@ -4,11 +4,11 @@ import { createHmac } from "crypto";
 
 const COOKIE = "jsa_member";
 // Gunakan secret TERPISAH dari ADMIN_PASSWORD
-const SECRET = process.env.MEMBER_SESSION_SECRET!;
-if (!SECRET) throw new Error("MEMBER_SESSION_SECRET wajib diisi di .env sebelum production!");
 
 function sign(value: string): string {
-  return createHmac("sha256", SECRET).update(value).digest("hex");
+  const secret = process.env.MEMBER_SESSION_SECRET;
+  if (!secret) throw new Error("MEMBER_SESSION_SECRET wajib diisi di .env!");
+  return createHmac("sha256", secret).update(value).digest("hex");
 }
 
 export async function getMemberSession(): Promise<string | null> {

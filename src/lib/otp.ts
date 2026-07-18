@@ -25,12 +25,12 @@ export async function sendOtp(identifier: string): Promise<{ ok: boolean; error?
   }
 
   // Hapus OTP lama yang belum dipakai
-  await prisma.otpCode.deleteMany({
+  await (prisma as any).otpCode.deleteMany({
     where: { identifier, used: false, expiresAt: { lt: new Date() } },
   });
 
   // Cek apakah sudah ada OTP aktif (mencegah spam)
-  const activeOtp = await prisma.otpCode.findFirst({
+  const activeOtp = await (prisma as any).otpCode.findFirst({
     where: { identifier, used: false, expiresAt: { gte: new Date() } },
   });
   if (activeOtp) {
@@ -41,7 +41,7 @@ export async function sendOtp(identifier: string): Promise<{ ok: boolean; error?
   const code = generateOtp();
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
 
-  await prisma.otpCode.create({
+  await (prisma as any).otpCode.create({
     data: { identifier, code, expiresAt },
   });
 
@@ -63,7 +63,7 @@ export async function verifyOtp(
   identifier: string,
   code: string
 ): Promise<{ ok: boolean; error?: string }> {
-  const otp = await prisma.otpCode.findFirst({
+  const otp = await (prisma as any).otpCode.findFirst({
     where: {
       identifier,
       code,
@@ -77,7 +77,7 @@ export async function verifyOtp(
   }
 
   // Tandai sudah dipakai
-  await prisma.otpCode.update({
+  await (prisma as any).otpCode.update({
     where: { id: otp.id },
     data: { used: true },
   });
