@@ -167,3 +167,86 @@ export function getOtpEmailHtml(code: string): string {
     </div>
   `;
 }
+
+export function getInvoiceEmailHtml(params: {
+  name: string;
+  programTitle: string;
+  price: number;
+  invoiceUrl: string;
+}): string {
+  const priceFormatted = new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(params.price);
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
+      <h2 style="color: #232176; margin-top: 0;">Selesaikan Pembayaran Anda ⏰</h2>
+      <p>Halo ${escapeHtml(params.name)}, Anda terdaftar pada program <strong>${escapeHtml(params.programTitle)}</strong>.</p>
+      <p>Untuk mengaktifkan akses kelas, silakan selesaikan pembayaran sebesar <strong>${priceFormatted}</strong>:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${params.invoiceUrl}" style="background: #f7941d; color: #ffffff; padding: 12px 28px; border-radius: 99px; text-decoration: none; font-weight: bold; display: inline-block;">Bayar Sekarang</a>
+      </div>
+      <p style="font-size: 0.9em; color: #56545c;">Invoice berlaku 24 jam. Setelah lunas, Anda otomatis menerima email konfirmasi berisi link akses kelas.</p>
+      <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
+      <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; ${new Date().getFullYear()}. Semua hak dilindungi.</p>
+    </div>
+  `;
+}
+
+export function getInvoiceExpiredEmailHtml(params: {
+  name: string;
+  programTitle: string;
+  registerUrl: string;
+}): string {
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
+      <h2 style="color: #b45309; margin-top: 0;">Invoice Anda Telah Kedaluwarsa ⚠️</h2>
+      <p>Halo ${escapeHtml(params.name)}, invoice untuk program <strong>${escapeHtml(params.programTitle)}</strong> sudah melewati batas waktu dan tidak dapat digunakan lagi.</p>
+      <p>Jika Anda masih ingin bergabung, silakan daftar kembali melalui tombol di bawah — prosesnya hanya membutuhkan beberapa menit.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${params.registerUrl}" style="background: #232176; color: #ffffff; padding: 12px 28px; border-radius: 99px; text-decoration: none; font-weight: bold; display: inline-block;">Daftar Ulang</a>
+      </div>
+      <p style="font-size: 0.9em; color: #56545c;">Butuh bantuan? Hubungi kami langsung melalui WhatsApp Admin.</p>
+      <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
+      <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; ${new Date().getFullYear()}. Semua hak dilindungi.</p>
+    </div>
+  `;
+}
+
+export function getInvoiceFailedEmailHtml(params: {
+  name: string;
+  programTitle: string;
+  registerUrl: string;
+}): string {
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
+      <h2 style="color: #dc2626; margin-top: 0;">Pembayaran Gagal Diproses ❌</h2>
+      <p>Halo ${escapeHtml(params.name)}, pembayaran untuk program <strong>${escapeHtml(params.programTitle)}</strong> gagal diproses oleh sistem pembayaran.</p>
+      <p>Kemungkinan penyebab: saldo tidak cukup, transaksi ditolak bank, atau koneksi terputus saat pembayaran berlangsung.</p>
+      <p>Silakan coba daftar kembali dan gunakan metode pembayaran lain:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${params.registerUrl}" style="background: #232176; color: #ffffff; padding: 12px 28px; border-radius: 99px; text-decoration: none; font-weight: bold; display: inline-block;">Coba Lagi</a>
+      </div>
+      <p style="font-size: 0.9em; color: #56545c;">Jika dana sudah terpotong dan program belum aktif, segera hubungi admin kami via WhatsApp untuk proses pengembalian dana.</p>
+      <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
+      <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; ${new Date().getFullYear()}. Semua hak dilindungi.</p>
+    </div>
+  `;
+}
+
+export function getWelcomeMemberEmailHtml(name: string, loginUrl: string): string {
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
+      <h2 style="color: #232176; margin-top: 0;">Selamat Datang di Jetschool Academy! 🎉</h2>
+      <p>Halo ${escapeHtml(name)},</p>
+      <p>Akun Anda telah berhasil dibuat. Anda kini bisa mengakses dashboard belajar, memantau progress, dan mengelola sertifikat dari satu tempat.</p>
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${loginUrl}" style="background: #232176; color: #ffffff; padding: 13px 32px; border-radius: 99px; text-decoration: none; font-weight: bold; display: inline-block;">Masuk ke Dashboard</a>
+      </div>
+      <p style="font-size: 0.9em; color: #56545c;">Jika ada pertanyaan, jangan ragu menghubungi tim kami. Selamat belajar!</p>
+      <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
+      <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; ${new Date().getFullYear()}. Semua hak dilindungi.</p>
+    </div>
+  `;
+}

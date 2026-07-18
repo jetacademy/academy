@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { isValidCallback } from "@/lib/xendit";
 import { sendWa, msgPaid, msgAccess } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
-import { sendEmail, getPaidEmailHtml } from "@/lib/email";
+import { sendEmail, getPaidEmailHtml, getInvoiceExpiredEmailHtml, getInvoiceFailedEmailHtml } from "@/lib/email";
 
 /**
  * POST /api/webhooks/xendit — dipanggil server Xendit saat status invoice berubah.
@@ -93,11 +93,33 @@ export async function POST(req: Request) {
         prisma.payment.update({ where: { id: payment.id }, data: { status: "EXPIRED" } }),
         prisma.registration.update({ where: { id: payment.registrationId }, data: { status: "EXPIRED" } }),
       ]);
+      // Notifikasi email invoice kedaluwarsa — best-effort
+      const reg = payment.registration;
+      await sendEmail({
+        to: reg.email,
+        subject: `Invoice Kedaluwarsa: ${reg.program.title}`,
+        html: getInvoiceExpiredEmailHtml({
+          name: reg.name,
+          programTitle: reg.program.title,
+          registerUrl: `${baseUrl}/program/${reg.program.slug}`,
+        }),
+      }).catch((err) => console.error("[webhook] Gagal kirim email EXPIRED:", err));
     } else if (event.status === "FAILED" && payment.status !== "PAID" && isCurrentInvoice) {
       await prisma.$transaction([
         prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } }),
         prisma.registration.update({ where: { id: payment.registrationId }, data: { status: "FAILED" } }),
       ]);
+      // Notifikasi email pembayaran gagal — best-effort
+      const regFailed = payment.registration;
+      await sendEmail({
+        to: regFailed.email,
+        subject: `Pembayaran Gagal: ${regFailed.program.title}`,
+        html: getInvoiceFailedEmailHtml({
+          name: regFailed.name,
+          programTitle: regFailed.program.title,
+          registerUrl: `${baseUrl}/program/${regFailed.program.slug}`,
+        }),
+      }).catch((err) => console.error("[webhook] Gagal kirim email FAILED:", err));
     } else {
       console.warn("[webhook] Status tidak dikenal / stale callback:", event.status);
       return NextResponse.json({ error: `Status tidak dikenal: ${event.status}` }, { status: 202 });

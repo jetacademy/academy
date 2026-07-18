@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendWa, msgWelcome, msgAccess, normalizeWa } from "@/lib/wa";
 import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 import { formatJadwal } from "@/lib/format";
-import { sendEmail, getWelcomeEmailHtml, getPaidEmailHtml } from "@/lib/email";
+import { sendEmail, getWelcomeEmailHtml, getPaidEmailHtml, getInvoiceEmailHtml } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
@@ -173,20 +173,8 @@ export async function POST(req: Request) {
 
     await sendEmail({
       to: email,
-      subject: `Selesaikan Pembayaran Pelatihan: ${program.title}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
-          <h2 style="color: #232176; margin-top: 0;">Satu Langkah Lagi! ⏰</h2>
-          <p>Halo ${name}, Anda terdaftar pada program <strong>${program.title}</strong>.</p>
-          <p>Untuk mengaktifkan akses kelas, silakan selesaikan pembayaran invoice sebesar <strong>${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(program.price)}</strong> di link berikut:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${invoice.invoice_url}" style="background: #f7941d; color: #ffffff; padding: 12px 24px; border-radius: 99px; text-decoration: none; font-weight: bold; display: inline-block;">Bayar Sekarang</a>
-          </div>
-          <p>Invoice ini berlaku selama 24 jam. Jika sudah lunas, Anda akan otomatis menerima email konfirmasi link akses kelas.</p>
-          <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
-          <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; 2026</p>
-        </div>
-      `
+      subject: `Selesaikan Pembayaran: ${program.title}`,
+      html: getInvoiceEmailHtml({ name, programTitle: program.title, price: program.price, invoiceUrl: invoice.invoice_url }),
     }).catch((err) => console.error("Gagal mengirim email invoice:", err));
 
     return NextResponse.json({ ok: true, invoiceUrl: invoice.invoice_url });

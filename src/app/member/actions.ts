@@ -7,6 +7,7 @@ import { createMemberSession, destroyMemberSession, getMemberSession } from "@/l
 import { issueCertificate, checkCertEligibility } from "@/lib/certificates";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sendOtp, verifyOtp } from "@/lib/otp";
+import { sendEmail, getWelcomeMemberEmailHtml } from "@/lib/email";
 
 async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; error?: string }> {
   // Cari registrasi mana saja yang cocok dengan WA atau email
@@ -373,6 +374,14 @@ export async function registerUser(formData: FormData) {
   if (!otpResult.ok) {
     return { error: otpResult.error ?? "Gagal mengirim OTP." };
   }
+
+  // Email selamat datang — best-effort
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  await sendEmail({
+    to: email,
+    subject: "Selamat Datang di Jetschool Academy!",
+    html: getWelcomeMemberEmailHtml(name, `${baseUrl}/member`),
+  }).catch((err) => console.error("[registerUser] Gagal kirim email welcome:", err));
 
   return { ok: true, userId: user.id };
 }
