@@ -21,14 +21,15 @@ export default async function AdminUserList({
   const { id, e, ok, deleted, role: roleFilter } = await searchParams;
 
   // Query conditions
-  const whereClause: { role?: string } = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const whereClause: any = {};
   if (roleFilter && ["ADMIN", "TEACHER", "STUDENT"].includes(roleFilter)) {
     whereClause.role = roleFilter;
   }
 
   // Fetch all users matching filters
   const users = await prisma.user.findMany({
-    where: whereClause as any,
+    where: whereClause,
     orderBy: { createdAt: "desc" },
   }) as UserItem[];
 
