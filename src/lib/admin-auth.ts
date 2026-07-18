@@ -83,9 +83,9 @@ export async function createAdminSession(emailInput: string, passwordInput: stri
   const email = emailInput.trim();
   const password = passwordInput;
 
-  // 1. Cek env-based admin (fallback)
+  // 1. Cek env-based admin (fallback) — email WAJIB diisi, tidak boleh dikosongkan
   const envPassword = process.env.ADMIN_PASSWORD;
-  if (envPassword && (email === "admin@jetschool.id" || email === "admin" || !email)) {
+  if (envPassword && (email === "admin@jetschool.id" || email === "admin")) {
     const bufInput = Buffer.from(password);
     const bufExpected = Buffer.from(envPassword);
     if (bufInput.length === bufExpected.length) {

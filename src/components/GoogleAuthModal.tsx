@@ -46,6 +46,11 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelect }: GoogleAut
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
+  // Reset error saat modal dibuka ulang
+  useEffect(() => {
+    if (isOpen) setGoogleError(null);
+  }, [isOpen]);
+
   // Load Google Client SDK
   useEffect(() => {
     if (!isOpen) return;

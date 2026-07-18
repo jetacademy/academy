@@ -69,11 +69,14 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
 export async function memberSendOtp(identifier: string) {
   const hdrs = await headers();
   const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-otp";
-  const limit = checkRateLimit(`member-otp:${ip}`, 3, 60_000);
-  if (!limit.ok) return { error: "Terlalu banyak permintaan OTP. Coba lagi nanti." };
-
   const cleanVal = identifier.trim();
   if (!cleanVal) return { error: "WhatsApp atau Email tidak boleh kosong." };
+
+  // Rate limit ganda: per IP (cegah bot) + per identifier (cegah bypass VPN)
+  const limitIp = checkRateLimit(`member-otp-ip:${ip}`, 5, 60_000);
+  if (!limitIp.ok) return { error: "Terlalu banyak permintaan OTP. Coba lagi nanti." };
+  const limitId = checkRateLimit(`member-otp-id:${cleanVal}`, 3, 60_000);
+  if (!limitId.ok) return { error: "Terlalu banyak permintaan OTP untuk akun ini. Coba lagi nanti." };
 
   return sendOtp(cleanVal);
 }

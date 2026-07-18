@@ -478,7 +478,8 @@ export async function markPaid(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
   const reg = await prisma.registration.findUnique({ where: { id }, include: { program: true, payment: true } });
-  if (!reg || reg.status !== "REGISTERED") return;
+  const MARKPAID_ALLOWED = ["REGISTERED", "EXPIRED", "FAILED"];
+  if (!reg || !MARKPAID_ALLOWED.includes(reg.status)) return;
 
   const amount = reg.program.price > 0 ? reg.program.price : reg.program.certPrice;
   await prisma.$transaction([
@@ -546,14 +547,39 @@ export async function saveRegistration(formData: FormData) {
   const data = { programId, name, whatsapp, email, status, institution };
 
   try {
+    let regId: string;
     if (id) {
       await prisma.registration.update({ where: { id }, data });
+      regId = id;
     } else {
-      await prisma.registration.create({ data });
+      const created = await prisma.registration.create({ data });
+      regId = created.id;
     }
+
+    // Pastikan ada User record agar peserta bisa login member
+    const existingUser = await prisma.user.findFirst({
+      where: { OR: [{ email }, { whatsapp }] },
+      select: { id: true },
+    });
+    const userId = existingUser?.id ?? (
+      await prisma.user.create({
+        data: { name, email, whatsapp, role: "STUDENT" },
+        select: { id: true },
+      })
+    ).id;
+
+    // Hubungkan semua registrasi dengan email/WA ini yang belum punya userId
+    await prisma.registration.updateMany({
+      where: { userId: null, OR: [{ email }, { whatsapp }] },
+      data: { userId },
+    });
+    // Pastikan registrasi ini terhubung juga
+    await prisma.registration.update({
+      where: { id: regId },
+      data: { userId },
+    });
   } catch (err) {
     if (isUniqueError(err)) {
-      // nomor WA sudah terdaftar di program yang sama
       redirect("/webadmin/pendaftar?e=duplikat");
     }
     throw err;

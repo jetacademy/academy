@@ -15,7 +15,7 @@ function generateOtp(): string {
  * Kirim OTP ke nomor WhatsApp member.
  * Simpan OTP ke DB, hapus OTP lama yang belum dipakai.
  */
-export async function sendOtp(identifier: string): Promise<{ ok: boolean; error?: string }> {
+export async function sendOtp(identifier: string): Promise<{ ok: boolean; channel?: "whatsapp" | "email" | "none"; error?: string }> {
   // Cari apakah identifier terdaftar — cek Registration dulu, lalu User
   const existsReg = await prisma.registration.findFirst({
     where: {
@@ -64,21 +64,26 @@ export async function sendOtp(identifier: string): Promise<{ ok: boolean; error?
     });
   }
 
+  let emailSent = false;
   // Fallback: kirim via email jika WA gagal atau tidak tersedia
   if (!waSent) {
     const emailAddr = existsReg?.email ?? existsUser?.email;
     if (emailAddr) {
-      await sendEmail({
+      emailSent = await sendEmail({
         to: emailAddr,
         subject: "Kode Verifikasi Jetschool Academy",
         html: getOtpEmailHtml(code),
-      }).catch((err) => {
+      }).then(() => true).catch((err) => {
         console.error("[otp] Gagal kirim email fallback:", err);
+        return false;
       });
     }
   }
 
-  return { ok: true };
+  return {
+    ok: true,
+    channel: waSent ? "whatsapp" : emailSent ? "email" : "none",
+  };
 }
 
 /**

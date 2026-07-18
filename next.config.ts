@@ -13,7 +13,15 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
-      { protocol: "https", hostname: "**" },
+      // Batasi ke domain yang dikenal — jangan izinkan semua hostname
+      { protocol: "https", hostname: "*.jetschool.id" },
+      { protocol: "https", hostname: "jetschool.id" },
+      { protocol: "https", hostname: "storage.googleapis.com" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+      // YouTube thumbnails (untuk preview video LMS)
+      { protocol: "https", hostname: "img.youtube.com" },
+      { protocol: "https", hostname: "i.ytimg.com" },
     ],
   },
   async headers() {
@@ -46,6 +54,10 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // HSTS — paksa HTTPS selama 2 tahun, termasuk subdomain
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          // Batasi fitur browser yang tidak diperlukan
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
         ],
       },
     ];

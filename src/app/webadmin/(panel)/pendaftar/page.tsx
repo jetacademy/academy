@@ -25,7 +25,7 @@ export default async function AdminPendaftar({ searchParams }: {
   };
 
   const [programs, regs, totalCount] = await Promise.all([
-    prisma.program.findMany({ orderBy: { title: "asc" }, select: { id: true, title: true } }),
+    prisma.program.findMany({ orderBy: { title: "asc" }, take: 200, select: { id: true, title: true } }),
     prisma.registration.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -89,7 +89,7 @@ export default async function AdminPendaftar({ searchParams }: {
                   <td>
                     <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
                       <Link href={`/webadmin/pendaftar/${r.id}`} className="btn btn-sm">Edit</Link>
-                      {r.status === "REGISTERED" && (
+                      {["REGISTERED", "EXPIRED", "FAILED"].includes(r.status) && (
                         <form action={markPaid}>
                           <input type="hidden" name="id" value={r.id} />
                           <button type="submit" className="btn btn-sm btn-yellow" title="Tandai lunas manual (transfer langsung) + kirim WA akses">

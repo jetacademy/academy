@@ -18,6 +18,7 @@ export default function MemberLoginPage() {
   const [identifier, setIdentifier] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [otpChannel, setOtpChannel] = useState<"whatsapp" | "email" | "none" | null>(null);
   const router = useRouter();
 
   async function handleGoogleSelect(email: string, _name: string, credential?: string) {
@@ -73,6 +74,7 @@ export default function MemberLoginPage() {
       setStep("pilih-metode");
     } else {
       setOtpSent(true);
+      setOtpChannel(("channel" in res ? res.channel : null) ?? null);
       setStep("otp");
     }
   }
@@ -180,7 +182,8 @@ export default function MemberLoginPage() {
             {step === "otp" && (
               <div>
                 <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", marginBottom: "1.2rem", textAlign: "center" }}>
-                  Kode verifikasi telah dikirim ke <strong>{identifier}</strong> via WhatsApp atau Email
+                  Kode verifikasi telah dikirim ke <strong>{identifier}</strong>{" "}
+                  {otpChannel === "whatsapp" ? "via WhatsApp" : otpChannel === "email" ? "via Email" : "via WhatsApp atau Email"}
                 </p>
                 <div className="field">
                   <label htmlFor="fOtp">Kode OTP (6 digit)</label>

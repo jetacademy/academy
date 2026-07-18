@@ -55,7 +55,7 @@ export default async function AdminLoginPage({ searchParams }: {
           </Link>
 
           <p className="reg-note" style={{ textAlign: "center", marginTop: "1.5rem" }}>
-            Password diatur lewat <b>ADMIN_PASSWORD</b> di file .env
+            Hubungi administrator jika lupa kata sandi.
           </p>
         </form>
       </div>
