@@ -6,6 +6,8 @@ import WaFloat from "@/components/WaFloat";
 import Faq from "@/components/Faq";
 import RegisterForm from "@/components/RegisterForm";
 import ValueStack from "@/components/ValueStack";
+import OfferTimer from "@/components/OfferTimer";
+import Testimonials from "@/components/Testimonials";
 import Icon from "@/components/Icon";
 import { getProgramBySlug } from "@/lib/programs";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
@@ -149,6 +151,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                   </div>
                 )}
               </div>
+              <OfferTimer target={program.scheduleAt.toISOString()} note="Sesi dimulai dalam" />
             </div>
           </div>
         </div>
@@ -325,6 +328,9 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           </div>
         </section>
       )}
+
+      {/* ===== TESTIMONI ===== */}
+      <Testimonials limit={3} />
 
       {/* ===== FORM DAFTAR ===== */}
       <section className="section" id="daftar">
