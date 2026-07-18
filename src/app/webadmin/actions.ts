@@ -50,18 +50,22 @@ function isUniqueError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
 }
 
-/** Sanitasi HTML dari rich text editor: buang script/style/iframe, event handler, dan URL javascript:. */
+/** Sanitasi HTML dari rich text editor — pakai DOMPurify (plugin isomorphic). */
 function sanitizeHtml(html: string | null): string | null {
   if (!html) return null;
-  const cleaned = html
-    .replace(/<\s*(script|style|iframe|object|embed|form)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
-    .replace(/<\s*(script|style|iframe|object|embed|form)[^>]*\/?\s*>/gi, "")
-    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
-    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
-    .replace(/\son\w+\s*=\s*[^\s>]+/gi, "")
-    .replace(/(href|src)\s*=\s*(["']?)\s*javascript:[^"'\s>]*\2/gi, "");
+  const { JSDOM } = require("jsdom");
+  const { window } = new JSDOM("");
+  const purify = require("isomorphic-dompurify")(window as any);
+  const cleaned = purify.sanitize(html, {
+    ALLOWED_TAGS: [
+      "p", "br", "b", "i", "u", "strong", "em", "a", "ul", "ol", "li",
+      "h1", "h2", "h3", "h4", "h5", "h6", "img", "hr", "blockquote",
+      "pre", "code", "span", "div", "table", "thead", "tbody", "tr", "th", "td",
+    ],
+    ALLOWED_ATTR: ["href", "src", "alt", "target", "rel", "style", "class"],
+    ALLOW_DATA_ATTR: false,
+  });
   const trimmed = cleaned.trim();
-  // hasil kosong (mis. hanya <br> / <p></p>) dianggap tidak ada konten
   const textOnly = trimmed.replace(/<[^>]*>/g, "").trim();
   return textOnly.length > 0 || /<img\b/i.test(trimmed) ? trimmed : null;
 }

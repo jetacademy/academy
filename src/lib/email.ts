@@ -69,15 +69,29 @@ ${html.replace(/<[^>]*>/g, " ").trim()}
   }
 }
 
+// ─── Helpers ────────────────────────────────────────────────────
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // ─── Templates ───────────────────────────────────────────────────
 
 export function getWelcomeEmailHtml(name: string, programTitle: string, schedule: string, joinUrl: string) {
+  const safeName = escapeHtml(name);
+  const safeTitle = escapeHtml(programTitle);
+  const safeSchedule = escapeHtml(schedule);
   return `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
-      <h2 style="color: #232176; margin-top: 0;">Halo ${name}, selamat bergabung! 👋</h2>
-      <p>Pendaftaran Anda untuk program <strong>${programTitle}</strong> telah berhasil.</p>
+      <h2 style="color: #232176; margin-top: 0;">Halo ${safeName}, selamat bergabung! 👋</h2>
+      <p>Pendaftaran Anda untuk program <strong>${safeTitle}</strong> telah berhasil.</p>
       <div style="background: #f7f6f8; padding: 15px; border-radius: 6px; margin: 20px 0;">
-        <p style="margin: 0 0 8px 0;">📅 <strong>Jadwal Pelaksanaan:</strong> ${schedule}</p>
+        <p style="margin: 0 0 8px 0;">📅 <strong>Jadwal Pelaksanaan:</strong> ${safeSchedule}</p>
         <p style="margin: 0;">🔗 <strong>Tautan Penting:</strong> Gabung grup koordinasi WhatsApp untuk mendapatkan update terkini.</p>
       </div>
       <div style="text-align: center; margin: 30px 0;">
