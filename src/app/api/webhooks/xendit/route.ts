@@ -26,22 +26,28 @@ export async function POST(req: Request) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
   try {
-    // external_id kita isi dengan registrationId saat membuat invoice
-    let registrationId = event.external_id ?? "___";
-    if (registrationId.startsWith("ACADEMY-")) {
-      registrationId = registrationId.substring(8);
+    if (!event.external_id) {
+      return NextResponse.json({ error: "external_id tidak ditemukan." }, { status: 400 });
     }
+    // external_id kita isi dengan registrationId saat membuat invoice
+    const INVOICE_PREFIX = "ACADEMY-";
+    const registrationId = event.external_id.startsWith(INVOICE_PREFIX)
+      ? event.external_id.slice(INVOICE_PREFIX.length)
+      : event.external_id;
 
     const payment = await prisma.payment.findFirst({
       where: {
         OR: [
-          { xenditInvoiceId: event.id ?? "___" },
-          { registrationId: registrationId },
+          { xenditInvoiceId: event.id ?? "" },
+          { registrationId },
         ],
       },
       include: { registration: { include: { program: true } } },
     });
     if (!payment) return NextResponse.json({ error: "Pembayaran tidak ditemukan." }, { status: 404 });
+
+    // Pastikan webhook ini untuk invoice yang masih aktif — tolak stale callback
+    const isCurrentInvoice = !event.id || payment.xenditInvoiceId === event.id;
 
     if (event.status === "PAID") {
       // idempoten: webhook bisa dikirim lebih dari sekali
@@ -82,12 +88,12 @@ export async function POST(req: Request) {
           html: getPaidEmailHtml(reg.name, reg.program.title, memberUrl, reg.program.zoomLink, reg.program.waGroupLink, reg.program.lmsLink),
         }).catch((err) => console.error("Gagal mengirim email webhook lunas:", err));
       }
-    } else if (event.status === "EXPIRED" && payment.status !== "PAID") {
+    } else if (event.status === "EXPIRED" && payment.status !== "PAID" && isCurrentInvoice) {
       await prisma.payment.update({ where: { id: payment.id }, data: { status: "EXPIRED" } });
-    } else if (event.status === "FAILED" && payment.status !== "PAID") {
+    } else if (event.status === "FAILED" && payment.status !== "PAID" && isCurrentInvoice) {
       await prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } });
     } else {
-      console.warn("[webhook] Status tidak dikenal:", event.status);
+      console.warn("[webhook] Status tidak dikenal / stale callback:", event.status);
       return NextResponse.json({ error: `Status tidak dikenal: ${event.status}` }, { status: 202 });
     }
 

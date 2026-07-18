@@ -56,8 +56,8 @@ export default async function LmsPage({
   // Validasi kepemilikan sesi
   if (reg.email !== sessionVal && reg.whatsapp !== sessionVal) redirect("/member");
 
-  // Proteksi pembayaran jika berbayar
-  if (reg.status === "REGISTERED" && reg.program.price > 0) redirect("/member");
+  // Proteksi pembayaran jika berbayar — user non-bayar hanya bisa lihat preview
+  const isPreviewMode = reg.status === "REGISTERED" && reg.program.price > 0;
 
   const program = reg.program;
 
@@ -93,7 +93,11 @@ export default async function LmsPage({
     ...(ungrouped.length > 0 ? [{ title: groups.length > 0 ? "Lainnya" : null, modules: ungrouped }] : []),
   ];
   const orderedModules = sections.flatMap((s) => s.modules);
-  const allLessons = orderedModules.flatMap((m) => m.lessons);
+  let allLessons = orderedModules.flatMap((m) => m.lessons);
+  // Mode preview: user non-bayar hanya lihat lesson dengan isPreview=true
+  if (isPreviewMode) {
+    allLessons = allLessons.filter((l) => l.isPreview);
+  }
   const totalLessons = allLessons.length;
 
   if (totalLessons === 0) {

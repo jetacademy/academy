@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/crypto";
 
 const COOKIE = "jsa_admin";
-const SECRET = process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_PASSWORD || "default-admin-session-secret-change-me";
+const SECRET = process.env.ADMIN_SESSION_SECRET;
+if (!SECRET) throw new Error("ADMIN_SESSION_SECRET wajib diisi di .env sebelum production!");
 
 function sign(value: string): string {
   return createHmac("sha256", SECRET).update(value).digest("hex");

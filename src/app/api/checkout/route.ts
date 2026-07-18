@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createInvoice, isXenditConfigured } from "@/lib/xendit";
+import { normalizeWa } from "@/lib/wa";
 
 /**
  * POST /api/checkout — buat invoice Xendit untuk paket sertifikat.
@@ -14,7 +15,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Format data tidak valid." }, { status: 400 });
   }
 
-  const whatsapp = (body.whatsapp ?? "").trim();
+  const whatsappRaw = (body.whatsapp ?? "").trim();
+  if (!/^08[0-9]{8,13}$/.test(whatsappRaw)) {
+    return NextResponse.json({ error: "Nomor WhatsApp tidak valid (contoh: 081234567890)." }, { status: 400 });
+  }
+  const whatsapp = normalizeWa(whatsappRaw);
   const programSlug = (body.programSlug ?? "").trim();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
@@ -73,7 +78,7 @@ export async function POST(req: Request) {
         prisma.payment.upsert({
           where: { registrationId: reg.id },
           create: { registrationId: reg.id, amount: program.certPrice, status: "PAID", paidAt: new Date() },
-          update: { status: "PAID", paidAt: new Date() },
+          update: { amount: program.certPrice, status: "PAID", paidAt: new Date() },
         }),
         prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
       ]);
@@ -96,7 +101,7 @@ export async function POST(req: Request) {
         xenditInvoiceId: invoice.id,
         invoiceUrl: invoice.invoice_url,
       },
-      update: { xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING" },
+      update: { amount: program.certPrice, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING" },
     });
 
     return NextResponse.json({ ok: true, invoiceUrl: invoice.invoice_url });

@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { createHmac } from "crypto";
 
 const COOKIE = "jsa_member";
-// Gunakan secret TERPISAH dari ADMIN_PASSWORD — jangan pakai ulang secret admin!
-const SECRET = process.env.MEMBER_SESSION_SECRET || process.env.ADMIN_PASSWORD || "default-member-session-secret-change-me";
+// Gunakan secret TERPISAH dari ADMIN_PASSWORD
+const SECRET = process.env.MEMBER_SESSION_SECRET;
+if (!SECRET) throw new Error("MEMBER_SESSION_SECRET wajib diisi di .env sebelum production!");
 
 function sign(value: string): string {
   return createHmac("sha256", SECRET).update(value).digest("hex");

@@ -85,6 +85,11 @@ export async function completeLesson(registrationId: string, lessonId: string) {
   const reg = await getOwnedRegistration(registrationId);
   if (!reg) return { error: "Sesi tidak valid." };
 
+  // Cek akses pembayaran untuk program berbayar
+  if (reg.status === "REGISTERED" && reg.program.price > 0) {
+    return { error: "Selesaikan pembayaran terlebih dahulu." };
+  }
+
   // Pastikan lesson memang bagian dari program yang diikuti
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
@@ -123,6 +128,11 @@ export async function submitLessonQuiz(
   const reg = await getOwnedRegistration(registrationId);
   if (!reg) return { error: "Sesi tidak valid. Silakan login ulang." };
 
+  // Cek akses pembayaran untuk program berbayar
+  if (reg.status === "REGISTERED" && reg.program.price > 0) {
+    return { error: "Selesaikan pembayaran terlebih dahulu." };
+  }
+
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
     include: { module: true, questions: { orderBy: { order: "asc" } } },
@@ -152,17 +162,19 @@ export async function submitLessonQuiz(
   const passingScore = lesson.passingScore ?? reg.program.passingScore;
   const passed = score >= passingScore;
 
-  await prisma.testAttempt.create({
-    data: { registrationId, lessonId, score, passed },
-  });
-
-  if (passed) {
-    await prisma.completion.upsert({
-      where: { registrationId_lessonId: { registrationId, lessonId } },
-      create: { registrationId, lessonId },
-      update: {},
+  // Simpan dalam transaksi — atomic: attempt + completion
+  await prisma.$transaction(async (tx) => {
+    await tx.testAttempt.create({
+      data: { registrationId, lessonId, score, passed },
     });
-  }
+    if (passed) {
+      await tx.completion.upsert({
+        where: { registrationId_lessonId: { registrationId, lessonId } },
+        create: { registrationId, lessonId },
+        update: {},
+      });
+    }
+  });
 
   revalidatePath(`/member/lms/${registrationId}`);
   return { ok: true, passed, score, passingScore };

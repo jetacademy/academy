@@ -59,13 +59,28 @@ function sanitizeHtml(html: string | null): string | null {
   const { JSDOM } = require("jsdom");
   const { window } = new JSDOM("");
   const purify = require("isomorphic-dompurify")(window as any);
+  // Hook: bersihkan javascript: dan data: dari href
+  purify.addHook("afterSanitizeAttributes", function (node: Element) {
+    if (node.tagName === "A" && node.getAttribute("href")) {
+      const href = node.getAttribute("href")!;
+      if (/^\s*(javascript|data|vbscript):/i.test(href)) {
+        node.setAttribute("href", "#");
+      }
+    }
+    if (node.tagName === "IMG" && node.getAttribute("src")) {
+      const src = node.getAttribute("src")!;
+      if (/^\s*(javascript|data):/i.test(src)) {
+        node.removeAttribute("src");
+      }
+    }
+  });
   const cleaned = purify.sanitize(html, {
     ALLOWED_TAGS: [
       "p", "br", "b", "i", "u", "strong", "em", "a", "ul", "ol", "li",
       "h1", "h2", "h3", "h4", "h5", "h6", "img", "hr", "blockquote",
       "pre", "code", "span", "div", "table", "thead", "tbody", "tr", "th", "td",
     ],
-    ALLOWED_ATTR: ["href", "src", "alt", "target", "rel", "style", "class"],
+    ALLOWED_ATTR: ["href", "src", "alt", "target", "rel", "class"],
     ALLOW_DATA_ATTR: false,
   });
   const trimmed = cleaned.trim();
@@ -528,7 +543,8 @@ export async function saveRegistration(formData: FormData) {
 
 // ─── Upload & Sertifikat ─────────────────────────────────────────
 
-const ALLOWED_UPLOAD_EXT = ["pdf", "png", "jpg", "jpeg", "webp", "svg"];
+const ALLOWED_UPLOAD_EXT = ["pdf", "png", "jpg", "jpeg", "webp"];
+const ALLOWED_UPLOAD_MIME = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20 MB
 
 /**
@@ -548,6 +564,10 @@ export async function uploadFileAction(formData: FormData): Promise<{ url?: stri
     const ext = (file.name.split(".").pop() ?? "").toLowerCase();
     if (!ALLOWED_UPLOAD_EXT.includes(ext)) {
       return { error: `Tipe file .${ext} tidak diizinkan. Gunakan: ${ALLOWED_UPLOAD_EXT.join(", ")}.` };
+    }
+    // Validasi MIME type dari server (bukan dari client) — cegah rename berbahaya
+    if (!ALLOWED_UPLOAD_MIME.includes(file.type)) {
+      return { error: `Format file tidak dikenali. Gunakan PDF atau gambar (PNG/JPG/WebP).` };
     }
 
     const bytes = await file.arrayBuffer();
