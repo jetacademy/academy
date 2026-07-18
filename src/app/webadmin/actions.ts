@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, createAdminSession, destroyAdminSession } from "@/lib/admin-auth";
 import { hashPassword } from "@/lib/crypto";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { sendWa, msgAccess, msgPaid } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml } from "@/lib/email";
@@ -13,6 +14,12 @@ import { sendEmail, getPaidEmailHtml } from "@/lib/email";
 // ─── Auth ────────────────────────────────────────────────────────
 
 export async function adminLogin(formData: FormData) {
+  const { headers } = await import("next/headers");
+  const hdrs = await headers();
+  const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "admin-login";
+  const limit = checkRateLimit(`admin-login:${ip}`, 5, 60_000);
+  if (!limit.ok) redirect("/webadmin/login?e=ratelimit");
+
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
   const ok = await createAdminSession(email, password);
@@ -94,19 +101,23 @@ export async function saveProgram(formData: FormData) {
   await requireAdmin();
 
   const id = optStr(formData, "id");
+  const rawTagline = String(formData.get("tagline") ?? "").trim();
+  const rawDescription = String(formData.get("description") ?? "").trim();
+  const rawMentorBio = String(formData.get("mentorBio") ?? "").trim();
+  const rawGuarantee = String(formData.get("guarantee") ?? "").trim();
   const data = {
     slug: String(formData.get("slug") ?? "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-"),
     type: String(formData.get("type") ?? "WEBINAR") as "WEBINAR" | "KELAS" | "WORKSHOP" | "BOOTCAMP",
     title: String(formData.get("title") ?? "").trim(),
-    tagline: String(formData.get("tagline") ?? "").trim(),
-    description: String(formData.get("description") ?? "").trim(),
+    tagline: sanitizeHtml(rawTagline) ?? rawTagline,
+    description: sanitizeHtml(rawDescription) ?? rawDescription,
     emoji: String(formData.get("emoji") ?? "🎓").trim() || "🎓",
     imageUrl: optStr(formData, "imageUrl"),
     mentorName: String(formData.get("mentorName") ?? "").trim(),
-    mentorBio: String(formData.get("mentorBio") ?? "").trim(),
+    mentorBio: sanitizeHtml(rawMentorBio) ?? rawMentorBio,
     materi: parseLines(String(formData.get("materi") ?? "")),
     deliverables: parseDeliverables(String(formData.get("deliverables") ?? "")),
-    guarantee: optStr(formData, "guarantee"),
+    guarantee: rawGuarantee ? (sanitizeHtml(rawGuarantee) ?? rawGuarantee) : null,
     scheduleAt: new Date(String(formData.get("scheduleAt"))),
     durationLabel: String(formData.get("durationLabel") ?? "2 jam").trim(),
     zoomLink: optStr(formData, "zoomLink"),

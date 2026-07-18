@@ -156,6 +156,7 @@ h3 { font-size: 1.15rem; line-height: 1.25; letter-spacing: -.015em; }
 .nav-links a { padding: .3em 0; transition: color .15s; }
 .nav-links a:hover { color: var(--ink); }
 .nav .btn { padding: .8em 1.6em; font-size: .88rem; }
+.btn-text-mobile { display: none; }
 .nav-burger { display: none; font-size: 1.5rem; line-height: 1; color: var(--ink); }
 @media (max-width: 860px) {
   .nav-links {
@@ -201,13 +202,15 @@ h3 { font-size: 1.15rem; line-height: 1.25; letter-spacing: -.015em; }
     padding: 0.55em 0.95em !important;
     font-size: 0.78rem !important;
   }
+  .btn-text-desktop { display: none; }
+  .btn-text-mobile { display: inline; }
   .nav-burger {
     font-size: 1.3rem;
     padding-left: 0.2rem;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .nav-brand-suffix {
     display: none;
   }

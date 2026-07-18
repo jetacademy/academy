@@ -1,9 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createMemberSession, destroyMemberSession, getMemberSession } from "@/lib/member-auth";
 import { issueCertificate, checkCertEligibility } from "@/lib/certificates";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { sendOtp, verifyOtp } from "@/lib/otp";
 
 async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; error?: string }> {
   // Cari apakah ada pendaftaran dengan WhatsApp atau Email tersebut
@@ -24,10 +27,49 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
 }
 
 /**
+ * Kirim kode OTP ke WhatsApp/Email member untuk login.
+ */
+export async function memberSendOtp(identifier: string) {
+  const hdrs = await headers();
+  const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-otp";
+  const limit = checkRateLimit(`member-otp:${ip}`, 3, 60_000);
+  if (!limit.ok) return { error: "Terlalu banyak permintaan OTP. Coba lagi nanti." };
+
+  const cleanVal = identifier.trim();
+  if (!cleanVal) return { error: "WhatsApp atau Email tidak boleh kosong." };
+
+  return sendOtp(cleanVal);
+}
+
+/**
+ * Verifikasi OTP dan login.
+ */
+export async function memberVerifyOtp(identifier: string, code: string) {
+  const hdrs = await headers();
+  const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-verify";
+  const limit = checkRateLimit(`member-verify:${ip}`, 5, 60_000);
+  if (!limit.ok) return { error: "Terlalu banyak percobaan. Coba lagi nanti." };
+
+  const cleanVal = identifier.trim();
+  const cleanCode = code.trim();
+  if (!cleanVal || !cleanCode) return { error: "Data tidak lengkap." };
+
+  const verified = await verifyOtp(cleanVal, cleanCode);
+  if (!verified.ok) return verified;
+
+  return loginByIdentifier(cleanVal);
+}
+
+/**
  * Login fallback tanpa Google (mode dev / Google belum dikonfigurasi).
  * Di produksi dengan Google aktif, jalur ini ditolak — wajib lewat token terverifikasi.
  */
 export async function memberLogin(identifier: string) {
+  const hdrs = await headers();
+  const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-login";
+  const limit = checkRateLimit(`member-login:${ip}`, 10, 60_000);
+  if (!limit.ok) return { error: "Terlalu banyak percobaan login. Coba lagi nanti." };
+
   const cleanVal = identifier.trim();
   if (!cleanVal) {
     return { error: "WhatsApp atau Email tidak boleh kosong." };

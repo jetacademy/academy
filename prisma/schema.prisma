@@ -260,6 +260,19 @@ model Completion {
   @@index([lessonId])
 }
 
+// OTP untuk login member — dikirim via WhatsApp, berlaku 5 menit
+model OtpCode {
+  id        String   @id @default(cuid())
+  identifier String  // whatsapp atau email — yang dipakai untuk login
+  code      String   // 6 digit angka
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([identifier])
+  @@index([identifier, code])
+}
+
 // Kategori program
 model Category {
   id         String    @id @default(cuid())

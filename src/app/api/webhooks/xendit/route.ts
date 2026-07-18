@@ -89,9 +89,15 @@ export async function POST(req: Request) {
         }).catch((err) => console.error("Gagal mengirim email webhook lunas:", err));
       }
     } else if (event.status === "EXPIRED" && payment.status !== "PAID" && isCurrentInvoice) {
-      await prisma.payment.update({ where: { id: payment.id }, data: { status: "EXPIRED" } });
+      await prisma.$transaction([
+        prisma.payment.update({ where: { id: payment.id }, data: { status: "EXPIRED" } }),
+        (prisma as any).registration.update({ where: { id: payment.registrationId }, data: { status: "EXPIRED" } }),
+      ]);
     } else if (event.status === "FAILED" && payment.status !== "PAID" && isCurrentInvoice) {
-      await prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } });
+      await prisma.$transaction([
+        prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } }),
+        (prisma as any).registration.update({ where: { id: payment.registrationId }, data: { status: "FAILED" } }),
+      ]);
     } else {
       console.warn("[webhook] Status tidak dikenal / stale callback:", event.status);
       return NextResponse.json({ error: `Status tidak dikenal: ${event.status}` }, { status: 202 });

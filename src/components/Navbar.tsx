@@ -72,7 +72,10 @@ export default function Navbar({ minimal = false, ctaHref = "/#program", ctaLabe
             </Link>
           )}
 
-          <Link href={ctaHref} className="btn btn-purple">{ctaLabel}</Link>
+          <Link href={ctaHref} className="btn btn-purple">
+            <span className="btn-text-desktop">{ctaLabel}</span>
+            <span className="btn-text-mobile">Program</span>
+          </Link>
           {!minimal && (
             <button className="nav-burger" aria-label="Buka menu" onClick={() => setOpen(!open)}>☰</button>
           )}
