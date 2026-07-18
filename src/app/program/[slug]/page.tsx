@@ -40,7 +40,20 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const sessionVal = await getMemberSession();
   let memberProfile = null;
   if (sessionVal) {
-    memberProfile = await prisma.registration.findFirst({
+    // 1. Cari data dari tabel User dulu (karena user yang baru daftar belum tentu punya registration)
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
+      },
+      select: {
+        name: true,
+        email: true,
+        whatsapp: true,
+      },
+    });
+
+    // 2. Cari data tambahan (institution) dari registrasi terakhir jika ada
+    const lastReg = await prisma.registration.findFirst({
       where: {
         OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
       },
@@ -52,6 +65,22 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       },
       orderBy: { createdAt: "desc" },
     });
+
+    if (user) {
+      memberProfile = {
+        name: user.name || lastReg?.name || "",
+        email: user.email || lastReg?.email || "",
+        whatsapp: user.whatsapp || lastReg?.whatsapp || "",
+        institution: lastReg?.institution || "",
+      };
+    } else if (lastReg) {
+      memberProfile = {
+        name: lastReg.name,
+        email: lastReg.email,
+        whatsapp: lastReg.whatsapp,
+        institution: lastReg.institution,
+      };
+    }
   }
 
   const isFree = program.price === 0;

@@ -5,6 +5,7 @@ import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 import { formatJadwal } from "@/lib/format";
 import { sendEmail, getWelcomeEmailHtml, getPaidEmailHtml, getInvoiceEmailHtml } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { createMemberSession } from "@/lib/member-auth";
 
 /**
  * POST /api/register — satu pintu untuk semua tipe program.
@@ -98,6 +99,9 @@ export async function POST(req: Request) {
       update: { name, email, institution, userId: user.id },
       include: { payment: true },
     });
+
+    // Buat session member secara otomatis setelah pendaftaran berhasil
+    await createMemberSession(email);
 
     // ── PROGRAM GRATIS (WEBINAR) ─────────────────────────────────
     if (program.price === 0) {

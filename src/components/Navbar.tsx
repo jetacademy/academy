@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 /**
  * Navbar 2 mode:
@@ -15,6 +15,11 @@ export default function Navbar({ minimal = false, ctaHref = "/#program", ctaLabe
   ctaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(document.cookie.includes("jsa_member="));
+  }, []);
 
   return (
     <header className="nav">
@@ -40,7 +45,7 @@ export default function Navbar({ minimal = false, ctaHref = "/#program", ctaLabe
         )}
 
         <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: ".8rem" }}>
-          {!minimal && (
+          {(isLoggedIn || !minimal) && (
             <Link
               href="/member"
               title="Dashboard Peserta"
