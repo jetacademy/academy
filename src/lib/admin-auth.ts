@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 
 const COOKIE = "jsa_admin";
 
@@ -38,7 +38,7 @@ export async function createAdminSession(password: string): Promise<boolean> {
   const buf = Buffer.from(password);
   const expected = Buffer.from(adminPassword());
   try {
-    const result = crypto.timingSafeEqual(buf, expected);
+    const result = timingSafeEqual(buf, expected);
     if (!result) return false;
   } catch {
     return false;

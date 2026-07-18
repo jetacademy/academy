@@ -397,7 +397,7 @@ export async function deleteLmsLesson(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
   const programId = String(formData.get("programId"));
-  await prisma.lesson.delete({ where: { id } }).catch(() => {});
+  await prisma.lesson.delete({ where: { id } }).catch((err) => console.error("[deleteLmsLesson] Gagal:", err));
   revalidatePath(`/webadmin/program/${programId}/lms`);
   redirect(`/webadmin/program/${programId}/lms?deleted=1`);
 }
