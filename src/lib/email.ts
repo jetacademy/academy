@@ -105,10 +105,12 @@ export function getWelcomeEmailHtml(name: string, programTitle: string, schedule
 }
 
 export function getPaidEmailHtml(name: string, programTitle: string, memberUrl: string, zoomLink?: string | null, waGroupLink?: string | null, lmsLink?: string | null) {
+  const safeName = escapeHtml(name);
+  const safeTitle = escapeHtml(programTitle);
   return `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
       <h2 style="color: #232176; margin-top: 0;">Pembayaran Dikonfirmasi! 🎉</h2>
-      <p>Halo ${name}, pembayaran Anda untuk program <strong>${programTitle}</strong> telah lunas. Akses penuh ke program Anda kini telah aktif.</p>
+      <p>Halo ${safeName}, pembayaran Anda untuk program <strong>${safeTitle}</strong> telah lunas. Akses penuh ke program Anda kini telah aktif.</p>
       
       <div style="background: #f7f6f8; padding: 15px; border-radius: 6px; margin: 20px 0;">
         <h3 style="margin-top: 0; color: #232176; font-size: 1rem;">🔗 Detail Akses Pelatihan:</h3>
@@ -129,10 +131,12 @@ export function getPaidEmailHtml(name: string, programTitle: string, memberUrl: 
 }
 
 export function getCertEmailHtml(name: string, programTitle: string, certUrl: string) {
+  const safeName = escapeHtml(name);
+  const safeTitle = escapeHtml(programTitle);
   return `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
       <h2 style="color: #232176; margin-top: 0;">Selamat, Sertifikat Anda Telah Terbit! 🏆</h2>
-      <p>Halo ${name}, selamat atas kelulusan Anda dalam program <strong>${programTitle}</strong>. E-sertifikat resmi Anda telah berhasil diterbitkan dan diverifikasi oleh sistem.</p>
+      <p>Halo ${safeName}, selamat atas kelulusan Anda dalam program <strong>${safeTitle}</strong>. E-sertifikat resmi Anda telah berhasil diterbitkan dan diverifikasi oleh sistem.</p>
       
       <div style="text-align: center; margin: 40px 0;">
         <a href="${certUrl}" style="background: #232176; color: #ffffff; padding: 14px 28px; border-radius: 99px; text-decoration: none; font-weight: bold; display: inline-block;">Unduh e-Sertifikat Resmi</a>

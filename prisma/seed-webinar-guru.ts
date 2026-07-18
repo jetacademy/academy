@@ -157,7 +157,7 @@ async function main() {
 
   for (const s of soal) {
     await prisma.question.create({
-      data: { ...s, programId: program.id },
+      data: { ...s, correct: s.correct as any, programId: program.id },
     });
   }
 

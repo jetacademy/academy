@@ -31,13 +31,18 @@ export default async function AdminLoginPage({ searchParams }: {
           <h3 style={{ textAlign: "center" }}>Panel Admin</h3>
           <p className="sub" style={{ textAlign: "center" }}>Masuk untuk mengelola program, pendaftar & sertifikat.</p>
 
-          {e && <div className="form-error">Password salah. Coba lagi.</div>}
+          {e && <div className="form-error">Email atau Password salah. Coba lagi.</div>}
 
           <div className="field">
-            <label htmlFor="pw">Password Admin</label>
-            <input id="pw" name="password" type="password" placeholder="••••••••" required autoFocus />
+            <label htmlFor="email">Email</label>
+            <input id="email" name="email" type="text" placeholder="admin@jetschool.id atau biarkan kosong untuk root" autoFocus />
           </div>
-          <button type="submit" className="btn btn-ink btn-lg btn-block">Masuk dengan Password</button>
+
+          <div className="field">
+            <label htmlFor="pw">Password</label>
+            <input id="pw" name="password" type="password" placeholder="••••••••" required />
+          </div>
+          <button type="submit" className="btn btn-ink btn-lg btn-block">Masuk Ke Panel</button>
 
           <div style={{ margin: "1.2rem 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ height: "1px", background: "var(--line)", flexGrow: 1 }} />

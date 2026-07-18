@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, createAdminSession, destroyAdminSession } from "@/lib/admin-auth";
+import { hashPassword } from "@/lib/crypto";
 import { sendWa, msgAccess, msgPaid } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml } from "@/lib/email";
@@ -12,7 +13,9 @@ import { sendEmail, getPaidEmailHtml } from "@/lib/email";
 // ─── Auth ────────────────────────────────────────────────────────
 
 export async function adminLogin(formData: FormData) {
-  const ok = await createAdminSession(String(formData.get("password") ?? ""));
+  const email = String(formData.get("email") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const ok = await createAdminSession(email, password);
   if (!ok) redirect("/webadmin/login?e=1");
   redirect("/webadmin");
 }
@@ -191,7 +194,7 @@ export async function saveQuestion(formData: FormData) {
     optionB: String(formData.get("optionB") ?? "").trim(),
     optionC: String(formData.get("optionC") ?? "").trim(),
     optionD: String(formData.get("optionD") ?? "").trim(),
-    correct: ["A", "B", "C", "D"].includes(String(formData.get("correct"))) ? String(formData.get("correct")) : "A",
+    correct: (["A", "B", "C", "D"].includes(String(formData.get("correct"))) ? String(formData.get("correct")) : "A") as "A" | "B" | "C" | "D",
     order: num(formData, "order"),
   };
   if (!data.text) redirect(questionBackUrl(programId, lessonId));
@@ -622,4 +625,59 @@ export async function deleteCategory(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/webadmin/kategori");
   redirect("/webadmin/kategori?deleted=1");
+}
+
+// ─── User Management ─────────────────────────────────────────────
+
+export async function saveUser(formData: FormData) {
+  await requireAdmin();
+
+  const id = optStr(formData, "id");
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const whatsapp = optStr(formData, "whatsapp");
+  const role = String(formData.get("role") ?? "STUDENT") as "ADMIN" | "TEACHER" | "STUDENT";
+  const password = String(formData.get("password") ?? "");
+
+  if (!name || !email) {
+    redirect("/webadmin/user?e=lengkapi");
+  }
+
+  const data: any = {
+    name,
+    email,
+    whatsapp,
+    role,
+  };
+
+  if (password.length > 0) {
+    data.passwordHash = hashPassword(password);
+  }
+
+  try {
+    if (id) {
+      await (prisma as any).user.update({ where: { id }, data });
+    } else {
+      if (password.length === 0 && role !== "STUDENT") {
+        redirect("/webadmin/user?e=password-wajib");
+      }
+      await (prisma as any).user.create({ data });
+    }
+  } catch (err) {
+    if (isUniqueError(err)) {
+      redirect(id ? `/webadmin/user?id=${id}&e=duplikat` : "/webadmin/user?e=duplikat");
+    }
+    throw err;
+  }
+
+  revalidatePath("/webadmin/user");
+  redirect("/webadmin/user?ok=1");
+}
+
+export async function deleteUser(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  await (prisma as any).user.delete({ where: { id } }).catch(() => {});
+  revalidatePath("/webadmin/user");
+  redirect("/webadmin/user?deleted=1");
 }

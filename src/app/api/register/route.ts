@@ -62,11 +62,32 @@ export async function POST(req: Request) {
       }
     }
 
+    // 1. Cari atau buat User record untuk menyelaraskan login member
+    let user = await (prisma as any).user.findFirst({
+      where: {
+        OR: [
+          { email },
+          { whatsapp }
+        ]
+      }
+    });
+
+    if (!user) {
+      user = await (prisma as any).user.create({
+        data: {
+          name,
+          email,
+          whatsapp,
+          role: "STUDENT"
+        }
+      });
+    }
+
     // idempoten: daftar dua kali dengan nomor sama = tetap sukses
     const reg = await (prisma.registration as any).upsert({
       where: { whatsapp_programId: { whatsapp, programId: program.id } },
-      create: { name, whatsapp, email, institution, programId: program.id },
-      update: { name, email, institution },
+      create: { name, whatsapp, email, institution, programId: program.id, userId: user.id },
+      update: { name, email, institution, userId: user.id },
       include: { payment: true },
     }) as any;
 
