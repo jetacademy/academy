@@ -31,7 +31,7 @@ function getTransporter() {
 }
 
 export async function sendEmail({ to, subject, html }: EmailPayload) {
-  const from = process.env.SMTP_FROM ?? "Jetschool Academy <no-reply@jetschool.id>";
+  const from = process.env.SMTP_FROM ?? `Jetschool Academy <${process.env.SMTP_USER}>`;
   const client = getTransporter();
 
   if (client) {
@@ -145,6 +145,25 @@ export function getCertEmailHtml(name: string, programTitle: string, certUrl: st
       <p style="font-size: 0.9em; color: #56545c; text-align: center;">Sertifikat ini dilengkapi dengan QR Code verifikasi unik untuk pembuktian keabsahan publik.</p>
       <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
       <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; 2026. Semua hak dilindungi.</p>
+    </div>
+  `;
+}
+
+export function getOtpEmailHtml(code: string): string {
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
+      <h2 style="color: #232176; margin-top: 0;">Kode Verifikasi Anda 🔐</h2>
+      <p>Gunakan kode berikut untuk masuk ke akun Jetschool Academy Anda. Kode berlaku selama <strong>5 menit</strong>.</p>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <div style="display: inline-block; background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 10px; padding: 18px 48px;">
+          <span style="font-size: 40px; font-weight: 800; letter-spacing: 12px; color: #232176;">${code}</span>
+        </div>
+      </div>
+
+      <p style="font-size: 0.9em; color: #56545c;">Jika Anda tidak meminta kode ini, abaikan email ini. Jangan bagikan kode kepada siapa pun — tim kami tidak akan pernah memintanya.</p>
+      <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
+      <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; ${new Date().getFullYear()}. Semua hak dilindungi.</p>
     </div>
   `;
 }

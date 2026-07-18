@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendWa } from "@/lib/wa";
+import { sendEmail, getOtpEmailHtml } from "@/lib/email";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const OTP_LENGTH = 6;
@@ -54,11 +55,27 @@ export async function sendOtp(identifier: string): Promise<{ ok: boolean; error?
 
   // Kirim via WhatsApp — cari nomor WA dari Registration atau User
   const waNumber = existsReg?.whatsapp ?? existsUser?.whatsapp;
+  let waSent = false;
   if (waNumber) {
     const message = `*Jetschool Academy* — Kode verifikasi Anda: *${code}*\n\nKode berlaku 5 menit. Jangan bagikan kode ini kepada siapa pun.`;
-    await sendWa(waNumber, message).catch((err) => {
+    waSent = await sendWa(waNumber, message).catch((err) => {
       console.error("[otp] Gagal kirim WA:", err);
+      return false;
     });
+  }
+
+  // Fallback: kirim via email jika WA gagal atau tidak tersedia
+  if (!waSent) {
+    const emailAddr = existsReg?.email ?? existsUser?.email;
+    if (emailAddr) {
+      await sendEmail({
+        to: emailAddr,
+        subject: "Kode Verifikasi Jetschool Academy",
+        html: getOtpEmailHtml(code),
+      }).catch((err) => {
+        console.error("[otp] Gagal kirim email fallback:", err);
+      });
+    }
   }
 
   return { ok: true };
