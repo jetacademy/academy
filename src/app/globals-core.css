@@ -1,0 +1,119 @@
+/* ============================================================
+   JETSCHOOL ACADEMY — CORE / BASE STYLES
+   Custom properties, reset, typography, shared animations
+   ============================================================ */
+
+:root {
+  --bg: #F5F4F6;             /* latar halaman (abu sangat muda) */
+  --white: #FFFFFF;          /* kartu utama */
+  --chip: #F7F6F8;           /* chip abu muda di dalam kartu */
+  --ink: #17161A;            /* teks utama */
+  --ink-soft: #56545C;       /* teks sekunder */
+  --ink-faint: #9C99A3;      /* teks tersier */
+  --line: #ECEAEE;
+
+  /* palet mengikuti logo: navy roket + kuning-oranye api */
+  --purple: #232176;         /* navy utama (CTA) */
+  --purple-deep: #191756;
+  --purple-soft: #EAEAF6;
+  --orange: #F7941D;         /* oranye api roket (aksen kedua) */
+  --orange-soft: #FFF3E2;
+  --lime: #FFFFFF;           /* tombol putih di atas blok navy */
+  --lime-deep: #FFE9C7;
+  --gold-star: #F5B301;
+  --green: #17A05E;
+  --red: #E5484D;
+  --wa: #25D366;
+
+  --r-lg: 28px;              /* kartu besar */
+  --r-md: 18px;              /* chip */
+  --r-sm: 12px;
+  --shadow: 0 10px 40px rgba(25, 25, 25, .08);
+
+  /* alias utk komponen lama (admin dll.) */
+  --paper: var(--bg);
+  --paper-2: var(--chip);
+  --line-strong: #D8D7D2;
+  --gold: var(--purple);
+  --yellow: var(--lime);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; display: block; }
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, select { font-family: inherit; }
+::selection { background: var(--purple-soft); color: var(--ink); }
+
+/* blob pink dekoratif di sudut halaman (khas referensi) */
+body::before, body::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  border-radius: 50%;
+  background: #C9C8EA;
+}
+body::before { width: 340px; height: 340px; left: -160px; bottom: -160px; }
+body::after { width: 260px; height: 260px; right: -110px; bottom: 120px; background: #FFC85C; opacity: .85; }
+
+.container { width: min(1120px, 94%); margin-inline: auto; }
+
+/* ---------- Tipografi: besar, tebal, rapat ---------- */
+h1, h2, h3 { font-weight: 800; line-height: 1.06; letter-spacing: -.03em; }
+h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); }
+h2 { font-size: clamp(1.7rem, 3.8vw, 2.6rem); }
+h3 { font-size: 1.15rem; line-height: 1.25; letter-spacing: -.015em; }
+
+.acc-p { color: var(--purple); }
+.acc-o { color: var(--orange); }
+
+.lead { color: var(--ink-soft); font-size: clamp(1rem, 1.8vw, 1.1rem); max-width: 36rem; }
+
+/* label kecil di atas judul */
+.kicker {
+  display: inline-block;
+  font-size: .74rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--purple);
+  background: var(--purple-soft);
+  padding: .55em 1.3em;
+  border-radius: 999px;
+  margin-bottom: 1.1rem;
+}
+.kicker.o { color: #C2410C; background: var(--orange-soft); }
+.kicker.center { margin-inline: auto; }
+
+/* ---------- Animasi muncul ---------- */
+.reveal { opacity: 0; transform: translateY(20px); transition: opacity .55s ease, transform .55s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(35,33,118,.18); }
+  50% { box-shadow: 0 0 0 6px rgba(35,33,118,.06); }
+}
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+@keyframes ticker { to { transform: translateX(-50%); } }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .ticker-track { animation: none; }
+  .float-chip { animation: none; }
+}

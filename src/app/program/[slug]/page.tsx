@@ -16,7 +16,7 @@ import { formatJadwal, formatHari, formatJam, rupiah } from "@/lib/format";
 import { getMemberSession } from "@/lib/member-auth";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // ISR: re-generate every 1 hour
 
 const TYPE_CLASS: Record<ProgramType, string> = {
   WEBINAR: "type-webinar",

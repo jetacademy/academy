@@ -10,7 +10,7 @@ import { sendOtp, verifyOtp } from "@/lib/otp";
 
 async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; error?: string }> {
   // Cari registrasi mana saja yang cocok dengan WA atau email
-  const registrations = await (prisma as any).registration.findMany({
+  const registrations = await prisma.registration.findMany({
     where: {
       OR: [{ email: cleanVal }, { whatsapp: cleanVal }],
     },
@@ -33,14 +33,14 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
   let userId = rep.userId;
   if (!userId) {
     // Cari User yang sudah ada berdasarkan email atau WA
-    let user = await (prisma as any).user.findFirst({
+    let user = await prisma.user.findFirst({
       where: { OR: [{ email }, { whatsapp }] },
       select: { id: true },
     });
 
     if (!user) {
       // Buat User baru jika benar-benar belum ada
-      user = await (prisma as any).user.create({
+      user = await prisma.user.create({
         data: { name, email, whatsapp, role: "STUDENT" },
         select: { id: true },
       });
@@ -49,7 +49,7 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
     userId = user.id;
 
     // Backfill: hubungkan SEMUA registrasi milik user ini yang belum terhubung
-    await (prisma as any).registration.updateMany({
+    await prisma.registration.updateMany({
       where: {
         userId: null,
         OR: [{ email }, { whatsapp }],

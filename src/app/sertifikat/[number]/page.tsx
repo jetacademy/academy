@@ -6,8 +6,9 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
+import type { CertConfig, CertMateriJp } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 86400; // ISR: re-generate every 24 hours
 
 export const metadata = { title: "e-Sertifikat — Jetschool Academy" };
 
@@ -31,8 +32,8 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
   }
   if (!cert) notFound();
 
-  const program = cert.registration.program as any;
-  const certConfig = program.certConfig ? (program.certConfig as any) : {};
+  const program = cert.registration.program;
+  const certConfig: CertConfig = program.certConfig ? (program.certConfig as CertConfig) : {};
   const certBgUrl = program.certBgUrl;
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
@@ -68,11 +69,11 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
 
   // Syllabus / JP breakdown
   const materiList = Array.isArray(program.materi) ? (program.materi as string[]) : [];
-  const configMateriJp = Array.isArray(certConfig.materiJp) ? certConfig.materiJp : [];
+  const configMateriJp: CertMateriJp[] = Array.isArray(certConfig.materiJp) ? certConfig.materiJp : [];
 
-  const materiJp: { materi: string; teori: number; tugas: number }[] =
-    configMateriJp.length > 0 && configMateriJp.every((r: any) => typeof r?.materi === "string")
-      ? configMateriJp.map((r: any) => ({
+  const materiJp: CertMateriJp[] =
+    configMateriJp.length > 0 && configMateriJp.every((r) => typeof r?.materi === "string")
+      ? configMateriJp.map((r) => ({
           materi: r.materi,
           teori: Number(r.teori) || 0,
           tugas: Number(r.tugas) || 0,

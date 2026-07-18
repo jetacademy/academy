@@ -14,7 +14,7 @@ export default async function AdminProgramEdit({
   const program = await prisma.program.findUnique({ where: { id } });
   if (!program) notFound();
 
-  const categories = await (prisma as any).category.findMany({
+  const categories = await prisma.category.findMany({
     orderBy: { name: "asc" },
   });
 

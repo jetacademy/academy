@@ -40,7 +40,7 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   }
 
   // Cari di database untuk memastikan user masih aktif dan valid
-  const user = await (prisma as any).user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, name: true, email: true, role: true },
   });
@@ -109,7 +109,7 @@ export async function createAdminSession(emailInput: string, passwordInput: stri
 
   // 2. Cek database user
   if (email) {
-    const user = await (prisma as any).user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { email },
     });
     if (user && user.passwordHash && (user.role === "ADMIN" || user.role === "TEACHER")) {

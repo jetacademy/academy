@@ -27,14 +27,14 @@ export default async function AdminUserList({
   }
 
   // Fetch all users matching filters
-  const users = await (prisma as any).user.findMany({
+  const users = await prisma.user.findMany({
     where: whereClause,
     orderBy: { createdAt: "desc" },
   }) as UserItem[];
 
   // If editing, fetch the specific user
   const editUser = id
-    ? await (prisma as any).user.findUnique({ where: { id } })
+    ? await prisma.user.findUnique({ where: { id } })
     : null;
 
   return (

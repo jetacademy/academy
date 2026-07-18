@@ -30,6 +30,6 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "ui-ux-pro-max-skill"]
+  "exclude": ["node_modules"]
 }
 

@@ -74,7 +74,7 @@ export default function AdminRegistrationForm({
         <label>Asal Lembaga / Instansi</label>
         <input
           name="institution"
-          defaultValue={(registration as any)?.institution ?? ""}
+          defaultValue={registration?.institution ?? ""}
           placeholder="contoh: SDN 1 Bandung / Umum"
         />
       </div>

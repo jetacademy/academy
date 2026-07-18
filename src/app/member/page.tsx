@@ -57,7 +57,7 @@ export default async function MemberDashboardPage() {
     },
   };
 
-  const registrations = (await (prisma.registration.findMany as unknown as (args: unknown) => Promise<unknown>)(queryOptions)) as unknown as RegistrationWithDetails[];
+  const registrations = await prisma.registration.findMany(queryOptions) as unknown as RegistrationWithDetails[];
 
   const memberName = registrations[0]?.name ?? "Member";
   // Banner admin hanya muncul jika benar-benar punya sesi admin (login password di /webadmin)
@@ -89,9 +89,9 @@ export default async function MemberDashboardPage() {
             <div>
               <span className="kicker" style={{ marginBottom: "0.2rem" }}>Selamat Datang</span>
               <h1 style={{ fontSize: "1.8rem", margin: 0 }}>Halo, <span className="acc-p">{memberName}</span> 👋</h1>
-              {registrations[0] && (registrations[0] as any).institution && (
+              {registrations[0]?.institution && (
                 <div style={{ fontSize: "0.85rem", color: "var(--purple)", marginTop: "0.2rem", fontWeight: 600 }}>
-                  🏫 {(registrations[0] as any).institution}
+                  🏫 {registrations[0].institution}
                 </div>
               )}
               <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", margin: "0.4rem 0 0" }}>

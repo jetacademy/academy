@@ -1,0 +1,88 @@
+/* ============================================================
+   JETSCHOOL ACADEMY — CERTIFICATE STYLES
+   Premium certificate container, A4 layout, print styles.
+   ============================================================ */
+
+/* ---------- Sertifikat ---------- */
+.cert {
+  background: var(--white);
+  border-radius: var(--r-lg);
+  border-top: 10px solid var(--purple);
+  box-shadow: var(--shadow);
+  padding: clamp(2rem, 6vw, 3.2rem);
+  text-align: center;
+  position: relative;
+}
+.cert .cert-kicker { font-size: .66rem; letter-spacing: .3em; text-transform: uppercase; color: var(--ink-faint); font-weight: 800; }
+.cert h3 { font-size: 1.8rem; margin: .5rem 0 .2rem; }
+.cert .cert-name {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 800; letter-spacing: -.02em;
+  color: var(--purple);
+  margin: 1rem 0 .8rem;
+  border-bottom: 2px dashed var(--line);
+  display: inline-block; padding-bottom: .3rem;
+}
+.cert .cert-foot {
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem;
+  margin-top: 2rem;
+  font-size: .74rem; color: var(--ink-faint); font-weight: 600;
+  text-align: left;
+}
+.cert .qr { width: 84px; height: 84px; border-radius: var(--r-sm); }
+.cert-seal {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--purple);
+  color: #fff;
+  margin: 1.1rem auto 0;
+  display: grid; place-items: center;
+  font-weight: 800; font-size: .68rem;
+}
+
+/* Premium certificate container */
+.cert-premium-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cert-scroll-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.cert-a4 {
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+@page {
+  size: auto;
+  margin: 0mm;
+}
+
+@media print {
+  body { background: #fff !important; }
+  .nav, .footer, .wa-float, .sticky-cta, .no-print, .ticker { display: none !important; }
+  .cert { box-shadow: none; border: 1px solid var(--line); }
+  .cert-premium-container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+  .cert-scroll-wrapper { display: block !important; padding: 0 !important; width: 100% !important; overflow: visible !important; }
+  .cert-a4 { box-shadow: none !important; border: none !important; border-radius: 0 !important; width: 100vw !important; height: 100vh !important; padding: 6% 8% !important; page-break-after: avoid; page-break-inside: avoid; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+
+@media (max-width: 768px) {
+  .cert-scroll-wrapper {
+    justify-content: flex-start;
+  }
+  .cert-a4 {
+    min-width: 750px; /* Keep layout stable and fonts readable on small screens with scroll */
+  }
+}

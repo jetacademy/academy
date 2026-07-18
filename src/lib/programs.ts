@@ -7,7 +7,7 @@ import { FALLBACK_PROGRAMS, type ProgramData, type ProgramType, type Deliverable
  */
 export async function getPrograms(): Promise<{ programs: ProgramData[]; demo: boolean }> {
   try {
-    const rows = await (prisma as any).program.findMany({
+    const rows = await prisma.program.findMany({
       where: { isActive: true },
       include: { category: true },
       orderBy: { scheduleAt: "asc" },
@@ -22,7 +22,7 @@ export async function getPrograms(): Promise<{ programs: ProgramData[]; demo: bo
 
 export async function getProgramBySlug(slug: string): Promise<{ program: ProgramData | null; demo: boolean }> {
   try {
-    const row = await (prisma as any).program.findUnique({
+    const row = await prisma.program.findUnique({
       where: { slug },
       include: { category: true },
     });

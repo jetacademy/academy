@@ -11,7 +11,7 @@ import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 import { formatHari, formatJam, rupiah, getDaysLeft } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic"; // program selalu diambil segar dari MySQL
+export const revalidate = 300; // ISR: re-generate every 5 minutes
 
 const TYPE_CLASS: Record<ProgramType, string> = {
   WEBINAR: "type-webinar",

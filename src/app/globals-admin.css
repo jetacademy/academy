@@ -1,0 +1,281 @@
+/* ============================================================
+   JETSCHOOL ACADEMY — ADMIN PANEL STYLES
+   Admin layout, tables, forms, tabs, badges, editor components.
+   ============================================================ */
+
+/* ---------- Panel Admin (/webadmin) ---------- */
+.adm-top { background: var(--white); box-shadow: var(--shadow); }
+.adm-top-inner { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; height: 66px; flex-wrap: wrap; }
+.adm-tabs { display: flex; gap: 1.5rem; font-size: .82rem; font-weight: 800; color: var(--ink-soft); overflow-x: auto; }
+.adm-tabs a { padding: .5em 0; border-bottom: 3px solid transparent; white-space: nowrap; }
+.adm-tabs a:hover { color: var(--ink); }
+.adm-tabs a.on { color: var(--purple); border-color: var(--purple); }
+.adm-main { padding: 2rem 0 4rem; }
+.adm-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1.4rem; flex-wrap: wrap; }
+.adm-head h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); }
+
+.adm-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+@media (max-width: 860px) { .adm-stats { grid-template-columns: repeat(2, 1fr); } }
+.adm-stat { background: var(--white); border-radius: var(--r-md); box-shadow: var(--shadow); padding: 1.2rem 1.4rem; }
+.adm-stat b { display: block; font-size: 1.7rem; font-weight: 800; letter-spacing: -.02em; }
+.adm-stat span { font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+
+.tbl-wrap { overflow-x: auto; background: var(--white); border-radius: var(--r-md); box-shadow: var(--shadow); }
+.tbl { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.tbl th {
+  text-align: left; white-space: nowrap;
+  font-size: .64rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: .9rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--chip);
+}
+.tbl td { padding: .85rem 1rem; border-bottom: 1px solid var(--chip); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl .muted { color: var(--ink-faint); font-size: .78rem; }
+
+.badge {
+  display: inline-block;
+  font-size: .64rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  border-radius: 999px;
+  padding: .4em 1em;
+  background: var(--chip);
+  white-space: nowrap;
+}
+.badge.y { background: var(--purple-soft); color: var(--purple-deep); }
+.badge.g { background: var(--green); color: #fff; }
+.badge.r { background: #FDECEC; color: var(--red); }
+.badge.dim { color: var(--ink-faint); }
+
+.btn-sm { padding: .55em 1.1em; font-size: .72rem; }
+.btn-danger { background: #FDECEC; color: var(--red); }
+.btn-danger:hover { box-shadow: 0 8px 18px rgba(229, 72, 77, .3); }
+
+.adm-form {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.4rem;
+  background: var(--white); border-radius: var(--r-md); box-shadow: var(--shadow);
+  padding: 1.8rem;
+}
+@media (max-width: 760px) { .adm-form { grid-template-columns: 1fr; } }
+.adm-form .full { grid-column: 1 / -1; }
+.field textarea {
+  width: 100%; font: inherit; font-size: .92rem;
+  padding: .8em 1em;
+  border: 2px solid transparent; border-radius: var(--r-sm);
+  outline: none; background: var(--chip);
+  min-height: 7em; resize: vertical;
+  transition: border-color .15s;
+}
+.field textarea:focus { border-color: var(--purple); background: var(--white); }
+.adm-note { font-size: .76rem; color: var(--ink-faint); margin-top: .35rem; font-weight: 600; }
+
+/* ══════════════ ADMIN: EDITOR PROGRAM (LMS BUILDER) ══════════════ */
+
+.prog-editor-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+
+.prog-tabs { display: flex; gap: .3rem; border-bottom: 2px solid var(--chip); overflow-x: auto; }
+.prog-tabs a {
+  padding: .7em 1.1em; font-size: .82rem; font-weight: 800; color: var(--ink-soft);
+  border-radius: 10px 10px 0 0; white-space: nowrap; border-bottom: 3px solid transparent; margin-bottom: -2px;
+}
+.prog-tabs a:hover { background: var(--chip); color: var(--ink); }
+.prog-tabs a.on { color: var(--purple); border-color: var(--purple); background: var(--white); }
+
+.adm-alert { padding: .8rem 1.2rem; border-radius: var(--r-sm); font-size: .85rem; font-weight: 700; margin-bottom: 1.2rem; }
+.adm-alert.err { background: #FDECEC; color: var(--red); }
+.adm-alert.ok { background: #E8F8EF; color: #1d8a4e; }
+
+/* Kartu modul */
+.lms-mod { background: var(--white); border: 1px solid var(--chip); border-radius: var(--r-md); box-shadow: var(--shadow); overflow: hidden; }
+.lms-mod + .lms-mod { margin-top: 1.2rem; }
+.lms-mod-head {
+  display: flex; align-items: center; gap: .8rem; padding: .9rem 1.2rem;
+  background: var(--bg-panel, #faf9fc); border-bottom: 1px solid var(--chip); flex-wrap: wrap;
+}
+.lms-mod-head .mod-no {
+  width: 2rem; height: 2rem; border-radius: 8px; background: var(--purple); color: #fff;
+  display: grid; place-items: center; font-weight: 800; font-size: .85rem; flex-shrink: 0;
+}
+.lms-mod-head form.inline-title { flex: 1; display: flex; gap: .5rem; min-width: 14rem; }
+.lms-mod-head form.inline-title input {
+  flex: 1; padding: .5em .8em; border: 1px solid transparent; border-radius: 8px; background: transparent;
+  font-weight: 800; font-size: .95rem; color: var(--ink);
+}
+.lms-mod-head form.inline-title input:hover { border-color: var(--chip); background: var(--white); }
+.lms-mod-head form.inline-title input:focus { border-color: var(--purple); background: var(--white); outline: none; }
+.lms-mod-head form.inline-title button { display: none; }
+.lms-mod-head form.inline-title input:focus ~ button,
+.lms-mod-head form.inline-title:focus-within button { display: inline-flex; }
+
+.icon-btn {
+  display: inline-grid; place-items: center; min-width: 1.9rem; height: 1.9rem; padding: 0 .55em; border-radius: 8px;
+  border: 1px solid var(--chip); background: var(--white); cursor: pointer; font-size: .74rem; font-weight: 700; color: var(--ink-soft);
+  transition: all .15s ease;
+}
+.icon-btn:hover { border-color: var(--purple); color: var(--purple); }
+.icon-btn:disabled { opacity: .3; cursor: default; }
+.icon-btn.danger:hover { border-color: var(--red); color: var(--red); background: #FDECEC; }
+
+/* Baris materi */
+.lms-lessons { padding: .6rem; }
+.lms-lesson { border: 1px solid transparent; border-radius: var(--r-sm); }
+.lms-lesson + .lms-lesson { margin-top: .25rem; }
+.lms-lesson[open] { border-color: var(--chip); background: #fcfbfe; margin-bottom: .6rem; }
+.lms-lesson summary {
+  display: flex; align-items: center; gap: .7rem; padding: .55rem .7rem; cursor: pointer;
+  border-radius: var(--r-sm); list-style: none; flex-wrap: wrap;
+}
+.lms-lesson summary::-webkit-details-marker { display: none; }
+.lms-lesson summary:hover { background: var(--chip); }
+.lms-lesson[open] summary { background: var(--chip); border-radius: var(--r-sm) var(--r-sm) 0 0; }
+.lms-lesson .l-title { flex: 1; font-weight: 700; font-size: .88rem; min-width: 10rem; }
+.lms-lesson .l-meta { font-size: .72rem; color: var(--ink-faint); font-weight: 600; }
+.lms-lesson-body { padding: 1.1rem; }
+
+.type-chip {
+  display: inline-flex; align-items: center; gap: .35em; font-size: .68rem; font-weight: 800;
+  padding: .3em .7em; border-radius: 99px; flex-shrink: 0; letter-spacing: .02em;
+}
+.type-chip.video { background: #EDE9FE; color: #6D28D9; }
+.type-chip.text { background: #E0F2FE; color: #0369A1; }
+.type-chip.pdf { background: #FEE2E2; color: #B91C1C; }
+.type-chip.quiz { background: #FEF3C7; color: #B45309; }
+
+.lms-add-row {
+  margin-top: .5rem; padding: .8rem; border: 2px dashed var(--chip); border-radius: var(--r-sm);
+}
+.lms-add-mod {
+  margin-top: 1.6rem; padding: 1.4rem; border: 2px dashed var(--purple); border-radius: var(--r-md);
+  background: var(--white);
+}
+
+/* Kartu pilihan kriteria kelulusan */
+.criteria-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+.criteria-card { position: relative; }
+.criteria-card input { position: absolute; opacity: 0; }
+.criteria-card label {
+  display: block; padding: 1.2rem; border: 2px solid var(--chip); border-radius: var(--r-md);
+  background: var(--white); cursor: pointer; height: 100%; transition: all .15s ease;
+}
+.criteria-card label:hover { border-color: var(--purple); }
+.criteria-card input:checked + label { border-color: var(--purple); background: #F6F4FE; box-shadow: 0 4px 14px rgba(98,51,238,.12); }
+.criteria-card b { display: block; font-size: .95rem; margin-bottom: .3rem; }
+.criteria-card span { font-size: .78rem; color: var(--ink-soft); line-height: 1.5; }
+
+/* Rich text editor */
+.rte { border: 1px solid var(--line-strong, #ddd); border-radius: 10px; background: var(--white); overflow: hidden; }
+.rte-toolbar { display: flex; flex-wrap: wrap; gap: 2px; padding: .35rem; border-bottom: 1px solid var(--chip); background: var(--bg-panel, #faf9fc); }
+.rte-toolbar button {
+  border: 1px solid transparent; background: transparent; border-radius: 6px; cursor: pointer;
+  font-size: .74rem; font-weight: 700; padding: .35em .7em; color: var(--ink-soft);
+}
+.rte-toolbar button:hover { background: var(--chip); color: var(--ink); border-color: var(--line-strong, #ddd); }
+.rte-area { padding: .9rem 1.1rem; outline: none; font-size: .92rem; line-height: 1.65; }
+.rte-area:empty::before { content: attr(data-placeholder); color: var(--ink-faint); font-weight: 500; }
+
+/* Tipografi konten rich text (editor & tampilan member) */
+.rt-content h2 { font-size: 1.25rem; margin: 1.1em 0 .45em; font-weight: 800; }
+.rt-content h3 { font-size: 1.05rem; margin: 1em 0 .4em; font-weight: 800; }
+.rt-content p { margin: 0 0 .8em; }
+.rt-content ul, .rt-content ol { margin: 0 0 .9em; padding-left: 1.5em; }
+.rt-content li { margin-bottom: .3em; }
+.rt-content a { color: var(--purple); text-decoration: underline; }
+.rt-content b, .rt-content strong { font-weight: 800; }
+
+/* Form program: kartu per seksi */
+.form-section { background: var(--white); border: 1px solid var(--chip); border-radius: var(--r-md); box-shadow: var(--shadow); margin-bottom: 1.2rem; overflow: hidden; }
+.form-section > header { padding: 1rem 1.4rem; border-bottom: 1px solid var(--chip); background: var(--bg-panel, #faf9fc); }
+.form-section > header h3 { font-size: .95rem; margin: 0; }
+.form-section > header p { font-size: .76rem; color: var(--ink-soft); margin: .2rem 0 0; font-weight: 600; }
+.form-section .fs-body { padding: 1.2rem 1.4rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.4rem; }
+.form-section .fs-body .full { grid-column: 1 / -1; }
+@media (max-width: 700px) { .form-section .fs-body { grid-template-columns: 1fr; } }
+
+/* Daftar soal & baris pilihan jawaban */
+.q-list { display: grid; gap: .5rem; }
+.q-row {
+  display: flex; align-items: center; gap: .9rem; padding: .8rem 1.1rem;
+  background: var(--white); border: 1px solid var(--chip); border-radius: var(--r-sm); box-shadow: var(--shadow);
+}
+.q-row .q-no {
+  width: 1.8rem; height: 1.8rem; border-radius: 8px; background: var(--chip); color: var(--ink-soft);
+  display: grid; place-items: center; font-weight: 800; font-size: .78rem; flex-shrink: 0;
+}
+.q-row .q-text {
+  flex: 1; font-weight: 700; font-size: .9rem; color: var(--ink); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.q-row .q-text:hover { color: var(--purple); }
+
+.opt-row {
+  display: flex; align-items: center; gap: .8rem; padding: .5rem .8rem;
+  border: 1.5px solid var(--chip); border-radius: 10px; background: var(--white); cursor: pointer;
+}
+.opt-row:hover { border-color: var(--purple); }
+.opt-row:has(input[type="radio"]:checked) { border-color: var(--purple); background: #F6F4FE; }
+.opt-row input[type="radio"] { width: 1.1rem; height: 1.1rem; accent-color: var(--purple); flex-shrink: 0; cursor: pointer; }
+.opt-row .opt-key {
+  width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--chip); color: var(--ink-soft);
+  display: grid; place-items: center; font-weight: 800; font-size: .74rem; flex-shrink: 0;
+}
+.opt-row:has(input[type="radio"]:checked) .opt-key { background: var(--purple); color: #fff; }
+.opt-row .opt-input { flex: 1; border: 0 !important; background: transparent !important; padding: .4em .2em !important; font-size: .9rem; }
+.opt-row .opt-input:focus { outline: none; }
+
+/* Segmented control tipe konten & kotak upload */
+.seg { display: flex; gap: .45rem; flex-wrap: wrap; }
+.seg label {
+  position: relative; padding: .55em 1.2em; border: 1.5px solid var(--chip); border-radius: 99px;
+  font-size: .82rem; font-weight: 700; cursor: pointer; color: var(--ink-soft); background: var(--white);
+  transition: all .15s ease;
+}
+.seg label:hover { border-color: var(--purple); color: var(--purple); }
+.seg label.on { border-color: var(--purple); color: var(--purple); background: #F6F4FE; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+
+.upload-box {
+  display: flex; align-items: center; gap: .9rem; flex-wrap: wrap;
+  padding: .9rem 1rem; border: 2px dashed var(--chip); border-radius: 10px; background: var(--bg-panel, #faf9fc);
+}
+
+/* Halaman editor fokus (materi & soal): kolom lebar di tengah */
+.editor-wrap { max-width: 68rem; margin: 0 auto; }
+
+/* Editor materi: konten utama kiri + sidebar pengaturan kanan (ala WordPress) */
+.editor-cols { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 0 1.4rem; align-items: start; }
+.editor-cols .form-section:last-child { position: sticky; top: 1rem; }
+@media (max-width: 980px) { .editor-cols { grid-template-columns: 1fr; } .editor-cols .form-section:last-child { position: static; } }
+
+/* Kelompok modul (jenjang teratas kurikulum) */
+.lms-group { border: 1.5px solid var(--purple-soft, #E6E1FA); border-radius: var(--r-md); margin-bottom: 1.4rem; background: var(--bg-panel, #faf9fc); overflow: hidden; }
+.lms-group-head {
+  display: flex; align-items: center; gap: .8rem; padding: .9rem 1.2rem; flex-wrap: wrap;
+  background: var(--white); border-bottom: 1.5px solid var(--purple-soft, #E6E1FA);
+}
+.lms-group-head .group-no {
+  background: var(--purple); color: #fff; font-weight: 800; font-size: .72rem;
+  padding: .35em .9em; border-radius: 99px; flex-shrink: 0; white-space: nowrap;
+}
+.lms-group-head form.inline-title { flex: 1; display: flex; gap: .5rem; min-width: 14rem; }
+.lms-group-head form.inline-title input {
+  flex: 1; padding: .5em .8em; border: 1px solid transparent; border-radius: 8px; background: transparent;
+  font-weight: 800; font-size: 1rem; color: var(--ink);
+}
+.lms-group-head form.inline-title input:hover { border-color: var(--chip); background: var(--white); }
+.lms-group-head form.inline-title input:focus { border-color: var(--purple); background: var(--white); outline: none; }
+.lms-group-head form.inline-title button { display: none; }
+.lms-group-head form.inline-title:focus-within button { display: inline-flex; }
+.lms-group-body { padding: 1rem 1.2rem 1.2rem; }
+.lms-group-body .lms-mod { box-shadow: none; }
+
+/* Navigator soal kuis: pil bernomor + pil "+" untuk soal baru */
+.q-nav { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+.q-nav a {
+  display: grid; place-items: center; min-width: 2rem; height: 2rem; padding: 0 .4em;
+  border: 1.5px solid var(--chip); border-radius: 99px; background: var(--white);
+  font-size: .8rem; font-weight: 800; color: var(--ink-soft); transition: all .15s ease;
+}
+.q-nav a:hover { border-color: var(--purple); color: var(--purple); }
+.q-nav a.on { background: var(--purple); border-color: var(--purple); color: #fff; }
+.q-nav a.plus { border-style: dashed; color: var(--purple); }
+.q-nav a.plus.on { background: var(--purple); color: #fff; border-style: solid; }

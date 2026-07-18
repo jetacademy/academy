@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  poweredByHeader: false,
+  generateEtags: false,
   experimental: {
     serverActions: {
       // upload PDF/gambar materi & sertifikat via server action (maks 20 MB + overhead encoding)

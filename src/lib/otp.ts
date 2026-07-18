@@ -26,12 +26,12 @@ export async function sendOtp(identifier: string): Promise<{ ok: boolean; error?
 
   // Hapus OTP lama yang sudah expire (cleanup global, bukan hanya identifier ini)
   // Dijalankan setiap kali ada permintaan OTP — O(1) karena index [expiresAt]
-  await (prisma as any).otpCode.deleteMany({
+  await prisma.otpCode.deleteMany({
     where: { expiresAt: { lt: new Date() } },
   });
 
   // Cek apakah sudah ada OTP aktif (mencegah spam)
-  const activeOtp = await (prisma as any).otpCode.findFirst({
+  const activeOtp = await prisma.otpCode.findFirst({
     where: { identifier, used: false, expiresAt: { gte: new Date() } },
   });
   if (activeOtp) {
@@ -42,7 +42,7 @@ export async function sendOtp(identifier: string): Promise<{ ok: boolean; error?
   const code = generateOtp();
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
 
-  await (prisma as any).otpCode.create({
+  await prisma.otpCode.create({
     data: { identifier, code, expiresAt },
   });
 
@@ -64,7 +64,7 @@ export async function verifyOtp(
   identifier: string,
   code: string
 ): Promise<{ ok: boolean; error?: string }> {
-  const otp = await (prisma as any).otpCode.findFirst({
+  const otp = await prisma.otpCode.findFirst({
     where: {
       identifier,
       code,
@@ -78,7 +78,7 @@ export async function verifyOtp(
   }
 
   // Tandai sudah dipakai
-  await (prisma as any).otpCode.update({
+  await prisma.otpCode.update({
     where: { id: otp.id },
     data: { used: true },
   });

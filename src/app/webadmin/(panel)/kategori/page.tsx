@@ -22,14 +22,14 @@ export default async function AdminCategoryList({
   const { id, e, ok, deleted } = await searchParams;
 
   // Fetch all categories with program counts
-  const categories = await (prisma as any).category.findMany({
+  const categories = await prisma.category.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { programs: true } } },
   }) as CategoryWithCount[];
 
   // If editing, fetch the specific category
   const editCategory = id
-    ? await (prisma as any).category.findUnique({ where: { id } })
+    ? await prisma.category.findUnique({ where: { id } })
     : null;
 
   return (

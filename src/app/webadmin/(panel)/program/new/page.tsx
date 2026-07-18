@@ -2,7 +2,7 @@ import ProgramForm from "@/components/ProgramForm";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminProgramNew() {
-  const categories = await (prisma as any).category.findMany({
+  const categories = await prisma.category.findMany({
     orderBy: { name: "asc" },
   });
   return (

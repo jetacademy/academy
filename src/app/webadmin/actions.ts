@@ -60,27 +60,29 @@ function isUniqueError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
 }
 
-/** Sanitasi HTML dari rich text editor — pakai DOMPurify (plugin isomorphic). */
+// ─── DOMPurify singleton (inisialisasi sekali di module level) ────
+const { JSDOM } = require("jsdom");
+const { window } = new JSDOM("");
+const purify = require("isomorphic-dompurify")(window as any);
+// Hook: bersihkan javascript: dan data: dari href
+purify.addHook("afterSanitizeAttributes", function (node: Element) {
+  if (node.tagName === "A" && node.getAttribute("href")) {
+    const href = node.getAttribute("href")!;
+    if (/^\s*(javascript|data|vbscript):/i.test(href)) {
+      node.setAttribute("href", "#");
+    }
+  }
+  if (node.tagName === "IMG" && node.getAttribute("src")) {
+    const src = node.getAttribute("src")!;
+    if (/^\s*(javascript|data):/i.test(src)) {
+      node.removeAttribute("src");
+    }
+  }
+});
+
+/** Sanitasi HTML dari rich text editor — pakai DOMPurify singleton di atas. */
 function sanitizeHtml(html: string | null): string | null {
   if (!html) return null;
-  const { JSDOM } = require("jsdom");
-  const { window } = new JSDOM("");
-  const purify = require("isomorphic-dompurify")(window as any);
-  // Hook: bersihkan javascript: dan data: dari href
-  purify.addHook("afterSanitizeAttributes", function (node: Element) {
-    if (node.tagName === "A" && node.getAttribute("href")) {
-      const href = node.getAttribute("href")!;
-      if (/^\s*(javascript|data|vbscript):/i.test(href)) {
-        node.setAttribute("href", "#");
-      }
-    }
-    if (node.tagName === "IMG" && node.getAttribute("src")) {
-      const src = node.getAttribute("src")!;
-      if (/^\s*(javascript|data):/i.test(src)) {
-        node.removeAttribute("src");
-      }
-    }
-  });
   const cleaned = purify.sanitize(html, {
     ALLOWED_TAGS: [
       "p", "br", "b", "i", "u", "strong", "em", "a", "ul", "ol", "li",
@@ -253,7 +255,7 @@ export async function deleteQuestion(formData: FormData) {
   const id = String(formData.get("id"));
   const programId = String(formData.get("programId"));
   const existing = await prisma.question.findUnique({ where: { id }, select: { lessonId: true } });
-  await prisma.question.delete({ where: { id } }).catch(() => {});
+  await prisma.question.delete({ where: { id } }).catch((err) => console.error("[deleteQuestion] Gagal:", err));
   revalidatePath(`/webadmin/program/${programId}/soal`);
   revalidatePath(`/webadmin/program/${programId}/lms`);
   redirect(`${questionBackUrl(programId, existing?.lessonId ?? null)}?deleted=1`);
@@ -342,7 +344,7 @@ export async function deleteLmsModule(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
   const programId = String(formData.get("programId"));
-  await prisma.lmsModule.delete({ where: { id } }).catch(() => {});
+  await prisma.lmsModule.delete({ where: { id } }).catch((err) => console.error("[deleteLmsModule] Gagal:", err));
   revalidatePath(`/webadmin/program/${programId}/lms`);
 }
 
@@ -511,7 +513,7 @@ export async function deleteRegistration(formData: FormData) {
   await prisma.certificate.deleteMany({ where: { registrationId: id } });
   await prisma.testAttempt.deleteMany({ where: { registrationId: id } });
   await prisma.payment.deleteMany({ where: { registrationId: id } });
-  await prisma.registration.delete({ where: { id } }).catch(() => {});
+  await prisma.registration.delete({ where: { id } }).catch((err) => console.error("[deleteRegistration] Gagal:", err));
   revalidatePath("/webadmin/pendaftar");
   revalidatePath("/webadmin");
 }
@@ -633,9 +635,9 @@ export async function saveCategory(formData: FormData) {
 
   try {
     if (id) {
-      await (prisma as any).category.update({ where: { id }, data });
+      await prisma.category.update({ where: { id }, data });
     } else {
-      await (prisma as any).category.create({ data });
+      await prisma.category.create({ data });
     }
   } catch (err) {
     if (isUniqueError(err)) {
@@ -652,7 +654,7 @@ export async function saveCategory(formData: FormData) {
 export async function deleteCategory(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
-  await (prisma as any).category.delete({ where: { id } }).catch(() => {});
+  await prisma.category.delete({ where: { id } }).catch((err) => console.error("[deleteCategory] Gagal:", err));
   revalidatePath("/");
   revalidatePath("/webadmin/kategori");
   redirect("/webadmin/kategori?deleted=1");
@@ -674,7 +676,7 @@ export async function saveUser(formData: FormData) {
     redirect("/webadmin/user?e=lengkapi");
   }
 
-  const data: any = {
+  const data: Prisma.UserUpdateInput = {
     name,
     email,
     whatsapp,
@@ -687,12 +689,12 @@ export async function saveUser(formData: FormData) {
 
   try {
     if (id) {
-      await (prisma as any).user.update({ where: { id }, data });
+      await prisma.user.update({ where: { id }, data });
     } else {
       if (password.length === 0 && role !== "STUDENT") {
         redirect("/webadmin/user?e=password-wajib");
       }
-      await (prisma as any).user.create({ data });
+      await prisma.user.create({ data });
     }
   } catch (err) {
     if (isUniqueError(err)) {
@@ -708,7 +710,7 @@ export async function saveUser(formData: FormData) {
 export async function deleteUser(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
-  await (prisma as any).user.delete({ where: { id } }).catch(() => {});
+  await prisma.user.delete({ where: { id } }).catch((err) => console.error("[deleteUser] Gagal:", err));
   revalidatePath("/webadmin/user");
   redirect("/webadmin/user?deleted=1");
 }

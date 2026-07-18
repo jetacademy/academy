@@ -91,12 +91,12 @@ export async function POST(req: Request) {
     } else if (event.status === "EXPIRED" && payment.status !== "PAID" && isCurrentInvoice) {
       await prisma.$transaction([
         prisma.payment.update({ where: { id: payment.id }, data: { status: "EXPIRED" } }),
-        (prisma as any).registration.update({ where: { id: payment.registrationId }, data: { status: "EXPIRED" } }),
+        prisma.registration.update({ where: { id: payment.registrationId }, data: { status: "EXPIRED" } }),
       ]);
     } else if (event.status === "FAILED" && payment.status !== "PAID" && isCurrentInvoice) {
       await prisma.$transaction([
         prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } }),
-        (prisma as any).registration.update({ where: { id: payment.registrationId }, data: { status: "FAILED" } }),
+        prisma.registration.update({ where: { id: payment.registrationId }, data: { status: "FAILED" } }),
       ]);
     } else {
       console.warn("[webhook] Status tidak dikenal / stale callback:", event.status);
