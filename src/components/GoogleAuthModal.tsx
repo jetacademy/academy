@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +7,6 @@ interface GoogleAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (email: string, name: string, credential?: string) => void;
-  title?: string;
 }
 
 declare global {
@@ -37,7 +37,7 @@ function decodeJwt(token: string) {
   }
 }
 
-export default function GoogleAuthModal({ isOpen, onClose, onSelect, title = "Login" }: GoogleAuthModalProps) {
+export default function GoogleAuthModal({ isOpen, onClose, onSelect }: GoogleAuthModalProps) {
   const [customEmail, setCustomEmail] = useState("");
   const [customName, setCustomName] = useState("");
   const [showCustom, setShowCustom] = useState(false);

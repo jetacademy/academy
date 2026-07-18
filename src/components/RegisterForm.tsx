@@ -265,7 +265,6 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
         isOpen={googleOpen}
         onClose={() => setGoogleOpen(false)}
         onSelect={handleGoogleSelect}
-        title="Daftar"
       />
     </>
   );

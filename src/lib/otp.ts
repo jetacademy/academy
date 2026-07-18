@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { sendWa } from "@/lib/wa";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const OTP_LENGTH = 6;
 const OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 menit
 

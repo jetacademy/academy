@@ -261,7 +261,7 @@ export async function submitLessonQuiz(
     }
   }
 
-  const correctCount = lesson.questions.filter((q) => answers[q.id] === q.correct).length;
+  const correctCount = lesson.questions.filter((q: { id: string; correct: string }) => answers[q.id] === q.correct).length;
   const score = Math.round((correctCount / lesson.questions.length) * 100);
   const passingScore = lesson.passingScore ?? reg.program.passingScore;
   const passed = score >= passingScore;

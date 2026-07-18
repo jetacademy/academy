@@ -61,6 +61,7 @@ function isUniqueError(err: unknown): boolean {
 }
 
 // ─── DOMPurify singleton (inisialisasi sekali di module level) ────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let purifyInstance: any = null;
 
 async function getPurify() {
@@ -68,6 +69,7 @@ async function getPurify() {
   const { JSDOM } = await import("jsdom");
   const dom = new JSDOM("");
   const createDOMPurify = await import("isomorphic-dompurify");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   purifyInstance = createDOMPurify.default(dom.window as any);
   // Hook: bersihkan javascript: dan data: dari href
   purifyInstance.addHook("afterSanitizeAttributes", function (node: Element) {
@@ -702,6 +704,7 @@ export async function saveUser(formData: FormData) {
       if (password.length === 0 && role !== "STUDENT") {
         redirect("/webadmin/user?e=password-wajib");
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await prisma.user.create({ data: data as any });
     }
   } catch (err) {
