@@ -1,5 +1,3 @@
-import { CardSkeleton } from "@/components/LoadingSkeleton";
-
 export default function RootLoading() {
   return (
     <div

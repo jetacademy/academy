@@ -53,7 +53,7 @@ export default async function MemberDashboardPage() {
       certificate: true,
     },
     orderBy: {
-      createdAt: "desc",
+      createdAt: "desc" as const,
     },
   };
 

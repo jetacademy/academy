@@ -190,10 +190,10 @@ export async function POST(req: Request) {
     }).catch((err) => console.error("Gagal mengirim email invoice:", err));
 
     return NextResponse.json({ ok: true, invoiceUrl: invoice.invoice_url });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[register]", err);
     return NextResponse.json(
-      { error: `Terjadi kesalahan: ${err?.message || err}` },
+      { error: `Terjadi kesalahan: ${err instanceof Error ? err.message : String(err)}` },
       { status: 503 }
     );
   }

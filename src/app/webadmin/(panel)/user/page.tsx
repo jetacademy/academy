@@ -21,7 +21,7 @@ export default async function AdminUserList({
   const { id, e, ok, deleted, role: roleFilter } = await searchParams;
 
   // Query conditions
-  const whereClause: any = {};
+  const whereClause: { role?: string } = {};
   if (roleFilter && ["ADMIN", "TEACHER", "STUDENT"].includes(roleFilter)) {
     whereClause.role = roleFilter;
   }

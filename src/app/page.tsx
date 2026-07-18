@@ -9,7 +9,6 @@ import Icon, { TYPE_ICON } from "@/components/Icon";
 import { getPrograms } from "@/lib/programs";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 import { formatHari, formatJam, rupiah, getDaysLeft } from "@/lib/format";
-import { prisma } from "@/lib/prisma";
 
 export const revalidate = 300; // ISR: re-generate every 5 minutes
 

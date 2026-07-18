@@ -33,7 +33,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
 }) {
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   const [error, setError] = useState("");
-  const [result, setResult] = useState<{ name: string } & Result | null>(null);
+  const [result] = useState<{ name: string } & Result | null>(null);
   const [googleOpen, setGoogleOpen] = useState(false);
   const [googleSelected, setGoogleSelected] = useState(!!memberProfile);
   const router = useRouter();

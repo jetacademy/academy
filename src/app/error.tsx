@@ -166,7 +166,7 @@ export default function RootError({
               cursor: "pointer",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.transform = "translateY(-2px)";
+              e.currentTarget.style.transform = "translateY(-2px)";
               e.currentTarget.style.boxShadow =
                 "0 8px 24px rgba(25,25,25,.15)";
             }}

@@ -9,30 +9,10 @@ import GoogleAuthModal from "@/components/GoogleAuthModal";
 import Image from "next/image";
 
 export default function MemberLoginPage() {
-  const [identifier, setIdentifier] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleOpen, setGoogleOpen] = useState(false);
   const router = useRouter();
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      const res = await memberLogin(identifier);
-      if (res?.error) {
-        setError(res.error);
-      } else if (res?.ok) {
-        router.push("/member");
-      }
-    } catch {
-      setError("Terjadi kesalahan sistem. Silakan coba lagi.");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function handleGoogleSelect(email: string, _name: string, credential?: string) {
     setGoogleOpen(false);
@@ -57,7 +37,7 @@ export default function MemberLoginPage() {
       } else {
         setError("Terjadi kesalahan tak terduga. Silakan coba lagi.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[Google login error]", err);
       setError("Koneksi gagal. Periksa jaringan Anda dan coba lagi.");
     } finally {

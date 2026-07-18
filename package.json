@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next lint && next build",
+    "build": "prisma generate && prisma migrate deploy && eslint . && next build",
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
@@ -17,7 +17,7 @@
     "seed": "node prisma/seed.mjs"
   },
   "dependencies": {
-    "@prisma/client": "6.19.3",
+    "@prisma/client": "^6.19.3",
     "isomorphic-dompurify": "^3.19.0",
     "next": "16.2.10",
     "nodemailer": "^9.0.3",

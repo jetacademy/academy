@@ -7,7 +7,8 @@
  *  - @/lib/email (sendEmail, getCertEmailHtml)
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { issueCertificate, checkCertEligibility } from '@/lib/certificates';
 
 // ─── Hoisted mocks (vi.mock factories are hoisted; use vi.hoisted) ─

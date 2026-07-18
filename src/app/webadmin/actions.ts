@@ -61,8 +61,10 @@ function isUniqueError(err: unknown): boolean {
 }
 
 // ─── DOMPurify singleton (inisialisasi sekali di module level) ────
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { JSDOM } = require("jsdom");
 const { window } = new JSDOM("");
+// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-explicit-any
 const purify = require("isomorphic-dompurify")(window as any);
 // Hook: bersihkan javascript: dan data: dari href
 purify.addHook("afterSanitizeAttributes", function (node: Element) {

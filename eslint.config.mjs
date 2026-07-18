@@ -13,6 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "ui-ux-pro-max-skill/**",
+    "src/__tests__/**",  // Test files use patterns necessary for mocking
   ]),
 ]);
 
