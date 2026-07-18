@@ -9,17 +9,53 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { sendOtp, verifyOtp } from "@/lib/otp";
 
 async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; error?: string }> {
-  // Cari apakah ada pendaftaran dengan WhatsApp atau Email tersebut
-  const exists = await prisma.registration.findFirst({
+  // Cari registrasi mana saja yang cocok dengan WA atau email
+  const registrations = await (prisma as any).registration.findMany({
     where: {
       OR: [{ email: cleanVal }, { whatsapp: cleanVal }],
     },
-  });
+    select: { id: true, name: true, email: true, whatsapp: true, userId: true },
+  }) as { id: string; name: string; email: string; whatsapp: string; userId: string | null }[];
 
-  if (!exists) {
+  if (registrations.length === 0) {
     return {
       error: "Nomor WhatsApp atau Email belum terdaftar pada program apa pun. Silakan mendaftar terlebih dahulu.",
     };
+  }
+
+  // Ambil data representatif dari registrasi pertama
+  const rep = registrations[0];
+  const email = rep.email;
+  const whatsapp = rep.whatsapp;
+  const name = rep.name;
+
+  // Cek apakah sudah ada User terhubung — jika belum, buat otomatis (backfill on-login)
+  let userId = rep.userId;
+  if (!userId) {
+    // Cari User yang sudah ada berdasarkan email atau WA
+    let user = await (prisma as any).user.findFirst({
+      where: { OR: [{ email }, { whatsapp }] },
+      select: { id: true },
+    });
+
+    if (!user) {
+      // Buat User baru jika benar-benar belum ada
+      user = await (prisma as any).user.create({
+        data: { name, email, whatsapp, role: "STUDENT" },
+        select: { id: true },
+      });
+    }
+
+    userId = user.id;
+
+    // Backfill: hubungkan SEMUA registrasi milik user ini yang belum terhubung
+    await (prisma as any).registration.updateMany({
+      where: {
+        userId: null,
+        OR: [{ email }, { whatsapp }],
+      },
+      data: { userId },
+    });
   }
 
   await createMemberSession(cleanVal);
