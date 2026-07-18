@@ -38,6 +38,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Program tidak ditemukan. (Sudah jalankan `npm run db:seed`?)" }, { status: 404 });
     }
 
+    // Validasi apakah nomor WA atau Email sudah digunakan & lunas / terdaftar di program ini
+    const existingReg = await prisma.registration.findFirst({
+      where: {
+        programId: program.id,
+        OR: [
+          { whatsapp },
+          { email }
+        ]
+      },
+      include: { payment: true }
+    });
+
+    if (existingReg) {
+      const isPaidOrFree = program.price === 0 || existingReg.status === "PAID" || existingReg.status === "PASSED" || existingReg.payment?.status === "PAID";
+      if (isPaidOrFree) {
+        const fieldUsed = existingReg.whatsapp === whatsapp ? "Nomor WhatsApp" : "Email";
+        const message = program.price === 0
+          ? `${fieldUsed} ini sudah terdaftar untuk program ini. Silakan cek WhatsApp/Email Anda.`
+          : `${fieldUsed} ini sudah terdaftar dan lunas untuk program ini. Silakan masuk ke menu Member.`;
+        return NextResponse.json({ error: message }, { status: 400 });
+      }
+    }
+
     // idempoten: daftar dua kali dengan nomor sama = tetap sukses
     const reg = await (prisma.registration as any).upsert({
       where: { whatsapp_programId: { whatsapp, programId: program.id } },
