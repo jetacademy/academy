@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendWa, msgWelcome, msgAccess } from "@/lib/wa";
+import { sendWa, msgWelcome, msgAccess, normalizeWa } from "@/lib/wa";
 import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 import { formatJadwal } from "@/lib/format";
 import { sendEmail, getWelcomeEmailHtml, getPaidEmailHtml } from "@/lib/email";
@@ -21,15 +21,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Format data tidak valid." }, { status: 400 });
   }
 
-  const name = (body.name ?? "").trim();
-  const whatsapp = (body.whatsapp ?? "").trim();
-  const email = (body.email ?? "").trim();
+  const name = (body.name ?? "").trim().slice(0, 100);
+  const whatsappRaw = (body.whatsapp ?? "").trim();
+  const whatsapp = normalizeWa(whatsappRaw);
+  const email = (body.email ?? "").trim().toLowerCase();
   const programSlug = (body.programSlug ?? "").trim();
-  const institution = (body.institution ?? "").trim();
+  const institution = (body.institution ?? "").trim().slice(0, 100).replace(/<[^>]*>/g, "");
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
   if (name.length < 3) return NextResponse.json({ error: "Nama minimal 3 huruf." }, { status: 400 });
-  if (!/^0[0-9]{8,13}$/.test(whatsapp)) return NextResponse.json({ error: "Nomor WhatsApp tidak valid (contoh: 081234567890)." }, { status: 400 });
+  if (!/^08[0-9]{8,13}$/.test(whatsappRaw)) return NextResponse.json({ error: "Nomor WhatsApp tidak valid (contoh: 081234567890)." }, { status: 400 });
   if (!/^\S+@\S+\.\S+$/.test(email)) return NextResponse.json({ error: "Email tidak valid." }, { status: 400 });
 
   try {
@@ -95,12 +96,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, invoiceUrl: reg.payment.invoiceUrl });
     }
 
-    // MODE DEV tanpa Xendit: langsung dianggap lunas agar alur bisa dites lokal
+    // MODE DEV: bypass Xendit jika env XENDIT_DEV_BYPASS=true
     if (!isXenditConfigured()) {
-      if (process.env.NODE_ENV === "production") {
+      console.warn("[register] XENDIT_SECRET_KEY kosong — MODE DEV: pembayaran dianggap lunas.");
+      if (process.env.NODE_ENV === "production" && process.env.XENDIT_DEV_BYPASS !== "true") {
         return NextResponse.json({ error: "Pembayaran belum dikonfigurasi. Hubungi admin." }, { status: 503 });
       }
-      console.warn("[register] XENDIT_SECRET_KEY kosong — MODE DEV: pembayaran dianggap lunas.");
       await prisma.$transaction([
         prisma.payment.upsert({
           where: { registrationId: reg.id },

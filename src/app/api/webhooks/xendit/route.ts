@@ -82,8 +82,13 @@ export async function POST(req: Request) {
           html: getPaidEmailHtml(reg.name, reg.program.title, memberUrl, reg.program.zoomLink, reg.program.waGroupLink, reg.program.lmsLink),
         }).catch((err) => console.error("Gagal mengirim email webhook lunas:", err));
       }
-    } else if (event.status === "EXPIRED") {
+    } else if (event.status === "EXPIRED" && payment.status !== "PAID") {
       await prisma.payment.update({ where: { id: payment.id }, data: { status: "EXPIRED" } });
+    } else if (event.status === "FAILED" && payment.status !== "PAID") {
+      await prisma.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } });
+    } else {
+      console.warn("[webhook] Status tidak dikenal:", event.status);
+      return NextResponse.json({ error: `Status tidak dikenal: ${event.status}` }, { status: 202 });
     }
 
     return NextResponse.json({ ok: true });

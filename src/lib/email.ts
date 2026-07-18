@@ -44,25 +44,29 @@ export async function sendEmail({ to, subject, html }: EmailPayload) {
     }
   }
 
-  // Fallback: log ke terminal dan tulis ke file lokal untuk simulasi
-  const logDir = path.join(process.cwd(), "scratch");
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true });
-  }
+  // Fallback: hanya di development, log ke terminal
+  if (process.env.NODE_ENV === "development") {
+    const logDir = path.join(process.cwd(), "scratch");
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
 
-  const logFile = path.join(logDir, "emails.log");
-  const logMessage = `
+    const logFile = path.join(logDir, "emails.log");
+    const logMessage = `
 =========================================
 TIMESTAMP: ${new Date().toISOString()}
 KE       : ${to}
 SUBJEK   : ${subject}
 -----------------------------------------
 ${html.replace(/<[^>]*>/g, " ").trim()}
-=========================================\n`;
+=========================================
+`;
 
-  fs.appendFileSync(logFile, logMessage, "utf-8");
-  console.log(`\n[Email Simulation Dev] Ke: ${to}\nSubjek: ${subject}\nTeks tercatat di: scratch/emails.log\n`);
-}
+    fs.appendFileSync(logFile, logMessage, "utf-8");
+    console.log(`\n[Email Simulation Dev] Ke: ${to}\nSubjek: ${subject}\nTeks tercatat di: scratch/emails.log\n`);
+  } else {
+    console.warn(`[Email] Gagal kirim ke ${to} — SMTP tidak tersedia.`);
+  }
 
 // ─── Templates ───────────────────────────────────────────────────
 

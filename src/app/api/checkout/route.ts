@@ -63,12 +63,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, invoiceUrl: reg.payment.invoiceUrl });
     }
 
-    // MODE DEV tanpa Xendit: langsung tandai lunas supaya alur bisa dites lokal
+    // MODE DEV tanpa Xendit: langsung tandai lunas
     if (!isXenditConfigured()) {
-      if (process.env.NODE_ENV === "production") {
+      console.warn("[checkout] XENDIT_SECRET_KEY kosong — MODE DEV: pembayaran dianggap lunas.");
+      if (process.env.NODE_ENV === "production" && process.env.XENDIT_DEV_BYPASS !== "true") {
         return NextResponse.json({ error: "Pembayaran belum dikonfigurasi. Hubungi admin." }, { status: 503 });
       }
-      console.warn("[checkout] XENDIT_SECRET_KEY kosong — MODE DEV: pembayaran dianggap lunas.");
       await prisma.$transaction([
         prisma.payment.upsert({
           where: { registrationId: reg.id },

@@ -42,6 +42,14 @@ enum LessonType {
   QUIZ // kuis pilihan ganda per materi
 }
 
+// Jenis jawaban kuis
+enum AnswerKey {
+  A
+  B
+  C
+  D
+}
+
 // Program pelatihan
 model Program {
   id            String         @id @default(cuid())
@@ -115,6 +123,9 @@ enum RegistrationStatus {
   REGISTERED // sudah daftar webinar gratis
   PAID // sudah bayar paket sertifikat, boleh post-test
   PASSED // lulus post-test, sertifikat terbit
+  EXPIRED // pembayaran kadaluarsa
+  FAILED // pembayaran gagal
+  CANCELLED // dibatalkan
 }
 
 // Pembayaran paket sertifikat via Xendit Invoice
@@ -142,18 +153,18 @@ enum PaymentStatus {
 
 // Soal pilihan ganda — post-test program (lessonId null) atau kuis materi (lessonId terisi)
 model Question {
-  id        String  @id @default(cuid())
-  program   Program @relation(fields: [programId], references: [id])
+  id        String    @id @default(cuid())
+  program   Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
   programId String
-  lesson    Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson    Lesson?   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   lessonId  String?
-  text      String  @db.Text
+  text      String    @db.Text
   optionA   String
   optionB   String
   optionC   String
   optionD   String
-  correct   String // "A" | "B" | "C" | "D" — tidak pernah dikirim ke client
-  order     Int     @default(0)
+  correct   AnswerKey
+  order     Int       @default(0)
 
   @@index([programId])
   @@index([lessonId])
