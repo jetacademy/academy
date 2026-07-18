@@ -4,7 +4,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WaFloat from "@/components/WaFloat";
 import Faq from "@/components/Faq";
-import Testimonials from "@/components/Testimonials";
 import Icon, { TYPE_ICON } from "@/components/Icon";
 import { getPrograms } from "@/lib/programs";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
@@ -246,8 +245,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      <Testimonials limit={4} />
 
       <Footer />
       <WaFloat />
