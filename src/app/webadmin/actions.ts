@@ -61,30 +61,36 @@ function isUniqueError(err: unknown): boolean {
 }
 
 // ─── DOMPurify singleton (inisialisasi sekali di module level) ────
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { JSDOM } = require("jsdom");
-const { window } = new JSDOM("");
-// eslint-disable-next-line @typescript-eslint/no-require-imports,@typescript-eslint/no-explicit-any
-const purify = require("isomorphic-dompurify")(window as any);
-// Hook: bersihkan javascript: dan data: dari href
-purify.addHook("afterSanitizeAttributes", function (node: Element) {
-  if (node.tagName === "A" && node.getAttribute("href")) {
-    const href = node.getAttribute("href")!;
-    if (/^\s*(javascript|data|vbscript):/i.test(href)) {
-      node.setAttribute("href", "#");
+let purifyInstance: any = null;
+
+async function getPurify() {
+  if (purifyInstance) return purifyInstance;
+  const { JSDOM } = await import("jsdom");
+  const dom = new JSDOM("");
+  const createDOMPurify = await import("isomorphic-dompurify");
+  purifyInstance = createDOMPurify.default(dom.window as any);
+  // Hook: bersihkan javascript: dan data: dari href
+  purifyInstance.addHook("afterSanitizeAttributes", function (node: Element) {
+    if (node.tagName === "A" && node.getAttribute("href")) {
+      const href = node.getAttribute("href")!;
+      if (/^\s*(javascript|data|vbscript):/i.test(href)) {
+        node.setAttribute("href", "#");
+      }
     }
-  }
-  if (node.tagName === "IMG" && node.getAttribute("src")) {
-    const src = node.getAttribute("src")!;
-    if (/^\s*(javascript|data):/i.test(src)) {
-      node.removeAttribute("src");
+    if (node.tagName === "IMG" && node.getAttribute("src")) {
+      const src = node.getAttribute("src")!;
+      if (/^\s*(javascript|data):/i.test(src)) {
+        node.removeAttribute("src");
+      }
     }
-  }
-});
+  });
+  return purifyInstance;
+}
 
 /** Sanitasi HTML dari rich text editor — pakai DOMPurify singleton di atas. */
-function sanitizeHtml(html: string | null): string | null {
+async function sanitizeHtml(html: string | null): Promise<string | null> {
   if (!html) return null;
+  const purify = await getPurify();
   const cleaned = purify.sanitize(html, {
     ALLOWED_TAGS: [
       "p", "br", "b", "i", "u", "strong", "em", "a", "ul", "ol", "li",
@@ -113,15 +119,15 @@ export async function saveProgram(formData: FormData) {
     slug: String(formData.get("slug") ?? "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-"),
     type: String(formData.get("type") ?? "WEBINAR") as "WEBINAR" | "KELAS" | "WORKSHOP" | "BOOTCAMP",
     title: String(formData.get("title") ?? "").trim(),
-    tagline: sanitizeHtml(rawTagline) ?? rawTagline,
-    description: sanitizeHtml(rawDescription) ?? rawDescription,
+    tagline: await sanitizeHtml(rawTagline) ?? rawTagline,
+    description: await sanitizeHtml(rawDescription) ?? rawDescription,
     emoji: String(formData.get("emoji") ?? "🎓").trim() || "🎓",
     imageUrl: optStr(formData, "imageUrl"),
     mentorName: String(formData.get("mentorName") ?? "").trim(),
-    mentorBio: sanitizeHtml(rawMentorBio) ?? rawMentorBio,
+    mentorBio: await sanitizeHtml(rawMentorBio) ?? rawMentorBio,
     materi: parseLines(String(formData.get("materi") ?? "")),
     deliverables: parseDeliverables(String(formData.get("deliverables") ?? "")),
-    guarantee: rawGuarantee ? (sanitizeHtml(rawGuarantee) ?? rawGuarantee) : null,
+    guarantee: rawGuarantee ? (await sanitizeHtml(rawGuarantee) ?? rawGuarantee) : null,
     scheduleAt: new Date(String(formData.get("scheduleAt"))),
     durationLabel: String(formData.get("durationLabel") ?? "2 jam").trim(),
     zoomLink: optStr(formData, "zoomLink"),
@@ -402,7 +408,7 @@ export async function saveLmsLesson(formData: FormData) {
     }
   }
   const fileUrl = optStr(formData, "fileUrl");
-  const content = sanitizeHtml(optStr(formData, "content"));
+  const content = await sanitizeHtml(optStr(formData, "content"));
   const duration = String(formData.get("duration") ?? "10 menit").trim() || "10 menit";
   const passingScoreRaw = num(formData, "passingScore");
   const hasPassingScore = formData.has("passingScore") && String(formData.get("passingScore")).trim() !== "";
@@ -696,7 +702,7 @@ export async function saveUser(formData: FormData) {
       if (password.length === 0 && role !== "STUDENT") {
         redirect("/webadmin/user?e=password-wajib");
       }
-      await prisma.user.create({ data });
+      await prisma.user.create({ data: data as any });
     }
   } catch (err) {
     if (isUniqueError(err)) {

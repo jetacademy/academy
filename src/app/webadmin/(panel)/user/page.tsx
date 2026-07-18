@@ -28,7 +28,7 @@ export default async function AdminUserList({
 
   // Fetch all users matching filters
   const users = await prisma.user.findMany({
-    where: whereClause,
+    where: whereClause as any,
     orderBy: { createdAt: "desc" },
   }) as UserItem[];
 
