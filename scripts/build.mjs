@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Build helper — handle Prisma migration for both new and existing databases
-const { execSync } = require("child_process");
+import { execSync } from "child_process";
+import { exit } from "process";
 
 function run(cmd) {
   console.log(`> ${cmd}`);
@@ -29,4 +30,4 @@ run("npx eslint .");
 
 // Step 5: Build Next.js
 const built = run("npx next build");
-if (!built) process.exit(1);
+if (!built) exit(1);
