@@ -206,7 +206,7 @@ export default function DaftarPage() {
             {step === "otp" && (
               <div>
                 <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", marginBottom: "1.2rem", textAlign: "center" }}>
-                  Kode OTP telah dikirim ke <strong>{userEmail}</strong> via WhatsApp
+                  Kode verifikasi telah dikirim ke <strong>{userEmail}</strong> via WhatsApp atau Email
                 </p>
                 <div className="field">
                   <label htmlFor="fOtp">Kode OTP (6 digit)</label>

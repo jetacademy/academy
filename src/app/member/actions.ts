@@ -10,44 +10,44 @@ import { sendOtp, verifyOtp } from "@/lib/otp";
 import { sendEmail, getWelcomeMemberEmailHtml } from "@/lib/email";
 
 async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; error?: string }> {
-  // Cari registrasi mana saja yang cocok dengan WA atau email
+  // 1. Cari User record terlebih dahulu — user yang baru daftar akun
+  //    belum tentu sudah ikut program, dan itu valid.
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ email: cleanVal }, { whatsapp: cleanVal }] },
+    select: { id: true, name: true, email: true, whatsapp: true },
+  });
+
+  // 2. Cari registrasi program yang cocok (untuk backfill)
   const registrations = await prisma.registration.findMany({
-    where: {
-      OR: [{ email: cleanVal }, { whatsapp: cleanVal }],
-    },
+    where: { OR: [{ email: cleanVal }, { whatsapp: cleanVal }] },
     select: { id: true, name: true, email: true, whatsapp: true, userId: true },
   }) as { id: string; name: string; email: string; whatsapp: string; userId: string | null }[];
 
-  if (registrations.length === 0) {
-    return {
-      error: "Nomor WhatsApp atau Email belum terdaftar pada program apa pun. Silakan mendaftar terlebih dahulu.",
-    };
+  // Jika tidak ada user maupun registrasi → identifier tidak dikenal
+  if (!user && registrations.length === 0) {
+    return { error: "Nomor WhatsApp atau Email belum terdaftar. Silakan buat akun atau daftar program terlebih dahulu." };
   }
 
-  // Ambil data representatif dari registrasi pertama
-  const rep = registrations[0];
-  const email = rep.email;
-  const whatsapp = rep.whatsapp;
-  const name = rep.name;
+  let userId = user?.id ?? null;
+  const email = user?.email ?? registrations[0]?.email ?? cleanVal;
+  const whatsapp = user?.whatsapp ?? registrations[0]?.whatsapp ?? "";
+  const name = user?.name ?? registrations[0]?.name ?? "";
 
-  // Cek apakah sudah ada User terhubung — jika belum, buat otomatis (backfill on-login)
-  let userId = rep.userId;
-  if (!userId) {
-    // Cari User yang sudah ada berdasarkan email atau WA
-    let user = await prisma.user.findFirst({
+  // 3. Jika login via registrasi (belum punya User) — buat User & backfill
+  if (!userId && registrations.length > 0) {
+    let newUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { whatsapp }] },
       select: { id: true },
     });
 
-    if (!user) {
-      // Buat User baru jika benar-benar belum ada
-      user = await prisma.user.create({
+    if (!newUser) {
+      newUser = await prisma.user.create({
         data: { name, email, whatsapp, role: "STUDENT" },
         select: { id: true },
       });
     }
 
-    userId = user.id;
+    userId = newUser.id;
 
     // Backfill: hubungkan SEMUA registrasi milik user ini yang belum terhubung
     await prisma.registration.updateMany({

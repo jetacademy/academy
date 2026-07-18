@@ -155,7 +155,7 @@ export default function MemberLoginPage() {
                   onClick={handleSendOtp}
                   disabled={isBusy}
                 >
-                  {isBusy ? "Mengirim..." : "Kirim Kode OTP via WhatsApp"}
+                  {isBusy ? "Mengirim..." : "Kirim Kode OTP"}
                 </button>
 
                 <p style={{ textAlign: "center", marginTop: "1.5rem", fontSize: "0.82rem", color: "var(--ink-soft)" }}>
@@ -170,7 +170,7 @@ export default function MemberLoginPage() {
             {step === "otp" && (
               <div>
                 <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", marginBottom: "1.2rem", textAlign: "center" }}>
-                  Kode OTP telah dikirim ke <strong>{identifier}</strong> via WhatsApp
+                  Kode verifikasi telah dikirim ke <strong>{identifier}</strong> via WhatsApp atau Email
                 </p>
                 <div className="field">
                   <label htmlFor="fOtp">Kode OTP (6 digit)</label>
