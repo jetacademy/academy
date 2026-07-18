@@ -93,16 +93,42 @@ export async function memberLoginWithGoogle(credential: string) {
       `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`,
       { cache: "no-store" }
     );
-    if (!res.ok) return { error: "Token Google tidak valid. Silakan coba lagi." };
-    const payload = (await res.json()) as { aud?: string; email?: string; email_verified?: string };
 
-    if (payload.aud !== clientId || !payload.email || payload.email_verified !== "true") {
-      return { error: "Verifikasi akun Google gagal. Silakan coba lagi." };
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error("[Google tokeninfo] HTTP error:", res.status, body);
+      return { error: "Token Google tidak valid. Silakan coba login ulang." };
+    }
+
+    const payload = (await res.json()) as {
+      aud?: string;
+      email?: string;
+      email_verified?: string;
+      error_description?: string;
+    };
+
+    if (payload.error_description) {
+      console.error("[Google tokeninfo] Error:", payload.error_description);
+      return { error: "Sesi Google sudah kedaluwarsa. Silakan coba login ulang." };
+    }
+
+    if (payload.aud !== clientId) {
+      console.error("[Google tokeninfo] AUD mismatch:", payload.aud, "!=", clientId);
+      return { error: "Token tidak cocok dengan aplikasi ini." };
+    }
+
+    if (!payload.email) {
+      return { error: "Akun Google tidak mengembalikan email." };
+    }
+
+    if (payload.email_verified !== "true") {
+      return { error: "Email Google Anda belum diverifikasi." };
     }
 
     return loginByIdentifier(payload.email.trim());
-  } catch {
-    return { error: "Gagal menghubungi server Google. Silakan coba lagi." };
+  } catch (err) {
+    console.error("[memberLoginWithGoogle] Unexpected error:", err);
+    return { error: "Gagal menghubungi server Google. Periksa koneksi dan coba lagi." };
   }
 }
 

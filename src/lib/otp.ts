@@ -24,9 +24,10 @@ export async function sendOtp(identifier: string): Promise<{ ok: boolean; error?
     return { ok: false, error: "Nomor WhatsApp/Email belum terdaftar." };
   }
 
-  // Hapus OTP lama yang belum dipakai
+  // Hapus OTP lama yang sudah expire (cleanup global, bukan hanya identifier ini)
+  // Dijalankan setiap kali ada permintaan OTP — O(1) karena index [expiresAt]
   await (prisma as any).otpCode.deleteMany({
-    where: { identifier, used: false, expiresAt: { lt: new Date() } },
+    where: { expiresAt: { lt: new Date() } },
   });
 
   // Cek apakah sudah ada OTP aktif (mencegah spam)

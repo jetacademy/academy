@@ -40,15 +40,26 @@ export default function MemberLoginPage() {
     setLoading(true);
 
     try {
-      // credential ada = token Google asli → verifikasi di server; tanpa credential = mode dev
-      const res = credential ? await memberLoginWithGoogle(credential) : await memberLogin(email);
+      let res: { ok?: boolean; error?: string } | undefined;
+
+      if (credential) {
+        // Token Google asli → verifikasi di server
+        res = await memberLoginWithGoogle(credential);
+      } else {
+        // Mode dev tanpa credential
+        res = await memberLogin(email);
+      }
+
       if (res?.error) {
         setError(res.error);
       } else if (res?.ok) {
         router.push("/member");
+      } else {
+        setError("Terjadi kesalahan tak terduga. Silakan coba lagi.");
       }
-    } catch {
-      setError("Terjadi kesalahan saat masuk dengan Google. Silakan coba lagi.");
+    } catch (err: any) {
+      console.error("[Google login error]", err);
+      setError("Koneksi gagal. Periksa jaringan Anda dan coba lagi.");
     } finally {
       setLoading(false);
     }

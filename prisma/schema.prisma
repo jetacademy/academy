@@ -116,8 +116,11 @@ model Registration {
 
   @@unique([whatsapp, programId]) // satu nomor WA = satu pendaftaran per program
   @@index([email])
+  @@index([email, programId])     // login lookup lebih efisien
+  @@index([whatsapp])             // lookup WA saja (OTP login)
   @@index([programId])
   @@index([status])
+  @@index([status, programId])    // filter status per program di dashboard
   @@index([createdAt])
   @@index([userId])
 }
@@ -185,6 +188,8 @@ model TestAttempt {
 
   @@index([registrationId])
   @@index([registrationId, lessonId])
+  @@index([lessonId])             // untuk agregasi hasil kuis per materi
+  @@index([passed, registrationId])  // cek apakah sudah pernah lulus
 }
 
 // Sertifikat — terbit otomatis saat lulus post-test
@@ -258,6 +263,7 @@ model Completion {
   @@unique([registrationId, lessonId])
   @@index([registrationId])
   @@index([lessonId])
+  @@index([lessonId, registrationId])  // agregasi completion per pelajaran
 }
 
 // OTP untuk login member — dikirim via WhatsApp, berlaku 5 menit
@@ -270,7 +276,9 @@ model OtpCode {
   createdAt DateTime @default(now())
 
   @@index([identifier])
-  @@index([identifier, code])
+  @@index([identifier, code])     // verifikasi OTP
+  @@index([expiresAt])            // cleanup job: hapus OTP kedaluwarsa
+  @@index([used, expiresAt])      // hapus OTP lama yang tidak terpakai
 }
 
 // Kategori program
@@ -295,11 +303,14 @@ model User {
   name         String
   email        String         @unique
   whatsapp     String?        @unique
-  passwordHash String? // Kata sandi terenkripsi (untuk ADMIN / TEACHER / STUDENT)
+  passwordHash String?        // Kata sandi terenkripsi (untuk ADMIN / TEACHER / STUDENT)
   role         Role           @default(STUDENT)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   registrations Registration[]
+
+  @@index([role])               // filter by role di halaman user management
+  @@index([createdAt])          // sort terbaru di daftar user
 }
 
 

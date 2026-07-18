@@ -23,6 +23,11 @@ export default async function AdminDashboard() {
     prisma.certificate.count(),
     prisma.program.findMany({
       orderBy: { scheduleAt: "asc" },
+      take: 200, // batas aman — tidak ada platform dengan >200 program aktif
+      select: {
+        id: true, title: true, type: true, price: true,
+        isActive: true, isFeatured: true, scheduleAt: true,
+      },
     }),
     prisma.registration.findMany({
       orderBy: { createdAt: "desc" },
