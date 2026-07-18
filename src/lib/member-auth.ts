@@ -19,14 +19,10 @@ export async function getMemberSession(): Promise<string | null> {
   if (!value || !signature) return null;
   if (sign(value) !== signature) return null;
 
-  // Refresh cookie maxAge setiap kali session diakses agar tidak expired
-  jar.set(COOKIE, raw, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 30, // 30 hari
-    path: "/",
-  });
+  // CATATAN: Jangan set/modify cookie di sini — fungsi ini dipanggil dari
+  // Server Component (render). Cookie hanya boleh dimodifikasi di Server Action
+  // atau Route Handler. Session refresh terjadi otomatis saat createMemberSession
+  // dipanggil ulang (login). Cookie berlaku 30 hari sejak login terakhir.
 
   return value;
 }
