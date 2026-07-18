@@ -160,10 +160,10 @@ export async function POST(req: Request) {
     }).catch((err) => console.error("Gagal mengirim email invoice:", err));
 
     return NextResponse.json({ ok: true, invoiceUrl: invoice.invoice_url });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[register]", err);
     return NextResponse.json(
-      { error: "Database belum terhubung. Cek DATABASE_URL di file .env lalu jalankan `npx prisma db push`." },
+      { error: `Terjadi kesalahan: ${err?.message || err}` },
       { status: 503 }
     );
   }
