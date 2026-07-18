@@ -27,7 +27,7 @@ export default function Navbar({ minimal = false, ctaHref = "/#program", ctaLabe
             height={44}
             style={{ objectFit: "contain" }}
           />
-          Jetschool <span style={{ color: "var(--purple)" }}>Academy</span>
+          Jetschool <span className="nav-brand-suffix" style={{ color: "var(--purple)" }}>Academy</span>
         </Link>
 
         {!minimal && (
@@ -38,11 +38,12 @@ export default function Navbar({ minimal = false, ctaHref = "/#program", ctaLabe
           </nav>
         )}
 
-        <div style={{ display: "flex", alignItems: "center", gap: ".8rem" }}>
+        <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: ".8rem" }}>
           {!minimal && (
             <Link
               href="/member"
               title="Dashboard Peserta"
+              className="nav-user-btn"
               style={{
                 display: "flex",
                 alignItems: "center",

@@ -4,6 +4,7 @@ import { sendWa, msgWelcome, msgAccess, normalizeWa } from "@/lib/wa";
 import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 import { formatJadwal } from "@/lib/format";
 import { sendEmail, getWelcomeEmailHtml, getPaidEmailHtml } from "@/lib/email";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/register — satu pintu untuk semua tipe program.
@@ -14,6 +15,13 @@ import { sendEmail, getWelcomeEmailHtml, getPaidEmailHtml } from "@/lib/email";
  *   Akses (grup/LMS/Zoom) dikirim via WA oleh webhook setelah lunas.
  */
 export async function POST(req: Request) {
+  // Rate limit: maks 10 registrasi per IP per 60 detik
+  const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "anonymous";
+  const limit = checkRateLimit(`register:${ip}`, 10, 60_000);
+  if (!limit.ok) {
+    return NextResponse.json({ error: limit.error }, { status: limit.status });
+  }
+
   let body: { name?: string; whatsapp?: string; email?: string; programSlug?: string; institution?: string };
   try {
     body = await req.json();

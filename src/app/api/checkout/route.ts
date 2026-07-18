@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 import { normalizeWa } from "@/lib/wa";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/checkout — buat invoice Xendit untuk paket sertifikat.
