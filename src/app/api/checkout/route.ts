@@ -9,6 +9,13 @@ import { checkRateLimit } from "@/lib/rate-limit";
  * Peserta diidentifikasi lewat nomor WA yang dipakai saat daftar webinar.
  */
 export async function POST(req: Request) {
+  // Rate limit: maks 20 checkout per IP per 60 detik
+  const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? "anonymous";
+  const limit = checkRateLimit(`checkout:${ip}`, 20, 60_000);
+  if (!limit.ok) {
+    return NextResponse.json({ error: limit.error }, { status: limit.status });
+  }
+
   let body: { whatsapp?: string; programSlug?: string };
   try {
     body = await req.json();
