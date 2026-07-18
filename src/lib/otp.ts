@@ -15,13 +15,18 @@ function generateOtp(): string {
  * Simpan OTP ke DB, hapus OTP lama yang belum dipakai.
  */
 export async function sendOtp(identifier: string): Promise<{ ok: boolean; error?: string }> {
-  // Cari apakah identifier terdaftar
-  const exists = await prisma.registration.findFirst({
+  // Cari apakah identifier terdaftar — cek Registration dulu, lalu User
+  const existsReg = await prisma.registration.findFirst({
     where: {
       OR: [{ email: identifier }, { whatsapp: identifier }],
     },
   });
-  if (!exists) {
+  const existsUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: identifier }, { whatsapp: identifier }],
+    },
+  });
+  if (!existsReg && !existsUser) {
     return { ok: false, error: "Nomor WhatsApp/Email belum terdaftar." };
   }
 
@@ -47,12 +52,14 @@ export async function sendOtp(identifier: string): Promise<{ ok: boolean; error?
     data: { identifier, code, expiresAt },
   });
 
-  // Kirim via WhatsApp
-  const waNumber = exists.whatsapp;
-  const message = `*Jetschool Academy* — Kode verifikasi Anda: *${code}*\n\nKode berlaku 5 menit. Jangan bagikan kode ini kepada siapa pun.`;
-  await sendWa(waNumber, message).catch((err) => {
-    console.error("[otp] Gagal kirim WA:", err);
-  });
+  // Kirim via WhatsApp — cari nomor WA dari Registration atau User
+  const waNumber = existsReg?.whatsapp ?? existsUser?.whatsapp;
+  if (waNumber) {
+    const message = `*Jetschool Academy* — Kode verifikasi Anda: *${code}*\n\nKode berlaku 5 menit. Jangan bagikan kode ini kepada siapa pun.`;
+    await sendWa(waNumber, message).catch((err) => {
+      console.error("[otp] Gagal kirim WA:", err);
+    });
+  }
 
   return { ok: true };
 }

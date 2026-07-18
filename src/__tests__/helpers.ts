@@ -210,7 +210,6 @@ export function makeRegistration(overrides?: Record<string, any>) {
 export function makeCertificate(overrides?: Record<string, any>) {
   return {
     id: 'cert-1',
-    serial: 1,
     number: 'JSA-2026-0001',
     registrationId: 'reg-1',
     issuedAt: new Date(),

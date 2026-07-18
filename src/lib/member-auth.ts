@@ -18,6 +18,16 @@ export async function getMemberSession(): Promise<string | null> {
   const [value, signature] = raw.split(":");
   if (!value || !signature) return null;
   if (sign(value) !== signature) return null;
+
+  // Refresh cookie maxAge setiap kali session diakses agar tidak expired
+  jar.set(COOKIE, raw, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 30, // 30 hari
+    path: "/",
+  });
+
   return value;
 }
 

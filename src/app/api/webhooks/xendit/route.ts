@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     // Pastikan webhook ini untuk invoice yang masih aktif — tolak stale callback
     const isCurrentInvoice = !event.id || payment.xenditInvoiceId === event.id;
 
-    if (event.status === "PAID") {
+    if (event.status === "PAID" && isCurrentInvoice) {
       // idempoten: webhook bisa dikirim lebih dari sekali
       if (payment.status !== "PAID") {
         await prisma.$transaction([

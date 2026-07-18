@@ -139,6 +139,10 @@ export default async function MemberDashboardPage() {
                   statusBadge = <span className="badge g">Lulus & Sertifikat Terbit</span>;
                 } else if (pay && pay.status === "PENDING") {
                   statusBadge = <span className="badge y">Menunggu Pembayaran</span>;
+                } else if (reg.status === "EXPIRED") {
+                  statusBadge = <span className="badge" style={{ background: "#ff6b6b", color: "#fff" }}>Kedaluwarsa</span>;
+                } else if (reg.status === "FAILED") {
+                  statusBadge = <span className="badge" style={{ background: "#e74c3c", color: "#fff" }}>Gagal</span>;
                 }
 
                 return (
@@ -227,6 +231,26 @@ export default async function MemberDashboardPage() {
                             <ClaimCertButton registrationId={reg.id} />
                           )}
                         </>
+                      )}
+
+                      {/* Kasus 5: EXPIRED — pembayaran kedaluwarsa, bisa bayar ulang */}
+                      {reg.status === "EXPIRED" && (
+                        <Link href={`/#program`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                          Bayar Ulang
+                        </Link>
+                      )}
+
+                      {/* Kasus 6: FAILED — pembayaran gagal, hubungi admin */}
+                      {reg.status === "FAILED" && (
+                        <a
+                          href={process.env.NEXT_PUBLIC_WA_ADMIN ? `https://wa.me/${process.env.NEXT_PUBLIC_WA_ADMIN}` : "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-line btn-block"
+                          style={{ textAlign: "center" }}
+                        >
+                          Hubungi Admin
+                        </a>
                       )}
 
                       {/* Kasus 4: Sudah lulus post-test (PASSED), tampilkan sertifikat */}

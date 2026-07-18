@@ -42,6 +42,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
   const [emailVal, setEmailVal] = useState(memberProfile?.email ?? "");
   const [whatsappVal, setWhatsappVal] = useState(memberProfile?.whatsapp ?? "");
   const [institutionVal, setInstitutionVal] = useState(memberProfile?.institution ?? "");
+  const [credentialVal, setCredentialVal] = useState<string | undefined>(undefined);
 
   const isPaid = price > 0;
 
@@ -49,13 +50,16 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     e.preventDefault();
     setError("");
     setState("loading");
-    const data = {
+    const data: Record<string, unknown> = {
       name: nameVal.trim(),
       whatsapp: whatsappVal.trim(),
       email: emailVal.trim(),
       institution: institutionVal.trim(),
       programSlug,
     };
+    if (credentialVal) {
+      data.credential = credentialVal;
+    }
 
     try {
       const res = await fetch("/api/register", {
@@ -80,17 +84,28 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
       }
 
       window.fbq?.("track", "Lead");
-      router.push("/member");
+      // Cek apakah auto-login berhasil — jika tidak, arahkan ke login
+      try {
+        const checkSession = await fetch("/member?check=1");
+        if (checkSession.ok) {
+          router.push("/member");
+        } else {
+          router.push("/member/login?registered=1");
+        }
+      } catch {
+        router.push("/member/login?registered=1");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kendala. Silakan coba kembali.");
       setState("idle");
     }
   }
 
-  function handleGoogleSelect(email: string, name: string) {
+  function handleGoogleSelect(email: string, name: string, credential?: string) {
     setGoogleOpen(false);
     setNameVal(name);
     setEmailVal(email);
+    setCredentialVal(credential);
     setGoogleSelected(true);
   }
 
@@ -99,6 +114,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     setEmailVal("");
     setWhatsappVal("");
     setInstitutionVal("");
+    setCredentialVal(undefined);
     setGoogleSelected(false);
     try {
       await memberLogout();
@@ -232,7 +248,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                 name="whatsapp"
                 type="tel"
                 placeholder="Contoh: 081234567890"
-                pattern="0[0-9]{8,13}"
+                pattern="^08[0-9]{8,13}$"
                 required
                 value={whatsappVal}
                 onChange={(e) => setWhatsappVal(e.target.value)}

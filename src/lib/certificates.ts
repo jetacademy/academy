@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { sendWa, msgCertificate } from "@/lib/wa";
 import { sendEmail, getCertEmailHtml } from "@/lib/email";
+import { randomBytes } from "crypto";
 
 /**
- * Terbitkan sertifikat bernomor urut (JSA-<tahun>-<serial 4 digit>) untuk sebuah registrasi,
+ * Terbitkan sertifikat dengan nomor random (JSA-<tahun>-<8 hex>),
  * set status PASSED, lalu kirim notifikasi WA + email (best-effort).
  * Idempoten: jika sertifikat sudah ada, kembalikan yang lama.
  */
@@ -21,13 +22,15 @@ export async function issueCertificate(registrationId: string): Promise<{ number
   }
 
   const year = new Date().getFullYear();
+  const randomSuffix = randomBytes(4).toString("hex"); // 8 hex chars
+  const number = `JSA-${year}-${randomSuffix}`;
+
   const cert = await prisma.$transaction(async (tx) => {
     const created = await tx.certificate.create({
-      data: { registrationId: reg.id, number: `TMP-${reg.id}` },
+      data: { registrationId: reg.id, number },
     });
-    const number = `JSA-${year}-${String(created.serial).padStart(4, "0")}`;
     await tx.registration.update({ where: { id: reg.id }, data: { status: "PASSED" } });
-    return tx.certificate.update({ where: { id: created.id }, data: { number } });
+    return created;
   });
 
   const certUrl = `${baseUrl}/sertifikat/${cert.number}`;

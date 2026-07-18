@@ -121,7 +121,7 @@ export default async function LmsPage({
   const progressPercent = Math.round((completedCount / totalLessons) * 100);
 
   // Kelayakan sertifikat sesuai kriteria program (hasil tes / penyelesaian materi)
-  const hasPaid = reg.status !== "REGISTERED" || (program.price === 0 && program.certPrice === 0);
+  const hasPaid = (reg.status === "PAID" || reg.status === "PASSED") || (program.price === 0 && program.certPrice === 0);
   const eligibility = reg.certificate ? { eligible: true as const } : await checkCertEligibility(reg.id, program);
   const canClaim = !reg.certificate && hasPaid && eligibility.eligible;
 

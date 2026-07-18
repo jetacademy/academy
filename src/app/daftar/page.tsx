@@ -15,12 +15,18 @@ export default function DaftarPage() {
   const [otpCode, setOtpCode] = useState("");
   const [googleOpen, setGoogleOpen] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [googleName, setGoogleName] = useState("");
+  const [googleEmail, setGoogleEmail] = useState("");
   const router = useRouter();
 
   async function handleGoogleSelect(email: string, name: string, credential?: string) {
     setGoogleOpen(false);
     setError(null);
     setLoading(true);
+
+    // Simpan data Google untuk pre-fill form
+    setGoogleName(name || "");
+    setGoogleEmail(email || "");
 
     try {
       let res: { ok?: boolean; error?: string };
@@ -38,7 +44,7 @@ export default function DaftarPage() {
         setStep("done");
       } else {
         // User belum punya akun — daftarkan dulu lewat form
-        // Isi otomatis dari data Google
+        // Data Google sudah disimpan di googleName & googleEmail, form akan terisi otomatis
         setError("Akun Google belum terdaftar. Silakan lengkapi data di bawah.");
         setStep("form");
       }
@@ -176,15 +182,17 @@ export default function DaftarPage() {
               <form onSubmit={handleRegister}>
                 <div className="field">
                   <label htmlFor="fName">Nama Lengkap</label>
-                  <input id="fName" name="name" type="text" placeholder="Contoh: Budi Santoso" required minLength={3} />
+                  <input id="fName" name="name" type="text" placeholder="Contoh: Budi Santoso" required minLength={3}
+                    defaultValue={googleName} />
                 </div>
                 <div className="field">
                   <label htmlFor="fEmail">Email</label>
-                  <input id="fEmail" name="email" type="email" placeholder="contoh@email.com" required />
+                  <input id="fEmail" name="email" type="email" placeholder="contoh@email.com" required
+                    defaultValue={googleEmail} />
                 </div>
                 <div className="field">
                   <label htmlFor="fWa">Nomor WhatsApp Aktif</label>
-                  <input id="fWa" name="whatsapp" type="tel" placeholder="Contoh: 081234567890" pattern="0[0-9]{8,13}" required />
+                  <input id="fWa" name="whatsapp" type="tel" placeholder="Contoh: 081234567890" pattern="^08[0-9]{8,13}$" required />
                 </div>
                 <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={loading} style={{ width: "100%", marginTop: "0.5rem" }}>
                   {loading ? "Memproses..." : "Daftar & Kirim OTP"}

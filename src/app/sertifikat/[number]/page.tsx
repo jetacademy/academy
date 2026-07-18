@@ -49,15 +49,14 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
   const issuedDate = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(cert.issuedAt);
   const monthRoman = toRoman(cert.issuedAt.getMonth() + 1);
   const yearStr = String(cert.issuedAt.getFullYear());
-  const serialStr = String(cert.serial).padStart(4, "0");
 
-  // Format cert number
+  // Format cert number — fallback ke cert.number (JSA-YYYY-XXXXXXXX)
   const numFormatted = certConfig.numberFormat
     ? certConfig.numberFormat
-        .replace(/\[serial\]/g, serialStr)
+        .replace(/\[serial\]/g, cert.number)
         .replace(/\[month\]/g, monthRoman)
         .replace(/\[year\]/g, yearStr)
-    : `NOMOR : ${serialStr}/JSA-GP/${monthRoman}/${yearStr}`;
+    : cert.number;
 
   // Description text
   const descTemplate = certConfig.description || "Sebagai peserta dalam pelatihan nasional yang diadakan oleh PT Jetschool Academy Indonesia dengan tema: \"{title}\" yang dilaksanakan pada {date}.";

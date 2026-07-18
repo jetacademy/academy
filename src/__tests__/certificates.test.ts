@@ -17,7 +17,6 @@ const { mockPrisma, mockPrismaTx, makeCertificate, makeRegistration } = vi.hoist
   function makeCertificate(overrides?: Record<string, any>) {
     return {
       id: 'cert-1',
-      serial: 1,
       number: 'JSA-2026-0001',
       registrationId: 'reg-1',
       issuedAt: new Date(),
@@ -173,95 +172,65 @@ describe('issueCertificate', () => {
   });
 
   it('returns existing certificate if already issued (idempotency)', async () => {
-    const existingCert = makeCertificate({ number: 'JSA-2026-0001' });
+    const existingCert = makeCertificate({ number: 'JSA-2026-a1b2c3d4' });
     const reg = makeRegistration({ certificate: existingCert });
     mockPrisma.registration.findUnique.mockResolvedValue(reg);
 
     const result = await issueCertificate('reg-1');
     expect(result).toEqual({
-      number: 'JSA-2026-0001',
-      url: 'http://localhost:3000/sertifikat/JSA-2026-0001',
+      number: 'JSA-2026-a1b2c3d4',
+      url: 'http://localhost:3000/sertifikat/JSA-2026-a1b2c3d4',
     });
     // Should NOT create a new certificate
     expect(mockPrismaTx.certificate.create).not.toHaveBeenCalled();
   });
 
-  it('creates a certificate with proper number format via transaction', async () => {
+  it('creates a certificate with random hex number format via transaction', async () => {
     const reg = makeRegistration({ certificate: null });
     mockPrisma.registration.findUnique.mockResolvedValue(reg);
 
-    const created = makeCertificate({ id: 'cert-new', serial: 5, number: 'TMP-reg-1' });
-    mockPrismaTx.certificate.create.mockResolvedValue(created);
-    mockPrismaTx.registration.update.mockResolvedValue({ ...reg, status: 'PASSED' });
-    mockPrismaTx.certificate.update.mockResolvedValue(
-      makeCertificate({ id: 'cert-new', serial: 5, number: 'JSA-2026-0005' })
+    // Simulate: certificate.create returns the cert with the random number already set
+    mockPrismaTx.certificate.create.mockImplementation(({ data }: any) =>
+      Promise.resolve(makeCertificate({ id: 'cert-new', number: data.number }))
     );
+    mockPrismaTx.registration.update.mockResolvedValue({ ...reg, status: 'PASSED' });
 
     const result = await issueCertificate('reg-1');
 
-    expect(result.number).toMatch(/^JSA-2026-\d{4}$/);
-    expect(result.number).toBe('JSA-2026-0005');
-    expect(result.url).toBe('http://localhost:3000/sertifikat/JSA-2026-0005');
+    // Number should match format JSA-YYYY-XXXXXXXX (8 hex chars)
+    expect(result.number).toMatch(/^JSA-2026-[0-9a-f]{8}$/);
+    expect(result.url).toMatch(/^http:\/\/localhost:3000\/sertifikat\/JSA-2026-[0-9a-f]{8}$/);
 
+    // Should create certificate with the random number directly (no TMP- prefix)
     expect(mockPrismaTx.certificate.create).toHaveBeenCalledWith({
-      data: { registrationId: 'reg-1', number: `TMP-reg-1` },
+      data: expect.objectContaining({
+        registrationId: 'reg-1',
+        number: expect.stringMatching(/^JSA-2026-[0-9a-f]{8}$/),
+      }),
     });
+    // Should NOT do a second update (number set at create time)
+    expect(mockPrismaTx.certificate.update).not.toHaveBeenCalled();
+    // Should set status to PASSED
     expect(mockPrismaTx.registration.update).toHaveBeenCalledWith({
       where: { id: 'reg-1' },
       data: { status: 'PASSED' },
     });
-    expect(mockPrismaTx.certificate.update).toHaveBeenCalledWith({
-      where: { id: 'cert-new' },
-      data: { number: 'JSA-2026-0005' },
-    });
-  });
-
-  it('handles serial padding correctly (4 digits)', async () => {
-    const reg = makeRegistration({ certificate: null });
-    mockPrisma.registration.findUnique.mockResolvedValue(reg);
-
-    const created = makeCertificate({ id: 'cert-new', serial: 42, number: 'TMP-reg-1' });
-    mockPrismaTx.certificate.create.mockResolvedValue(created);
-    mockPrismaTx.registration.update.mockResolvedValue({ ...reg, status: 'PASSED' });
-    mockPrismaTx.certificate.update.mockResolvedValue(
-      makeCertificate({ id: 'cert-new', serial: 42, number: 'JSA-2026-0042' })
-    );
-
-    const result = await issueCertificate('reg-1');
-    expect(result.number).toBe('JSA-2026-0042');
-  });
-
-  it('handles large serial numbers (5+ digits)', async () => {
-    const reg = makeRegistration({ certificate: null });
-    mockPrisma.registration.findUnique.mockResolvedValue(reg);
-
-    const created = makeCertificate({ id: 'cert-new', serial: 12345, number: 'TMP-reg-1' });
-    mockPrismaTx.certificate.create.mockResolvedValue(created);
-    mockPrismaTx.registration.update.mockResolvedValue({ ...reg, status: 'PASSED' });
-    mockPrismaTx.certificate.update.mockResolvedValue(
-      makeCertificate({ id: 'cert-new', serial: 12345, number: 'JSA-2026-12345' })
-    );
-
-    const result = await issueCertificate('reg-1');
-    expect(result.number).toBe('JSA-2026-12345');
   });
 
   it('sends WhatsApp notification best-effort (does not throw on failure)', async () => {
     const reg = makeRegistration({ certificate: null });
     mockPrisma.registration.findUnique.mockResolvedValue(reg);
 
-    const created = makeCertificate({ id: 'cert-new', serial: 1, number: 'TMP-reg-1' });
-    mockPrismaTx.certificate.create.mockResolvedValue(created);
-    mockPrismaTx.registration.update.mockResolvedValue({ ...reg, status: 'PASSED' });
-    mockPrismaTx.certificate.update.mockResolvedValue(
-      makeCertificate({ id: 'cert-new', serial: 1, number: 'JSA-2026-0001' })
+    mockPrismaTx.certificate.create.mockImplementation(({ data }: any) =>
+      Promise.resolve(makeCertificate({ id: 'cert-new', number: data.number }))
     );
+    mockPrismaTx.registration.update.mockResolvedValue({ ...reg, status: 'PASSED' });
 
     const { sendWa } = await import('@/lib/wa');
     vi.mocked(sendWa).mockRejectedValueOnce(new Error('WA down'));
 
     const result = await issueCertificate('reg-1');
-    expect(result.number).toBe('JSA-2026-0001');
+    expect(result.number).toMatch(/^JSA-2026-[0-9a-f]{8}$/);
     expect(sendWa).toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith(
       expect.stringContaining('Gagal kirim WA'),
@@ -274,15 +243,13 @@ describe('issueCertificate', () => {
     const reg = makeRegistration({ certificate: null });
     mockPrisma.registration.findUnique.mockResolvedValue(reg);
 
-    const created = makeCertificate({ id: 'cert-new', serial: 10, number: 'TMP-reg-1' });
-    mockPrismaTx.certificate.create.mockResolvedValue(created);
-    mockPrismaTx.registration.update.mockResolvedValue({ ...reg, status: 'PASSED' });
-    mockPrismaTx.certificate.update.mockResolvedValue(
-      makeCertificate({ id: 'cert-new', serial: 10, number: 'JSA-2026-0010' })
+    mockPrismaTx.certificate.create.mockImplementation(({ data }: any) =>
+      Promise.resolve(makeCertificate({ id: 'cert-new', number: data.number }))
     );
+    mockPrismaTx.registration.update.mockResolvedValue({ ...reg, status: 'PASSED' });
 
     const result = await issueCertificate('reg-1');
-    expect(result.url).toBe('https://academy.jetschool.id/sertifikat/JSA-2026-0010');
+    expect(result.url).toMatch(/^https:\/\/academy\.jetschool\.id\/sertifikat\/JSA-2026-[0-9a-f]{8}$/);
   });
 });
 

@@ -216,6 +216,15 @@ export async function completeLesson(registrationId: string, lessonId: string) {
     create: { registrationId, lessonId },
     update: {},
   });
+
+  // Auto-terbit sertifikat jika semua persyaratan sudah terpenuhi
+  const eligibility = await checkCertEligibility(registrationId, reg.program);
+  if (eligibility.eligible) {
+    const cert = await issueCertificate(registrationId);
+    revalidatePath(`/member/lms/${registrationId}`);
+    return { ok: true, certUrl: cert.url };
+  }
+
   revalidatePath(`/member/lms/${registrationId}`);
   return { ok: true };
 }
@@ -281,6 +290,16 @@ export async function submitLessonQuiz(
   });
 
   revalidatePath(`/member/lms/${registrationId}`);
+
+  // Auto-terbit sertifikat jika lulus kuis dan semua persyaratan terpenuhi
+  if (passed) {
+    const eligibility = await checkCertEligibility(registrationId, reg.program);
+    if (eligibility.eligible) {
+      const cert = await issueCertificate(registrationId);
+      return { ok: true, passed, score, passingScore, certUrl: cert.url };
+    }
+  }
+
   return { ok: true, passed, score, passingScore };
 }
 

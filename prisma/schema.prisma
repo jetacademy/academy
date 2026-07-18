@@ -195,8 +195,7 @@ model TestAttempt {
 // Sertifikat — terbit otomatis saat lulus post-test
 model Certificate {
   id             String       @id @default(cuid())
-  serial         Int          @unique @default(autoincrement()) // basis nomor urut
-  number         String       @unique // format: JSA-2026-0001 — utk verifikasi publik
+  number         String       @unique // format: JSA-2026-XXXXXXXX (8 random hex) — utk verifikasi publik
   registration   Registration @relation(fields: [registrationId], references: [id])
   registrationId String       @unique
   issuedAt       DateTime     @default(now())
