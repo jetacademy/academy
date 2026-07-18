@@ -7,7 +7,7 @@ import { verifyPassword } from "@/lib/crypto";
 const COOKIE = "jsa_admin";
 
 function sign(value: string): string {
-  const secret = process.env.ADMIN_SESSION_SECRET;
+  const secret = process.env.ADMIN_SESSION_SECRET || (process.env.NODE_ENV !== "production" ? "default-admin-session-secret-key" : "");
   if (!secret) throw new Error("ADMIN_SESSION_SECRET wajib diisi di .env!");
   return createHmac("sha256", secret).update(value).digest("hex");
 }

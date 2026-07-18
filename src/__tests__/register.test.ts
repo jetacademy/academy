@@ -7,7 +7,7 @@
  * Requires mocking all external dependencies.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { POST } from '@/app/api/register/route';
 
 // ─── Hoisted: define mocks before vi.mock factories ────────────────
@@ -104,7 +104,7 @@ const { mockPrisma, makeProgram, makeRegistration } = vi.hoisted(() => {
   return { mockPrisma, makeProgram, makeRegistration };
 });
 
-const mockCheckRateLimit = vi.hoisted(() => vi.fn(() => ({ ok: true })));
+const mockCheckRateLimit = vi.hoisted(() => vi.fn<any>(() => ({ ok: true })));
 
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: mockCheckRateLimit,
@@ -141,6 +141,7 @@ vi.mock('@/lib/email', () => ({
   sendEmail: vi.fn(() => Promise.resolve()),
   getWelcomeEmailHtml: vi.fn(() => '<html>welcome</html>'),
   getPaidEmailHtml: vi.fn(() => '<html>paid</html>'),
+  getInvoiceEmailHtml: vi.fn(() => '<html>invoice</html>'),
 }));
 
 vi.mock('@/lib/format', () => ({
