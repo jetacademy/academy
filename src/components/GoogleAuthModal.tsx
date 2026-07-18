@@ -42,6 +42,7 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelect }: GoogleAut
   const [customName, setCustomName] = useState("");
   const [showCustom, setShowCustom] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -76,6 +77,10 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelect }: GoogleAut
             onSelect(payload.email, payload.name || "", response.credential);
           }
         },
+        error_callback: (err: any) => {
+          console.error("[Google GSI] error_callback:", err);
+          setGoogleError("Google Sign-In tidak tersedia. Gunakan login OTP di bawah.");
+        },
       });
 
       // Render button
@@ -91,6 +96,7 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelect }: GoogleAut
       }
     } catch (e) {
       console.error("Google Sign-In initialization failed:", e);
+      setGoogleError("Gagal memuat tombol Google. Pastikan domain ini terdaftar di Google Cloud Console.");
     }
   }, [isOpen, scriptLoaded, clientId, onSelect]);
 
@@ -141,7 +147,28 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelect }: GoogleAut
           {clientId ? (
             /* REAL GOOGLE AUTH IF CLIENT ID IS PRESENT */
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", width: "100%", padding: "1.5rem 0" }}>
-              <div id="google-signin-btn" style={{ minHeight: "40px" }}></div>
+              {googleError ? (
+                <div style={{
+                  background: "#fff3cd",
+                  border: "1px solid #ffc107",
+                  borderRadius: "8px",
+                  padding: "0.8rem 1rem",
+                  fontSize: "0.8rem",
+                  color: "#856404",
+                  lineHeight: 1.5,
+                  textAlign: "center",
+                  width: "100%"
+                }}>
+                  ⚠️ {googleError}
+                </div>
+              ) : (
+                <>
+                  <div id="google-signin-btn" style={{ minHeight: "40px" }}></div>
+                  {!scriptLoaded && (
+                    <p style={{ fontSize: "0.78rem", color: "#5f6368" }}>Memuat tombol Google...</p>
+                  )}
+                </>
+              )}
               <p style={{ fontSize: "0.75rem", color: "#5f6368", textAlign: "center", lineHeight: 1.4 }}>
                 Tombol di atas terhubung langsung dengan server autentikasi resmi Google.
               </p>

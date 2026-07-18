@@ -45,7 +45,17 @@ export default function MemberLoginPage() {
       }
     } catch (err: unknown) {
       console.error("[Google login error]", err);
-      setError("Koneksi gagal. Periksa jaringan Anda dan coba lagi.");
+      // Bedakan error jaringan vs error lainnya
+      const isNetworkError = err instanceof TypeError && (
+        String(err.message).includes("fetch") ||
+        String(err.message).includes("network") ||
+        String(err.message).includes("Failed")
+      );
+      setError(
+        isNetworkError
+          ? "Koneksi gagal. Periksa jaringan Anda dan coba lagi."
+          : "Login dengan Google gagal. Gunakan metode OTP di bawah, atau coba lagi."
+      );
       setStep("pilih-metode");
     }
   }
