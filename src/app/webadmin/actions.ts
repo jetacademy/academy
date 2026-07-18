@@ -252,8 +252,9 @@ export async function deleteLmsGroup(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
   const programId = String(formData.get("programId"));
-  await prisma.lmsGroup.delete({ where: { id } }).catch(() => {});
+  await prisma.lmsGroup.delete({ where: { id } }).catch((err) => console.error("[deleteLmsGroup] Gagal:", err));
   revalidatePath(`/webadmin/program/${programId}/lms`);
+  revalidatePath(`/member/lms`);
 }
 
 export async function moveLmsGroup(formData: FormData) {
