@@ -20,6 +20,28 @@ enum ProgramType {
   BOOTCAMP // program intensif multi-sesi berbayar
 }
 
+// Kriteria kelulusan program — menentukan kapan sertifikat terbit.
+// Tidak ada post-test terpisah: tes = materi kuis yang bisa ditaruh di mana pun dalam kurikulum.
+enum CompletionCriteria {
+  ALL_LESSONS // penyelesaian modul: semua materi selesai (kuis harus lulus agar selesai)
+  ALL_QUIZZES // hasil tes: semua kuis dalam kurikulum lulus (materi non-kuis tidak wajib)
+}
+
+// Jenis sertifikat yang diterbitkan program
+enum CertKind {
+  PARTICIPATION // Sertifikat Keikutsertaan — bukti ikut/hadir, tanpa syarat lulus
+  COMPLETION // Sertifikat Penyelesaian — menyelesaikan seluruh materi
+  ACHIEVEMENT // Sertifikat Kelulusan — lulus penilaian/post-test
+}
+
+// Tipe konten materi pembelajaran
+enum LessonType {
+  VIDEO // embed YouTube / Vimeo
+  TEXT // artikel / teks materi
+  PDF // dokumen PDF (upload / URL)
+  QUIZ // kuis pilihan ganda per materi
+}
+
 // Program pelatihan
 model Program {
   id            String         @id @default(cuid())
@@ -46,14 +68,23 @@ model Program {
   certPriceOld  Int? // harga coret paket sertifikat
   seatsLeft     Int? // sisa kursi utk scarcity (opsional, tampil jika diisi)
   passingScore  Int            @default(60) // skor minimal lulus post-test (0-100)
+  completionCriteria CompletionCriteria @default(ALL_LESSONS) // syarat sertifikat terbit
+  certKind           CertKind           @default(ACHIEVEMENT) // jenis sertifikat yang terbit
+  maxTestAttempts    Int       @default(0) // 0 = tak terbatas; >0 = batas percobaan per kuis
   isActive      Boolean        @default(true)
+  isFeatured    Boolean        @default(false)
   certBgUrl     String?        @db.Text
   certConfig    Json?
   questions     Question[]
   registrations Registration[]
   modules       LmsModule[]
+  groups        LmsGroup[]
+  categoryId    String?
+  category      Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  @@index([categoryId])
 }
 
 // Pendaftar webinar (leads dari iklan Meta)
@@ -109,11 +140,13 @@ enum PaymentStatus {
   FAILED
 }
 
-// Soal post-test pilihan ganda per program
+// Soal pilihan ganda — post-test program (lessonId null) atau kuis materi (lessonId terisi)
 model Question {
   id        String  @id @default(cuid())
   program   Program @relation(fields: [programId], references: [id])
   programId String
+  lesson    Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId  String?
   text      String  @db.Text
   optionA   String
   optionB   String
@@ -123,18 +156,21 @@ model Question {
   order     Int     @default(0)
 
   @@index([programId])
+  @@index([lessonId])
 }
 
-// Riwayat pengerjaan post-test
+// Riwayat pengerjaan post-test (lessonId null) atau kuis materi (lessonId terisi)
 model TestAttempt {
   id             String       @id @default(cuid())
   registration   Registration @relation(fields: [registrationId], references: [id])
   registrationId String
+  lessonId       String? // null = post-test program
   score          Int // 0-100
   passed         Boolean
   createdAt      DateTime     @default(now())
 
   @@index([registrationId])
+  @@index([registrationId, lessonId])
 }
 
 // Sertifikat — terbit otomatis saat lulus post-test
@@ -149,30 +185,49 @@ model Certificate {
   @@index([issuedAt])
 }
 
-// LMS Modules (Kumpulan modul pembelajaran)
-model LmsModule {
-  id        String   @id @default(cuid())
-  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+// Kelompok modul — jenjang teratas kurikulum (mis. "Bagian 1: Dasar-dasar")
+model LmsGroup {
+  id        String      @id @default(cuid())
+  program   Program     @relation(fields: [programId], references: [id], onDelete: Cascade)
   programId String
   title     String
-  order     Int      @default(0)
-  lessons   Lesson[]
+  order     Int         @default(0)
+  modules   LmsModule[]
 
   @@index([programId])
 }
 
-// LMS Lessons (Materi pembelajaran berupa video / teks)
+// Modul / sub-bab — berisi materi; bisa berdiri sendiri atau di dalam kelompok
+model LmsModule {
+  id        String    @id @default(cuid())
+  program   Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
+  programId String
+  group     LmsGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  groupId   String?
+  title     String
+  order     Int       @default(0)
+  lessons   Lesson[]
+
+  @@index([programId])
+  @@index([groupId])
+}
+
+// LMS Lessons (Materi pembelajaran: video / teks / PDF / kuis)
 model Lesson {
-  id          String       @id @default(cuid())
-  module      LmsModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  moduleId    String
-  title       String
-  type        String       @default("VIDEO") // "VIDEO" | "TEXT"
-  videoUrl    String? // URL Video YouTube / Vimeo
-  content     String?      @db.Text // Teks materi pembelajaran
-  duration    String       @default("10 menit") // Durasi materi
-  order       Int          @default(0)
-  completions Completion[]
+  id           String       @id @default(cuid())
+  module       LmsModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId     String
+  title        String
+  type         LessonType   @default(VIDEO)
+  videoUrl     String? // URL Video YouTube / Vimeo
+  fileUrl      String?      @db.Text // URL PDF (upload atau eksternal)
+  content      String?      @db.Text // Teks materi pembelajaran
+  duration     String       @default("10 menit") // Durasi materi
+  passingScore Int? // khusus QUIZ: skor minimal lulus (null = pakai passingScore program)
+  isPreview    Boolean      @default(false) // materi bisa diakses gratis sebagai preview
+  order        Int          @default(0)
+  questions    Question[] // soal kuis (khusus type QUIZ)
+  completions  Completion[]
 
   @@index([moduleId])
 }
@@ -189,6 +244,17 @@ model Completion {
   @@unique([registrationId, lessonId])
   @@index([registrationId])
   @@index([lessonId])
+}
+
+// Kategori program
+model Category {
+  id         String    @id @default(cuid())
+  slug       String    @unique
+  name       String
+  isFeatured Boolean   @default(false)
+  programs   Program[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 

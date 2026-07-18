@@ -6,17 +6,12 @@ import CertCustomizer from "@/components/CertCustomizer";
 export default async function AdminProgramCertPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;
-  const program = await (prisma.program as any).findUnique({
-    where: { id },
-  });
-
+  const program = await prisma.program.findUnique({ where: { id } });
   if (!program) notFound();
 
   return (
     <>
-      <div className="adm-head">
-        <h1>Kustomisasi Sertifikat: {program.title}</h1>
-      </div>
+      <h2 style={{ fontSize: "1.15rem", margin: "0 0 1rem" }}>Kustomisasi Sertifikat</h2>
       <CertCustomizer program={program} />
     </>
   );

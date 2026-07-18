@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     }
     // sudah bayar → langsung ke post-test
     if (reg.status === "PAID") {
-      return NextResponse.json({ ok: true, postTestUrl: `${baseUrl}/post-test/${reg.id}` });
+      return NextResponse.json({ ok: true, postTestUrl: `${baseUrl}/member` });
     }
 
     // invoice pending yang masih ada → pakai ulang
@@ -77,15 +77,15 @@ export async function POST(req: Request) {
         }),
         prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
       ]);
-      return NextResponse.json({ ok: true, postTestUrl: `${baseUrl}/post-test/${reg.id}` });
+      return NextResponse.json({ ok: true, postTestUrl: `${baseUrl}/member` });
     }
 
     const invoice = await createInvoice({
-      externalId: reg.id,
+      externalId: `ACADEMY-${reg.id}`,
       amount: program.certPrice,
       payerEmail: reg.email,
       description: `Paket Sertifikat — ${program.title} (${reg.name})`,
-      successRedirectUrl: `${baseUrl}/post-test/${reg.id}`,
+      successRedirectUrl: `${baseUrl}/member`,
     });
 
     await prisma.payment.upsert({

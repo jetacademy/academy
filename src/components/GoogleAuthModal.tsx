@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 interface GoogleAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (email: string, name: string) => void;
+  onSelect: (email: string, name: string, credential?: string) => void;
   title?: string;
 }
 
@@ -16,7 +16,6 @@ declare global {
 }
 
 const MOCK_ACCOUNTS = [
-  { name: "Jetschool Superadmin", email: "jetschool.id@gmail.com" },
   { name: "Budi Santoso", email: "budi.santoso@gmail.com" },
   { name: "Arif Pratama", email: "arif.pratama@gmail.com" },
   { name: "Nadia Rahma", email: "nadia.rahma@gmail.com" },
@@ -73,7 +72,8 @@ export default function GoogleAuthModal({ isOpen, onClose, onSelect, title = "Lo
         callback: (response: any) => {
           const payload = decodeJwt(response.credential);
           if (payload && payload.email) {
-            onSelect(payload.email, payload.name || "");
+            // kirim credential mentah — verifikasi dilakukan di server
+            onSelect(payload.email, payload.name || "", response.credential);
           }
         },
       });

@@ -27,11 +27,16 @@ export async function POST(req: Request) {
 
   try {
     // external_id kita isi dengan registrationId saat membuat invoice
+    let registrationId = event.external_id ?? "___";
+    if (registrationId.startsWith("ACADEMY-")) {
+      registrationId = registrationId.substring(8);
+    }
+
     const payment = await prisma.payment.findFirst({
       where: {
         OR: [
           { xenditInvoiceId: event.id ?? "___" },
-          { registrationId: event.external_id ?? "___" },
+          { registrationId: registrationId },
         ],
       },
       include: { registration: { include: { program: true } } },
@@ -53,7 +58,7 @@ export async function POST(req: Request) {
         ]);
 
         const reg = payment.registration;
-        const postTestUrl = `${baseUrl}/post-test/${reg.id}`;
+        const memberUrl = `${baseUrl}/member`;
         if (reg.program.price > 0) {
           // program berbayar → kirim semua akses (grup, LMS, Zoom) + link post-test
           await sendWa(reg.whatsapp, msgAccess({
@@ -63,18 +68,18 @@ export async function POST(req: Request) {
             zoomLink: reg.program.zoomLink,
             waGroupLink: reg.program.waGroupLink,
             lmsLink: reg.program.lmsLink,
-            postTestUrl,
+            memberUrl,
           }));
         } else {
           // webinar gratis → yang dibayar adalah paket sertifikat, kirim link post-test
-          await sendWa(reg.whatsapp, msgPaid(reg.name, reg.program.title, postTestUrl));
+          await sendWa(reg.whatsapp, msgPaid(reg.name, reg.program.title, memberUrl));
         }
 
         // Kirim email pembayaran sukses — best-effort
         await sendEmail({
           to: reg.email,
           subject: `Pembayaran Berhasil: Akses Pelatihan ${reg.program.title}`,
-          html: getPaidEmailHtml(reg.name, reg.program.title, postTestUrl, reg.program.zoomLink, reg.program.waGroupLink, reg.program.lmsLink),
+          html: getPaidEmailHtml(reg.name, reg.program.title, memberUrl, reg.program.zoomLink, reg.program.waGroupLink, reg.program.lmsLink),
         }).catch((err) => console.error("Gagal mengirim email webhook lunas:", err));
       }
     } else if (event.status === "EXPIRED") {

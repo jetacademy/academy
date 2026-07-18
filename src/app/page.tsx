@@ -39,16 +39,17 @@ const FAQ_ITEMS = [
 ];
 
 export default async function Home() {
-  const [ { programs }, regCount, certCount ] = await Promise.all([
-    getPrograms(),
-    prisma.registration.count(),
-    prisma.certificate.count(),
-  ]);
+  const { programs } = await getPrograms();
+
   const webinarGratis = programs.find((p) => p.type === "WEBINAR" && p.price === 0);
   const programTerdekat = webinarGratis ?? programs[0] ?? null;
   const daysLeft = programTerdekat
     ? getDaysLeft(programTerdekat.scheduleAt)
     : null;
+
+  // Filter programs based on featured status. Fallback to all if none are featured.
+  const featuredPrograms = programs.filter((p) => p.isFeatured);
+  const displayPrograms = featuredPrograms.length > 0 ? featuredPrograms : programs;
 
   return (
     <>
@@ -75,27 +76,9 @@ export default async function Home() {
                 <a href="#program" className="btn btn-purple btn-lg">Lihat Program</a>
                 <a href="#cara" className="btn btn-line btn-lg">Cara Kerjanya</a>
               </div>
-
-              <div className="hero-pills" style={{ marginTop: "1rem" }}>
-                <div className="hero-pill">
-                  <b>{regCount}+</b>
-                  <span>Pendaftar Aktif</span>
-                </div>
-                <div className="hero-pill-sep" />
-                <div className="hero-pill">
-                  <b>{certCount}+</b>
-                  <span>Sertifikat Terbit</span>
-                </div>
-                <div className="hero-pill-sep" />
-                <div className="hero-pill">
-                  <b className="hero-pill-free">100%</b>
-                  <span>Garansi Lulus</span>
-                </div>
-              </div>
-
             </div>
 
-            {/* Kolom kanan: gambar + chip melayang */}
+            {/* Kolom kanan: gambar */}
             <div className="hero-visual-wrap">
               <div className="hero-img-wrap">
                 <Image
@@ -106,7 +89,6 @@ export default async function Home() {
                   priority
                   style={{ width: "100%", height: "auto" }}
                 />
-
               </div>
             </div>
           </div>
@@ -118,14 +100,19 @@ export default async function Home() {
         <div className="container">
           <div className="bento reveal">
             <div className="section-head">
-              <h2>Pilih program Anda.</h2>
+              <h2>Program Unggulan Pilihan.</h2>
+              <p className="lead" style={{ marginTop: "0.2rem", color: "var(--ink-soft)" }}>
+                Ikuti program terbaik yang direkomendasikan langsung untuk Anda.
+              </p>
             </div>
             <div className="prg-grid">
-              {programs.map((p) => (
+              {displayPrograms.map((p) => (
                 <Link key={p.slug} href={`/program/${p.slug}`} className="prg-card">
                   <div className="prg-top">
                     <span className={`type-tag ${TYPE_CLASS[p.type]}`}>{TYPE_LABEL[p.type]}</span>
-                    <span className="dot-btn dot-p" style={{ width: 38, height: 38 }}><Icon name={TYPE_ICON[p.type]} /></span>
+                    <span className="dot-btn dot-p" style={{ width: 38, height: 38 }}>
+                      <Icon name={TYPE_ICON[p.type]} />
+                    </span>
                   </div>
                   <h3>{p.title}</h3>
                   <p className="desc">{formatHari(p.scheduleAt)}, {formatJam(p.scheduleAt)} · {p.durationLabel}</p>

@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getMemberSession } from "@/lib/member-auth";
+import { isAdmin } from "@/lib/admin-auth";
 import { memberLogout } from "./actions";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ClaimCertButton from "@/components/ClaimCertButton";
 import { rupiah, formatJadwal } from "@/lib/format";
 import { Registration, Program, Payment, Certificate } from "@prisma/client";
 
@@ -57,8 +59,9 @@ export default async function MemberDashboardPage() {
 
   const registrations = (await (prisma.registration.findMany as unknown as (args: unknown) => Promise<unknown>)(queryOptions)) as unknown as RegistrationWithDetails[];
 
-  const memberName = registrations[0]?.name ?? "Superadmin";
-  const isSuperadmin = sessionVal.toLowerCase() === "jetschool.id@gmail.com";
+  const memberName = registrations[0]?.name ?? "Member";
+  // Banner admin hanya muncul jika benar-benar punya sesi admin (login password di /webadmin)
+  const isSuperadmin = await isAdmin();
 
   return (
     <>
@@ -68,23 +71,11 @@ export default async function MemberDashboardPage() {
         <div className="container">
           {/* Superadmin Quick Access Banner */}
           {isSuperadmin && (
-            <div className="reveal in" style={{
-              background: "linear-gradient(135deg, var(--purple) 0%, #a29bfe 100%)",
-              color: "#fff",
-              padding: "1.5rem 2rem",
-              borderRadius: "var(--r-md)",
-              boxShadow: "var(--shadow)",
-              marginBottom: "1.5rem",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "1rem"
-            }}>
+            <div className="member-admin-banner reveal in">
               <div>
-                <h3 style={{ margin: 0, fontWeight: 800, color: "#fff" }}>⚡ Mode Superadmin Aktif</h3>
+                <h3 style={{ margin: 0, fontWeight: 800, color: "#fff" }}>⚡ Mode Admin Aktif</h3>
                 <p style={{ margin: ".2rem 0 0 0", fontSize: ".85rem", opacity: 0.9 }}>
-                  Anda masuk menggunakan email superadmin <b>jetschool.id@gmail.com</b>. Anda memiliki akses penuh ke panel pengelolaan.
+                  Anda sedang login sebagai admin. Anda memiliki akses penuh ke panel pengelolaan.
                 </p>
               </div>
               <Link href="/webadmin" className="btn btn-sm" style={{ background: "#fff", color: "var(--purple)", fontWeight: 700 }}>
@@ -94,18 +85,7 @@ export default async function MemberDashboardPage() {
           )}
 
           {/* Header Dashboard */}
-          <div className="reveal in" style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "1.2rem",
-            marginBottom: "2.5rem",
-            background: "var(--white)",
-            padding: "1.5rem 2rem",
-            borderRadius: "var(--r-md)",
-            boxShadow: "var(--shadow)"
-          }}>
+          <div className="member-header-card reveal in">
             <div>
               <span className="kicker" style={{ marginBottom: "0.2rem" }}>Selamat Datang</span>
               <h1 style={{ fontSize: "1.8rem", margin: 0 }}>Halo, <span className="acc-p">{memberName}</span> 👋</h1>
@@ -162,16 +142,7 @@ export default async function MemberDashboardPage() {
                 }
 
                 return (
-                  <div key={reg.id} className="reveal in" style={{
-                    background: "var(--white)",
-                    borderRadius: "var(--r-md)",
-                    boxShadow: "var(--shadow)",
-                    padding: "1.8rem",
-                    display: "grid",
-                    gridTemplateColumns: "1fr auto",
-                    gap: "1.5rem",
-                    alignItems: "center"
-                  }}>
+                  <div key={reg.id} className="member-program-card reveal in">
                     {/* Sisi Kiri: Detail Program & Status */}
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "0.8rem", flexWrap: "wrap" }}>
@@ -196,7 +167,7 @@ export default async function MemberDashboardPage() {
                     </div>
 
                     {/* Sisi Kanan: Tombol Aksi Kontekstual */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", minWidth: "12rem" }}>
+                    <div className="member-card-actions">
                       {/* Kasus 1: Belum lunas pada program berbayar */}
                       {reg.status === "REGISTERED" && prog.price > 0 && pay && (
                         <>
@@ -235,7 +206,7 @@ export default async function MemberDashboardPage() {
                         </>
                       )}
 
-                      {/* Kasus 3: Sudah lunas (PAID), boleh ikuti post-test */}
+                      {/* Kasus 3: Sudah lunas (PAID) — belajar & klaim via LMS */}
                       {reg.status === "PAID" && (
                         <>
                           {prog.zoomLink && (
@@ -243,23 +214,17 @@ export default async function MemberDashboardPage() {
                               Masuk Link Zoom Live
                             </a>
                           )}
-                          {prog.modules && prog.modules.length > 0 ? (
-                            <Link href={`/member/lms/${reg.id}`} className="btn btn-ink btn-block" style={{ textAlign: "center" }}>
-                              Akses LMS Interaktif
+                          {prog.type === "KELAS" || prog.type === "BOOTCAMP" || (prog.modules && prog.modules.length > 0) ? (
+                            <Link href={`/member/lms/${reg.id}`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                              Lanjut Belajar & Tes
                             </Link>
                           ) : prog.lmsLink ? (
                             <a href={prog.lmsLink} target="_blank" rel="noopener noreferrer" className="btn btn-ink btn-block" style={{ textAlign: "center" }}>
                               Akses Materi LMS
                             </a>
-                          ) : null}
-                          {new Date() >= new Date(prog.scheduleAt) ? (
-                            <Link href={`/post-test/${reg.id}`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
-                              Mulai Kerjakan Post-Test
-                            </Link>
                           ) : (
-                            <button className="btn btn-block" disabled style={{ background: "var(--border)", color: "var(--ink-faint)", cursor: "not-allowed", textAlign: "center" }}>
-                              Post-Test (Belum Dimulai)
-                            </button>
+                            // program tanpa kurikulum (mis. webinar) → sertifikat bisa langsung diklaim
+                            <ClaimCertButton registrationId={reg.id} />
                           )}
                         </>
                       )}
@@ -270,7 +235,7 @@ export default async function MemberDashboardPage() {
                           <Link href={`/sertifikat/${cert.number}`} target="_blank" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
                             Unduh e-Sertifikat
                           </Link>
-                          {prog.modules && prog.modules.length > 0 ? (
+                          {prog.type === "KELAS" || prog.type === "BOOTCAMP" || (prog.modules && prog.modules.length > 0) ? (
                             <Link href={`/member/lms/${reg.id}`} className="btn btn-line btn-block" style={{ textAlign: "center" }}>
                               Akses LMS Interaktif
                             </Link>

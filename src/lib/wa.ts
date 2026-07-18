@@ -56,14 +56,14 @@ export function msgWelcome(name: string, programTitle: string, schedule: string,
   ].filter((l) => l !== null).join("\n");
 }
 
-export function msgPaid(name: string, programTitle: string, postTestUrl: string) {
+export function msgPaid(name: string, programTitle: string, memberUrl: string) {
   return [
     `Halo ${name},`,
     ``,
     `Pembayaran paket sertifikat *${programTitle}* telah kami terima. Terima kasih.`,
     ``,
-    `Langkah terakhir: selesaikan evaluasi singkat melalui tautan berikut. Setelah dinyatakan lulus, e-sertifikat Anda terbit secara otomatis.`,
-    postTestUrl,
+    `Langkah terakhir: selesaikan materi & tes di dashboard belajar Anda. Setelah syarat kelulusan terpenuhi, e-sertifikat terbit otomatis.`,
+    memberUrl,
     ``,
     `Salam,`,
     `Tim Jetschool Academy`,
@@ -78,7 +78,7 @@ export function msgAccess(params: {
   zoomLink?: string | null;
   waGroupLink?: string | null;
   lmsLink?: string | null;
-  postTestUrl: string;
+  memberUrl: string;
 }) {
   return [
     `Halo ${params.name},`,
@@ -91,8 +91,8 @@ export function msgAccess(params: {
     params.zoomLink ? `• Tautan Zoom: ${params.zoomLink}` : null,
     params.schedule ? `• Jadwal: ${params.schedule}` : null,
     ``,
-    `Setelah menyelesaikan materi, silakan kerjakan evaluasi berikut untuk menerbitkan e-sertifikat Anda:`,
-    params.postTestUrl,
+    `Akses materi & tes melalui dashboard belajar Anda — e-sertifikat terbit otomatis begitu syarat kelulusan terpenuhi:`,
+    params.memberUrl,
     ``,
     `Salam,`,
     `Tim Jetschool Academy`,

@@ -97,9 +97,6 @@ export default async function AdminPendaftar({ searchParams }: {
                           </button>
                         </form>
                       )}
-                      {r.status === "PAID" && (
-                        <a href={`/post-test/${r.id}`} target="_blank" className="btn btn-sm">Post-Test ↗</a>
-                      )}
                       {r.certificate && (
                         <a href={`/sertifikat/${r.certificate.number}`} target="_blank" className="btn btn-sm">Sertifikat ↗</a>
                       )}

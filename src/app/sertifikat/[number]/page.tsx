@@ -69,15 +69,22 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
   // Syllabus / JP breakdown
   const materiList = Array.isArray(program.materi) ? (program.materi as string[]) : [];
   const configMateriJp = Array.isArray(certConfig.materiJp) ? certConfig.materiJp : [];
-  
-  const materiJp = materiList.map((m, idx) => {
-    const match = configMateriJp[idx];
-    return {
-      materi: m,
-      teori: match?.teori != null ? Number(match.teori) : 5,
-      tugas: match?.tugas != null ? Number(match.tugas) : 3,
-    };
-  });
+
+  const materiJp: { materi: string; teori: number; tugas: number }[] =
+    configMateriJp.length > 0 && configMateriJp.every((r: any) => typeof r?.materi === "string")
+      ? configMateriJp.map((r: any) => ({
+          materi: r.materi,
+          teori: Number(r.teori) || 0,
+          tugas: Number(r.tugas) || 0,
+        }))
+      : materiList.map((m, idx) => {
+          const match = configMateriJp[idx];
+          return {
+            materi: m,
+            teori: match?.teori != null ? Number(match.teori) : 5,
+            tugas: match?.tugas != null ? Number(match.tugas) : 3,
+          };
+        });
 
   const totalJp = materiJp.reduce((acc, curr) => acc + curr.teori + curr.tugas, 0);
 
@@ -92,6 +99,27 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
   const stImg = certConfig.stampImg || "";
 
   const showPmm = certConfig.showPmmBadge !== false;
+
+  // Sub-judul default mengikuti jenis sertifikat program
+  const KIND_SUBTITLE: Record<string, string> = {
+    PARTICIPATION: "KETERANGAN KEIKUTSERTAAN PELATIHAN",
+    COMPLETION: "KETERANGAN SELESAI TOPIK PELATIHAN",
+    ACHIEVEMENT: "KETERANGAN KELULUSAN PELATIHAN",
+  };
+  const defaultSubtitle = KIND_SUBTITLE[String(program.certKind)] ?? "KETERANGAN SELESAI TOPIK PELATIHAN";
+
+  // Coordinates positioning from JSON config or default layout
+  const positions = certConfig.positions || {
+    logo: { x: 50, y: 11 },
+    title: { x: 50, y: 20 },
+    subtitle: { x: 50, y: 26 },
+    number: { x: 50, y: 31 },
+    recipient: { x: 50, y: 40 },
+    description: { x: 50, y: 51 },
+    table: { x: 50, y: 64 },
+    placeDate: { x: 50, y: 77 },
+    signatures: { x: 50, y: 84 },
+  };
 
   return (
     <>
@@ -108,9 +136,10 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
             </p>
           </div>
 
-          {/* MAIN CERTIFICATE SHEET (A4 Portrait aspect ratio) */}
-          <div
-            className="cert-a4"
+          {/* MAIN CERTIFICATE SHEET (A4 Portrait aspect ratio, padding 0 for complete absolute control) */}
+          <div className="cert-scroll-wrapper">
+            <div
+              className="cert-a4"
             style={{
               width: "100%",
               aspectRatio: "1 / 1.414",
@@ -119,12 +148,9 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
               boxShadow: "var(--shadow-lg)",
               border: certBgUrl ? "none" : "1px solid var(--line)",
               position: "relative",
-              padding: "7% 9% 5%",
+              padding: "0",
               color: "#1B1710",
               fontFamily: "Georgia, serif",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
               boxSizing: "border-box",
               overflow: "hidden"
             }}
@@ -153,19 +179,36 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
               />
             )}
 
-            {/* Official Logo Header */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: ".2rem", zIndex: 2 }}>
+            {/* 1. Official Logo Header */}
+            <div
+              style={{
+                position: "absolute",
+                left: `${positions.logo.x}%`,
+                top: `${positions.logo.y}%`,
+                transform: "translate(-50%, -50%)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: ".2rem",
+                zIndex: 2
+              }}
+            >
               <Image src="/iconjetschool academy.png" alt="Jetschool Academy" width={48} height={48} style={{ objectFit: "contain" }} />
               <div style={{ fontSize: ".75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", fontFamily: "sans-serif" }}>
                 Jetschool <span style={{ color: "var(--purple)" }}>Academy</span>
               </div>
             </div>
 
-            {/* Main Title & Subtitle */}
+            {/* 2. Main Title */}
             <h2
               style={{
+                position: "absolute",
+                left: `${positions.title.x}%`,
+                top: `${positions.title.y}%`,
+                transform: "translate(-50%, -50%)",
+                width: "90%",
                 fontSize: "clamp(1.6rem, 4vw, 2.5rem)",
-                margin: "1.2rem 0 .2rem",
+                margin: "0",
                 fontWeight: 900,
                 letterSpacing: ".25em",
                 textTransform: "uppercase",
@@ -177,8 +220,15 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
             >
               {certConfig.title || "SERTIFIKAT"}
             </h2>
+
+            {/* 3. Subtitle */}
             <div
               style={{
+                position: "absolute",
+                left: `${positions.subtitle.x}%`,
+                top: `${positions.subtitle.y}%`,
+                transform: "translate(-50%, -50%)",
+                width: "80%",
                 fontSize: "clamp(.55rem, 1.5vw, .75rem)",
                 letterSpacing: ".1em",
                 textTransform: "uppercase",
@@ -186,18 +236,20 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
                 fontFamily: "sans-serif",
                 borderBottom: "2px solid #1B1710",
                 paddingBottom: ".4rem",
-                width: "80%",
                 textAlign: "center",
-                zIndex: 2,
-                marginBottom: "1rem"
+                zIndex: 2
               }}
             >
-              {certConfig.subtitle || "KETERANGAN SELESAI TOPIK PELATIHAN"}
+              {certConfig.subtitle || defaultSubtitle}
             </div>
 
-            {/* Certificate Number Badge */}
+            {/* 4. Certificate Number Badge */}
             <div
               style={{
+                position: "absolute",
+                left: `${positions.number.x}%`,
+                top: `${positions.number.y}%`,
+                transform: "translate(-50%, -50%)",
                 background: "var(--purple)",
                 color: "var(--white)",
                 padding: ".35rem 2rem",
@@ -212,50 +264,65 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
               {numFormatted}
             </div>
 
-            <div style={{ fontSize: "clamp(.65rem, 1.8vw, .8rem)", color: "#555", fontStyle: "italic", marginTop: "1rem", zIndex: 2 }}>
-              Diberikan kepada :
-            </div>
-
-            {/* Recipient Name & Institution */}
+            {/* 5. Recipient Name & Institution */}
             <div
               style={{
-                fontSize: "clamp(1.2rem, 3.5vw, 1.8rem)",
-                fontWeight: 800,
-                color: "var(--purple)",
-                borderBottom: "1px dashed var(--purple)",
-                paddingBottom: ".2rem",
-                margin: ".5rem 0 .2rem",
-                textAlign: "center",
-                lineHeight: 1.2,
-                fontFamily: "Georgia, serif",
+                position: "absolute",
+                left: `${positions.recipient.x}%`,
+                top: `${positions.recipient.y}%`,
+                transform: "translate(-50%, -50%)",
+                width: "80%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
                 zIndex: 2
               }}
             >
-              {cert.registration.name}
-            </div>
-            {cert.registration.institution && (
+              <div style={{ fontSize: "clamp(.65rem, 1.8vw, .8rem)", color: "#555", fontStyle: "italic" }}>
+                Diberikan kepada :
+              </div>
               <div
                 style={{
-                  fontSize: "clamp(.75rem, 2vw, 1rem)",
-                  fontWeight: 700,
-                  color: "#333",
-                  marginBottom: "1rem",
+                  fontSize: "clamp(1.2rem, 3.5vw, 1.8rem)",
+                  fontWeight: 800,
+                  color: "var(--purple)",
+                  borderBottom: "1px dashed var(--purple)",
+                  paddingBottom: ".2rem",
+                  margin: ".5rem 0 .2rem",
                   textAlign: "center",
-                  zIndex: 2
+                  lineHeight: 1.2,
+                  fontFamily: "Georgia, serif"
                 }}
               >
-                {cert.registration.institution}
+                {cert.registration.name}
               </div>
-            )}
+              {cert.registration.institution && (
+                <div
+                  style={{
+                    fontSize: "clamp(.75rem, 2vw, 1rem)",
+                    fontWeight: 700,
+                    color: "#333",
+                    textAlign: "center"
+                  }}
+                >
+                  {cert.registration.institution}
+                </div>
+              )}
+            </div>
 
-            {/* Description Text */}
+            {/* 6. Description Text */}
             <p
               style={{
+                position: "absolute",
+                left: `${positions.description.x}%`,
+                top: `${positions.description.y}%`,
+                transform: "translate(-50%, -50%)",
+                width: "84%",
                 fontSize: "clamp(.62rem, 1.6vw, .78rem)",
                 color: "#333",
                 textAlign: "center",
                 lineHeight: 1.6,
-                margin: "0 5% 1.2rem",
+                margin: "0",
                 fontFamily: "Georgia, serif",
                 zIndex: 2
               }}
@@ -263,8 +330,17 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
               {descResolved}
             </p>
 
-            {/* Syllabus Table */}
-            <div style={{ width: "100%", margin: ".5rem 0", zIndex: 2 }}>
+            {/* 7. Syllabus Table */}
+            <div
+              style={{
+                position: "absolute",
+                left: `${positions.table.x}%`,
+                top: `${positions.table.y}%`,
+                transform: "translate(-50%, -50%)",
+                width: "86%",
+                zIndex: 2
+              }}
+            >
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "clamp(.55rem, 1.5vw, .7rem)", fontFamily: "sans-serif" }}>
                 <thead>
                   <tr style={{ background: "rgba(0,0,0,0.03)" }}>
@@ -295,110 +371,132 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
               </table>
             </div>
 
-            {/* Issued Location & Date */}
-            <div style={{ fontSize: "clamp(.62rem, 1.8vw, .75rem)", fontWeight: 700, margin: ".8rem 0 .5rem", color: "#444", fontFamily: "sans-serif", zIndex: 2 }}>
-              {certConfig.placeDate ? certConfig.placeDate.replace(/\[date\]/g, issuedDate) : `Pangandaran, ${issuedDate}`}
-            </div>
-
-            {/* Signatures & Verification Stamp Section */}
+            {/* 8. Issued Location & Date */}
             <div
               style={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: "auto",
-                paddingTop: "1rem",
-                position: "relative",
+                position: "absolute",
+                left: `${positions.placeDate.x}%`,
+                top: `${positions.placeDate.y}%`,
+                transform: "translate(-50%, -50%)",
+                fontSize: "clamp(.62rem, 1.8vw, .75rem)",
+                fontWeight: 700,
+                color: "#444",
                 fontFamily: "sans-serif",
-                fontSize: "clamp(.55rem, 1.5vw, .7rem)",
                 zIndex: 2
               }}
             >
-              {/* Signature 1 (Narasumber / Mentor) */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "35%" }}>
-                <div style={{ height: "45px", position: "relative", marginBottom: ".3rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {s1Img ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s1Img} alt="Signature 1" style={{ maxHeight: "45px", objectFit: "contain" }} />
-                  ) : (
-                    <div style={{ height: "45px" }} />
-                  )}
-                </div>
-                <b style={{ textDecoration: "underline", color: "#1B1710" }}>{s1Name}</b>
-                <span style={{ color: "#555", fontSize: "clamp(.48rem, 1.3vw, .62rem)", marginTop: ".1rem" }}>{s1Role}</span>
-              </div>
-
-              {/* QR Verification (Middle) */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "22%" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={qrDataUrl} alt="Verification QR" style={{ width: "64px", height: "64px", border: "1px solid #eee", background: "#fff" }} />
-                <span style={{ fontSize: "clamp(.42rem, 1.2vw, .55rem)", marginTop: ".3rem", color: "#666", fontWeight: 700 }}>
-                  ID: {cert.number}
-                </span>
-              </div>
-
-              {/* Signature 2 (Direktur Najib) + Stamp */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "35%", position: "relative" }}>
-                {/* Stamp overlay */}
-                {stImg && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={stImg}
-                    alt="Official Stamp"
-                    style={{
-                      position: "absolute",
-                      height: "64px",
-                      width: "64px",
-                      objectFit: "contain",
-                      left: "15px",
-                      top: "-25px",
-                      opacity: 0.85,
-                      pointerEvents: "none",
-                      zIndex: 3
-                    }}
-                  />
-                )}
-
-                <div style={{ height: "45px", position: "relative", marginBottom: ".3rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {s2Img ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s2Img} alt="Signature 2" style={{ maxHeight: "45px", objectFit: "contain" }} />
-                  ) : (
-                    <div style={{ height: "45px" }} />
-                  )}
-                </div>
-                <b style={{ textDecoration: "underline", color: "#1B1710" }}>{s2Name}</b>
-                <span style={{ color: "#555", fontSize: "clamp(.48rem, 1.3vw, .62rem)", marginTop: ".1rem" }}>{s2Role}</span>
-              </div>
+              {certConfig.placeDate ? certConfig.placeDate.replace(/\[date\]/g, issuedDate) : `Pangandaran, ${issuedDate}`}
             </div>
 
-            {/* PMM / Kemendikbud Komunitas Badge */}
-            {showPmm && (
+            {/* 9. Signatures, Stamp & QR Area */}
+            <div
+              style={{
+                position: "absolute",
+                left: `${positions.signatures.x}%`,
+                top: `${positions.signatures.y}%`,
+                transform: "translate(-50%, -50%)",
+                width: "86%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                zIndex: 2
+              }}
+            >
               <div
                 style={{
                   width: "100%",
-                  background: "rgba(16, 185, 129, 0.08)",
-                  border: "1px solid rgba(16, 185, 129, 0.2)",
-                  borderRadius: "6px",
-                  padding: ".4rem .8rem",
                   display: "flex",
+                  justifyContent: "space-between",
                   alignItems: "center",
-                  justifyContent: "center",
-                  gap: ".5rem",
-                  marginTop: "1.2rem",
-                  zIndex: 2,
-                  boxSizing: "border-box"
+                  fontFamily: "sans-serif",
+                  fontSize: "clamp(.55rem, 1.5vw, .7rem)",
+                  position: "relative"
                 }}
               >
-                <span style={{ color: "#10B981", fontWeight: 900, fontSize: ".8rem" }}>✓</span>
-                <span style={{ color: "#065F46", fontWeight: 700, fontSize: "clamp(.5rem, 1.5vw, .68rem)", fontFamily: "sans-serif" }}>
-                  Registered on Komunitas Platform Merdeka Mengajar (PMM)
-                </span>
-              </div>
-            )}
+                {/* Signature 1 (Narasumber / Mentor) */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "35%" }}>
+                  <div style={{ height: "45px", position: "relative", marginBottom: ".3rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {s1Img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={s1Img} alt="Signature 1" style={{ maxHeight: "45px", objectFit: "contain" }} />
+                    ) : (
+                      <div style={{ height: "45px" }} />
+                    )}
+                  </div>
+                  <b style={{ textDecoration: "underline", color: "#1B1710" }}>{s1Name}</b>
+                  <span style={{ color: "#555", fontSize: "clamp(.48rem, 1.3vw, .62rem)", marginTop: ".1rem" }}>{s1Role}</span>
+                </div>
 
+                {/* QR Verification (Middle) */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "22%" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qrDataUrl} alt="Verification QR" style={{ width: "64px", height: "64px", border: "1px solid #eee", background: "#fff" }} />
+                  <span style={{ fontSize: "clamp(.42rem, 1.2vw, .55rem)", marginTop: ".3rem", color: "#666", fontWeight: 700 }}>
+                    ID: {cert.number}
+                  </span>
+                </div>
+
+                {/* Signature 2 (Direktur Najib) + Stamp */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "35%", position: "relative" }}>
+                  {/* Stamp overlay */}
+                  {stImg && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={stImg}
+                      alt="Official Stamp"
+                      style={{
+                        position: "absolute",
+                        height: "64px",
+                        width: "64px",
+                        objectFit: "contain",
+                        left: "15px",
+                        top: "-25px",
+                        opacity: 0.85,
+                        pointerEvents: "none",
+                        zIndex: 3
+                      }}
+                    />
+                  )}
+
+                  <div style={{ height: "45px", position: "relative", marginBottom: ".3rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {s2Img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={s2Img} alt="Signature 2" style={{ maxHeight: "45px", objectFit: "contain" }} />
+                    ) : (
+                      <div style={{ height: "45px" }} />
+                    )}
+                  </div>
+                  <b style={{ textDecoration: "underline", color: "#1B1710" }}>{s2Name}</b>
+                  <span style={{ color: "#555", fontSize: "clamp(.48rem, 1.3vw, .62rem)", marginTop: ".1rem" }}>{s2Role}</span>
+                </div>
+              </div>
+
+              {/* PMM / Kemendikbud Komunitas Badge */}
+              {showPmm && (
+                <div
+                  style={{
+                    width: "100%",
+                    background: "rgba(16, 185, 129, 0.08)",
+                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                    borderRadius: "6px",
+                    padding: ".4rem .8rem",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: ".5rem",
+                    marginTop: "1.2rem",
+                    boxSizing: "border-box"
+                  }}
+                >
+                  <span style={{ color: "#10B981", fontWeight: 900, fontSize: ".8rem" }}>✓</span>
+                  <span style={{ color: "#065F46", fontWeight: 700, fontSize: "clamp(.5rem, 1.5vw, .68rem)", fontFamily: "sans-serif" }}>
+                    Registered on Komunitas Platform Merdeka Mengajar (PMM)
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
+        </div>
 
           {/* Action Buttons (Hide when printing) */}
           <div className="no-print" style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "2.5rem", flexWrap: "wrap" }}>

@@ -22,6 +22,7 @@ const programs = [
   // ── 1. WEBINAR GRATIS (pintu masuk funnel iklan) ─────────────────
   {
     slug: "digital-marketing-pemula",
+    categorySlug: "bisnis-pemasaran",
     type: "WEBINAR",
     title: "Digital Marketing untuk Pemula",
     tagline: "Dapatkan Pelanggan Pertama Anda dari Instagram dalam 30 Hari.",
@@ -64,6 +65,7 @@ const programs = [
   // ── 2. KELAS ONLINE / LMS BERBAYAR ───────────────────────────────
   {
     slug: "kelas-ai-untuk-kerja",
+    categorySlug: "teknologi-ai",
     type: "KELAS",
     title: "Kelas Online: AI untuk Dunia Kerja",
     tagline: "Selesaikan Pekerjaan Kantor 2× Lebih Cepat dengan Bantuan AI — Bersertifikat.",
@@ -106,6 +108,7 @@ const programs = [
   // ── 3. WORKSHOP BERBAYAR ─────────────────────────────────────────
   {
     slug: "workshop-excel-praktik",
+    categorySlug: "produktivitas-desain",
     type: "WORKSHOP",
     title: "Workshop Excel: Laporan Otomatis dalam 1 Hari",
     tagline: "Satu Hari Praktik, Laporan Bulanan Anda Menjadi Otomatis.",
@@ -147,39 +150,55 @@ const programs = [
 ];
 
 async function main() {
-  // Hapus bootcamp digital marketing beserta relasinya agar tidak tampil lagi
+  const seedCategories = [
+    { name: "Teknologi & AI", slug: "teknologi-ai", isFeatured: true },
+    { name: "Bisnis & Pemasaran", slug: "bisnis-pemasaran", isFeatured: true },
+    { name: "Produktivitas & Desain", slug: "produktivitas-desain", isFeatured: false },
+  ];
+
+  const categoryMap = {};
+  for (const cat of seedCategories) {
+    const dbCat = await prisma.category.upsert({
+      where: { slug: cat.slug },
+      create: cat,
+      update: cat,
+    });
+    categoryMap[cat.slug] = dbCat.id;
+  }
+
+  // Set bootcamp digital marketing menjadi tidak aktif agar tidak tampil di frontend
+  // tanpa menghapus pendaftaran & sertifikat yang sudah ada.
   const progToDelete = await prisma.program.findUnique({ where: { slug: "bootcamp-digital-marketing" } });
   if (progToDelete) {
-    const regIds = (await prisma.registration.findMany({
-      where: { programId: progToDelete.id },
-      select: { id: true }
-    })).map(r => r.id);
-
-    if (regIds.length > 0) {
-      await prisma.certificate.deleteMany({ where: { registrationId: { in: regIds } } });
-      await prisma.testAttempt.deleteMany({ where: { registrationId: { in: regIds } } });
-      await prisma.payment.deleteMany({ where: { registrationId: { in: regIds } } });
-      await prisma.registration.deleteMany({ where: { programId: progToDelete.id } });
-    }
-
-    await prisma.question.deleteMany({ where: { programId: progToDelete.id } });
-    await prisma.program.delete({ where: { id: progToDelete.id } });
+    await prisma.program.update({
+      where: { slug: "bootcamp-digital-marketing" },
+      data: { isActive: false },
+    });
+    console.log(`✓ [DEPRECATED] Bootcamp Digital Marketing dinonaktifkan (data sebelumnya tetap aman)`);
   }
 
   for (const p of programs) {
-    const { questions, ...data } = p;
+    const { questions, categorySlug, ...data } = p;
+    const programData = {
+      ...data,
+      categoryId: categorySlug ? categoryMap[categorySlug] : null,
+    };
     const program = await prisma.program.upsert({
       where: { slug: p.slug },
-      create: data,
-      update: data,
+      create: programData,
+      update: programData,
     });
 
-    await prisma.question.deleteMany({ where: { programId: program.id } });
-    await prisma.question.createMany({
-      data: questions.map((q, i) => ({ ...q, programId: program.id, order: i })),
-    });
-
-    console.log(`✓ [${p.type}] ${program.title} (${questions.length} soal)`);
+    // Hanya masukkan soal jika belum ada soal terdaftar untuk program ini
+    const existingQuestionsCount = await prisma.question.count({ where: { programId: program.id } });
+    if (existingQuestionsCount === 0) {
+      await prisma.question.createMany({
+        data: questions.map((q, i) => ({ ...q, programId: program.id, order: i })),
+      });
+      console.log(`✓ [${p.type}] ${program.title} (${questions.length} soal baru dibuat)`);
+    } else {
+      console.log(`✓ [${p.type}] ${program.title} (lewati pembuatan soal karena sudah ada data sebelumnya)`);
+    }
   }
   console.log("\nSeed selesai! Buka http://localhost:3000");
 }

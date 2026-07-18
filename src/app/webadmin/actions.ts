@@ -2,11 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, createAdminSession, destroyAdminSession } from "@/lib/admin-auth";
 import { sendWa, msgAccess, msgPaid } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
-
 import { sendEmail, getPaidEmailHtml } from "@/lib/email";
 
 // ─── Auth ────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ export async function adminLogout() {
   redirect("/webadmin/login");
 }
 
-// ─── Program ─────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────
 
 /** textarea "satu per baris" → array string */
 function parseLines(v: string): string[] {
@@ -45,6 +45,28 @@ function optStr(formData: FormData, key: string): string | null {
   const v = String(formData.get(key) ?? "").trim();
   return v.length > 0 ? v : null;
 }
+
+function isUniqueError(err: unknown): boolean {
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
+}
+
+/** Sanitasi HTML dari rich text editor: buang script/style/iframe, event handler, dan URL javascript:. */
+function sanitizeHtml(html: string | null): string | null {
+  if (!html) return null;
+  const cleaned = html
+    .replace(/<\s*(script|style|iframe|object|embed|form)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\s*(script|style|iframe|object|embed|form)[^>]*\/?\s*>/gi, "")
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
+    .replace(/\son\w+\s*=\s*[^\s>]+/gi, "")
+    .replace(/(href|src)\s*=\s*(["']?)\s*javascript:[^"'\s>]*\2/gi, "");
+  const trimmed = cleaned.trim();
+  // hasil kosong (mis. hanya <br> / <p></p>) dianggap tidak ada konten
+  const textOnly = trimmed.replace(/<[^>]*>/g, "").trim();
+  return textOnly.length > 0 || /<img\b/i.test(trimmed) ? trimmed : null;
+}
+
+// ─── Program ─────────────────────────────────────────────────────
 
 export async function saveProgram(formData: FormData) {
   await requireAdmin();
@@ -73,20 +95,49 @@ export async function saveProgram(formData: FormData) {
     certPrice: num(formData, "certPrice"),
     certPriceOld: num(formData, "certPriceOld") || null,
     seatsLeft: num(formData, "seatsLeft") || null,
-    passingScore: num(formData, "passingScore") || 60,
     isActive: formData.get("isActive") === "on",
+    isFeatured: formData.get("isFeatured") === "on",
+    categoryId: optStr(formData, "categoryId"),
   };
 
-  if (!data.slug || !data.title) redirect("/webadmin/program?e=lengkapi");
+  if (!data.slug || !data.title) redirect(id ? `/webadmin/program/${id}?e=lengkapi` : "/webadmin/program/new?e=lengkapi");
+  if (Number.isNaN(data.scheduleAt.getTime())) data.scheduleAt = new Date();
 
-  if (id) {
-    await prisma.program.update({ where: { id }, data });
-  } else {
-    await prisma.program.create({ data });
+  try {
+    if (id) {
+      await prisma.program.update({ where: { id }, data });
+    } else {
+      await prisma.program.create({ data });
+    }
+  } catch (err) {
+    if (isUniqueError(err)) {
+      // slug sudah dipakai program lain
+      redirect(id ? `/webadmin/program/${id}?e=slug` : "/webadmin/program/new?e=slug");
+    }
+    throw err;
   }
   revalidatePath("/");
   revalidatePath("/webadmin/program");
   redirect("/webadmin/program?ok=1");
+}
+
+/** Pengaturan kriteria kelulusan & sertifikat (tab Kelulusan) */
+export async function saveGraduationSettings(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const completionCriteria = String(formData.get("completionCriteria") ?? "ALL_LESSONS") as
+    | "ALL_LESSONS" | "ALL_QUIZZES";
+  const certKind = String(formData.get("certKind") ?? "ACHIEVEMENT") as
+    | "PARTICIPATION" | "COMPLETION" | "ACHIEVEMENT";
+  const passingScore = Math.min(100, Math.max(0, num(formData, "passingScore") || 60));
+  const maxTestAttempts = Math.max(0, num(formData, "maxTestAttempts"));
+
+  await prisma.program.update({
+    where: { id },
+    data: { completionCriteria, certKind, passingScore, maxTestAttempts },
+  });
+  revalidatePath(`/webadmin/program/${id}/kelulusan`);
+  redirect(`/webadmin/program/${id}/kelulusan?ok=1`);
 }
 
 export async function toggleProgram(formData: FormData) {
@@ -106,6 +157,7 @@ export async function deleteProgram(formData: FormData) {
     // ada pendaftar → jangan hapus data, cukup nonaktifkan
     await prisma.program.update({ where: { id }, data: { isActive: false } });
   } else {
+    // modul & lesson ikut terhapus via onDelete: Cascade; soal dihapus manual
     await prisma.question.deleteMany({ where: { programId: id } });
     await prisma.program.delete({ where: { id } });
   }
@@ -113,37 +165,253 @@ export async function deleteProgram(formData: FormData) {
   revalidatePath("/");
 }
 
-// ─── Soal ────────────────────────────────────────────────────────
+// ─── Soal kuis ───────────────────────────────────────────────────
+
+/** Tujuan kembali setelah simpan/hapus soal: halaman materi kuis (fallback: kurikulum) */
+function questionBackUrl(programId: string, lessonId: string | null): string {
+  return lessonId
+    ? `/webadmin/program/${programId}/lms/lesson/${lessonId}`
+    : `/webadmin/program/${programId}/lms`;
+}
 
 export async function saveQuestion(formData: FormData) {
   await requireAdmin();
   const id = optStr(formData, "id");
   const programId = String(formData.get("programId"));
+  const lessonId = optStr(formData, "lessonId"); // terisi = soal kuis materi
   const data = {
     text: String(formData.get("text") ?? "").trim(),
     optionA: String(formData.get("optionA") ?? "").trim(),
     optionB: String(formData.get("optionB") ?? "").trim(),
     optionC: String(formData.get("optionC") ?? "").trim(),
     optionD: String(formData.get("optionD") ?? "").trim(),
-    correct: String(formData.get("correct") ?? "A"),
+    correct: ["A", "B", "C", "D"].includes(String(formData.get("correct"))) ? String(formData.get("correct")) : "A",
     order: num(formData, "order"),
   };
-  if (!data.text) return;
+  if (!data.text) redirect(questionBackUrl(programId, lessonId));
 
   if (id) {
     await prisma.question.update({ where: { id }, data });
   } else {
-    await prisma.question.create({ data: { ...data, programId } });
+    // urutan otomatis di akhir jika tidak diisi
+    if (!data.order) {
+      const last = await prisma.question.findFirst({
+        where: lessonId ? { lessonId } : { programId, lessonId: null },
+        orderBy: { order: "desc" },
+      });
+      data.order = (last?.order ?? 0) + 1;
+    }
+    await prisma.question.create({ data: { ...data, programId, lessonId } });
   }
   revalidatePath(`/webadmin/program/${programId}/soal`);
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+
+  // "Simpan & Tambah Lagi" → langsung ke form soal baru berikutnya
+  if (String(formData.get("intent") ?? "") === "next" && lessonId) {
+    redirect(`/webadmin/program/${programId}/soal/new?lesson=${lessonId}&ok=1`);
+  }
+  redirect(`${questionBackUrl(programId, lessonId)}?ok=1`);
 }
 
 export async function deleteQuestion(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
   const programId = String(formData.get("programId"));
-  await prisma.question.delete({ where: { id } });
+  const existing = await prisma.question.findUnique({ where: { id }, select: { lessonId: true } });
+  await prisma.question.delete({ where: { id } }).catch(() => {});
   revalidatePath(`/webadmin/program/${programId}/soal`);
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+  redirect(`${questionBackUrl(programId, existing?.lessonId ?? null)}?deleted=1`);
+}
+
+// ─── Kelompok Modul ──────────────────────────────────────────────
+
+export async function saveLmsGroup(formData: FormData) {
+  await requireAdmin();
+
+  const id = optStr(formData, "id");
+  const programId = String(formData.get("programId") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+
+  if (!programId || !title) redirect(`/webadmin/program/${programId}/lms?e=lengkapi`);
+
+  if (id) {
+    await prisma.lmsGroup.update({ where: { id }, data: { title } });
+  } else {
+    const last = await prisma.lmsGroup.findFirst({ where: { programId }, orderBy: { order: "desc" } });
+    await prisma.lmsGroup.create({ data: { programId, title, order: (last?.order ?? 0) + 1 } });
+  }
+
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+}
+
+/** Hapus kelompok — modul di dalamnya TIDAK ikut terhapus (menjadi tanpa kelompok) */
+export async function deleteLmsGroup(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+  await prisma.lmsGroup.delete({ where: { id } }).catch(() => {});
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+}
+
+export async function moveLmsGroup(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+  const dir = String(formData.get("dir")) === "up" ? "up" : "down";
+
+  const groups = await prisma.lmsGroup.findMany({ where: { programId }, orderBy: { order: "asc" } });
+  const idx = groups.findIndex((g) => g.id === id);
+  const swapIdx = dir === "up" ? idx - 1 : idx + 1;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= groups.length) return;
+
+  const reordered = [...groups];
+  [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+
+  await prisma.$transaction(
+    reordered.map((g, i) => prisma.lmsGroup.update({ where: { id: g.id }, data: { order: i + 1 } }))
+  );
+
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+}
+
+// ─── Modul LMS ───────────────────────────────────────────────────
+
+export async function saveLmsModule(formData: FormData) {
+  await requireAdmin();
+
+  const id = optStr(formData, "id");
+  const programId = String(formData.get("programId") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  // groupId dari form: "" = tanpa kelompok
+  const hasGroupField = formData.has("groupId");
+  const groupId = optStr(formData, "groupId");
+
+  if (!programId || !title) redirect(`/webadmin/program/${programId}/lms?e=lengkapi`);
+
+  if (id) {
+    await prisma.lmsModule.update({
+      where: { id },
+      data: hasGroupField ? { title, groupId } : { title },
+    });
+  } else {
+    const last = await prisma.lmsModule.findFirst({ where: { programId, groupId }, orderBy: { order: "desc" } });
+    await prisma.lmsModule.create({ data: { programId, groupId, title, order: (last?.order ?? 0) + 1 } });
+  }
+
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+}
+
+export async function deleteLmsModule(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+  await prisma.lmsModule.delete({ where: { id } }).catch(() => {});
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+}
+
+/** Geser urutan modul ke atas / bawah — dalam lingkup kelompoknya */
+export async function moveLmsModule(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+  const dir = String(formData.get("dir")) === "up" ? "up" : "down";
+
+  const current = await prisma.lmsModule.findUnique({ where: { id }, select: { groupId: true } });
+  if (!current) return;
+
+  const modules = await prisma.lmsModule.findMany({
+    where: { programId, groupId: current.groupId },
+    orderBy: { order: "asc" },
+  });
+  const idx = modules.findIndex((m) => m.id === id);
+  const swapIdx = dir === "up" ? idx - 1 : idx + 1;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= modules.length) return;
+
+  const reordered = [...modules];
+  [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+
+  await prisma.$transaction(
+    reordered.map((m, i) => prisma.lmsModule.update({ where: { id: m.id }, data: { order: i + 1 } }))
+  );
+
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+}
+
+// ─── Materi (Lesson) ─────────────────────────────────────────────
+
+const LESSON_TYPES = ["VIDEO", "TEXT", "PDF", "QUIZ"] as const;
+type LessonTypeStr = (typeof LESSON_TYPES)[number];
+
+export async function saveLmsLesson(formData: FormData) {
+  await requireAdmin();
+
+  const id = optStr(formData, "id");
+  const programId = String(formData.get("programId") ?? "").trim();
+  const moduleId = String(formData.get("moduleId") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const rawType = String(formData.get("type") ?? "VIDEO");
+  const type: LessonTypeStr = (LESSON_TYPES as readonly string[]).includes(rawType) ? (rawType as LessonTypeStr) : "VIDEO";
+  const videoUrl = optStr(formData, "videoUrl");
+  const fileUrl = optStr(formData, "fileUrl");
+  const content = sanitizeHtml(optStr(formData, "content"));
+  const duration = String(formData.get("duration") ?? "10 menit").trim() || "10 menit";
+  const passingScoreRaw = num(formData, "passingScore");
+  const passingScore = type === "QUIZ" && passingScoreRaw > 0 ? Math.min(100, passingScoreRaw) : null;
+  const isPreview = formData.get("isPreview") === "on";
+
+  if (!programId || !moduleId || !title) redirect(`/webadmin/program/${programId}/lms?e=lengkapi`);
+
+  const data = { moduleId, title, type, videoUrl, fileUrl, content, duration, passingScore, isPreview };
+
+  let lessonId = id;
+  if (id) {
+    await prisma.lesson.update({ where: { id }, data });
+  } else {
+    const last = await prisma.lesson.findFirst({ where: { moduleId }, orderBy: { order: "desc" } });
+    const created = await prisma.lesson.create({ data: { ...data, order: (last?.order ?? 0) + 1 } });
+    lessonId = created.id;
+  }
+
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+  // Materi kuis baru → langsung ke editornya agar admin bisa menambah soal;
+  // selain itu kembali ke outline kurikulum.
+  if (!id && type === "QUIZ") {
+    redirect(`/webadmin/program/${programId}/lms/lesson/${lessonId}?ok=baru`);
+  }
+  redirect(`/webadmin/program/${programId}/lms?ok=1`);
+}
+
+export async function deleteLmsLesson(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+  await prisma.lesson.delete({ where: { id } }).catch(() => {});
+  revalidatePath(`/webadmin/program/${programId}/lms`);
+  redirect(`/webadmin/program/${programId}/lms?deleted=1`);
+}
+
+/** Geser urutan materi dalam satu modul */
+export async function moveLmsLesson(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+  const moduleId = String(formData.get("moduleId"));
+  const dir = String(formData.get("dir")) === "up" ? "up" : "down";
+
+  const lessons = await prisma.lesson.findMany({ where: { moduleId }, orderBy: { order: "asc" } });
+  const idx = lessons.findIndex((l) => l.id === id);
+  const swapIdx = dir === "up" ? idx - 1 : idx + 1;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= lessons.length) return;
+
+  const reordered = [...lessons];
+  [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+
+  await prisma.$transaction(
+    reordered.map((l, i) => prisma.lesson.update({ where: { id: l.id }, data: { order: i + 1 } }))
+  );
+
+  revalidatePath(`/webadmin/program/${programId}/lms`);
 }
 
 // ─── Pendaftar ───────────────────────────────────────────────────
@@ -166,7 +434,7 @@ export async function markPaid(formData: FormData) {
   ]);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-  const postTestUrl = `${baseUrl}/post-test/${reg.id}`;
+  const memberUrl = `${baseUrl}/member`;
   if (reg.program.price > 0) {
     await sendWa(reg.whatsapp, msgAccess({
       name: reg.name,
@@ -175,17 +443,17 @@ export async function markPaid(formData: FormData) {
       zoomLink: reg.program.zoomLink,
       waGroupLink: reg.program.waGroupLink,
       lmsLink: reg.program.lmsLink,
-      postTestUrl,
+      memberUrl,
     }));
   } else {
-    await sendWa(reg.whatsapp, msgPaid(reg.name, reg.program.title, postTestUrl));
+    await sendWa(reg.whatsapp, msgPaid(reg.name, reg.program.title, memberUrl));
   }
 
   // Kirim email pembayaran sukses — best-effort
   await sendEmail({
     to: reg.email,
     subject: `Pembayaran Berhasil: Akses Pelatihan ${reg.program.title}`,
-    html: getPaidEmailHtml(reg.name, reg.program.title, postTestUrl, reg.program.zoomLink, reg.program.waGroupLink, reg.program.lmsLink),
+    html: getPaidEmailHtml(reg.name, reg.program.title, memberUrl, reg.program.zoomLink, reg.program.waGroupLink, reg.program.lmsLink),
   }).catch((err) => console.error("Gagal mengirim email manual markPaid:", err));
 
   revalidatePath("/webadmin/pendaftar");
@@ -212,25 +480,26 @@ export async function saveRegistration(formData: FormData) {
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const status = String(formData.get("status") ?? "REGISTERED") as "REGISTERED" | "PAID" | "PASSED";
-  const institution = String(formData.get("institution") ?? "").trim();
+  const institution = optStr(formData, "institution");
 
   if (!programId || !name || !whatsapp || !email) {
     redirect("/webadmin/pendaftar?e=lengkapi");
   }
 
-  const data = {
-    programId,
-    name,
-    whatsapp,
-    email,
-    status,
-    institution,
-  };
+  const data = { programId, name, whatsapp, email, status, institution };
 
-  if (id) {
-    await (prisma.registration as any).update({ where: { id }, data });
-  } else {
-    await (prisma.registration as any).create({ data });
+  try {
+    if (id) {
+      await prisma.registration.update({ where: { id }, data });
+    } else {
+      await prisma.registration.create({ data });
+    }
+  } catch (err) {
+    if (isUniqueError(err)) {
+      // nomor WA sudah terdaftar di program yang sama
+      redirect("/webadmin/pendaftar?e=duplikat");
+    }
+    throw err;
   }
 
   revalidatePath("/webadmin/pendaftar");
@@ -238,148 +507,103 @@ export async function saveRegistration(formData: FormData) {
   redirect("/webadmin/pendaftar?ok=1");
 }
 
-export async function saveLmsModule(formData: FormData) {
-  await requireAdmin();
+// ─── Upload & Sertifikat ─────────────────────────────────────────
 
-  const id = optStr(formData, "id");
-  const programId = String(formData.get("programId") ?? "").trim();
-  const title = String(formData.get("title") ?? "").trim();
-  const order = Number(formData.get("order") ?? 0);
+const ALLOWED_UPLOAD_EXT = ["pdf", "png", "jpg", "jpeg", "webp", "svg"];
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20 MB
 
-  if (!programId || !title) {
-    redirect(`/webadmin/program/${programId || ""}?e=lengkapi`);
+/**
+ * Upload file ke public/uploads. TIDAK melempar error — di production Next
+ * menyembunyikan pesan error server action, jadi kembalikan { url | error }.
+ */
+export async function uploadFileAction(formData: FormData): Promise<{ url?: string; error?: string }> {
+  try {
+    const { writeFile, mkdir } = await import("fs/promises");
+    const { join } = await import("path");
+
+    await requireAdmin();
+    const file = formData.get("file") as File;
+    if (!file || file.size === 0) return { error: "File kosong atau tidak terbaca." };
+    if (file.size > MAX_UPLOAD_BYTES) return { error: "Ukuran file maksimal 20 MB." };
+
+    const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+    if (!ALLOWED_UPLOAD_EXT.includes(ext)) {
+      return { error: `Tipe file .${ext} tidak diizinkan. Gunakan: ${ALLOWED_UPLOAD_EXT.join(", ")}.` };
+    }
+
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const uploadDir = join(process.cwd(), "public", "uploads");
+    await mkdir(uploadDir, { recursive: true });
+
+    const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    const filename = `${Date.now()}-${cleanName}`;
+    await writeFile(join(uploadDir, filename), buffer);
+
+    return { url: `/uploads/${filename}` };
+  } catch (err) {
+    console.error("[uploadFileAction]", err);
+    return { error: `Gagal menyimpan file di server: ${err instanceof Error ? err.message : "kesalahan tak dikenal"}.` };
   }
-
-  const data = {
-    programId,
-    title,
-    order,
-  };
-
-  const db = prisma as unknown as {
-    lmsModule: {
-      update: (args: unknown) => Promise<unknown>;
-      create: (args: unknown) => Promise<unknown>;
-    };
-  };
-
-  if (id) {
-    await db.lmsModule.update({ where: { id }, data });
-  } else {
-    await db.lmsModule.create({ data });
-  }
-
-  revalidatePath(`/webadmin/program/${programId}/lms`);
 }
 
-export async function deleteLmsModule(formData: FormData) {
+export async function saveCertTemplate(programId: string, certBgUrl: string | null, certConfig: unknown) {
   await requireAdmin();
-
-  const id = String(formData.get("id"));
-  const programId = String(formData.get("programId"));
-
-  const db = prisma as unknown as {
-    lmsModule: {
-      delete: (args: unknown) => Promise<unknown>;
-    };
-  };
-
-  await db.lmsModule.delete({ where: { id } });
-
-  revalidatePath(`/webadmin/program/${programId}/lms`);
-}
-
-export async function saveLmsLesson(formData: FormData) {
-  await requireAdmin();
-
-  const id = optStr(formData, "id");
-  const programId = String(formData.get("programId") ?? "").trim();
-  const moduleId = String(formData.get("moduleId") ?? "").trim();
-  const title = String(formData.get("title") ?? "").trim();
-  const type = String(formData.get("type") ?? "VIDEO");
-  const videoUrl = optStr(formData, "videoUrl");
-  const content = optStr(formData, "content");
-  const duration = String(formData.get("duration") ?? "10 menit").trim();
-  const order = Number(formData.get("order") ?? 0);
-
-  if (!programId || !moduleId || !title) {
-    redirect(`/webadmin/program/${programId}?e=lengkapi`);
-  }
-
-  const data = {
-    moduleId,
-    title,
-    type,
-    videoUrl,
-    content,
-    duration,
-    order,
-  };
-
-  const db = prisma as unknown as {
-    lesson: {
-      update: (args: unknown) => Promise<unknown>;
-      create: (args: unknown) => Promise<unknown>;
-    };
-  };
-
-  if (id) {
-    await db.lesson.update({ where: { id }, data });
-  } else {
-    await db.lesson.create({ data });
-  }
-
-  revalidatePath(`/webadmin/program/${programId}/lms`);
-}
-
-export async function deleteLmsLesson(formData: FormData) {
-  await requireAdmin();
-
-  const id = String(formData.get("id"));
-  const programId = String(formData.get("programId"));
-
-  const db = prisma as unknown as {
-    lesson: {
-      delete: (args: unknown) => Promise<unknown>;
-    };
-  };
-
-  await db.lesson.delete({ where: { id } });
-
-  revalidatePath(`/webadmin/program/${programId}/lms`);
-}
-
-export async function uploadFileAction(formData: FormData): Promise<string> {
-  const { writeFile, mkdir } = await import("fs/promises");
-  const { join } = await import("path");
-  
-  await requireAdmin();
-  const file = formData.get("file") as File;
-  if (!file || file.size === 0) throw new Error("File empty");
-  
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-  const uploadDir = join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-  
-  const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-  const filename = `${Date.now()}-${cleanName}`;
-  const filepath = join(uploadDir, filename);
-  await writeFile(filepath, buffer);
-  
-  return `/uploads/${filename}`;
-}
-
-export async function saveCertTemplate(programId: string, certBgUrl: string | null, certConfig: any) {
-  await requireAdmin();
-  await (prisma.program as any).update({
+  await prisma.program.update({
     where: { id: programId },
     data: {
       certBgUrl,
-      certConfig: certConfig ? JSON.parse(JSON.stringify(certConfig)) : null
-    }
+      certConfig: certConfig ? (JSON.parse(JSON.stringify(certConfig)) as Prisma.InputJsonValue) : Prisma.DbNull,
+    },
   });
   revalidatePath(`/webadmin/program/${programId}`);
   revalidatePath(`/webadmin/program/${programId}/cert`);
 }
 
+// ─── Kategori ────────────────────────────────────────────────────
+
+export async function saveCategory(formData: FormData) {
+  await requireAdmin();
+
+  const id = optStr(formData, "id");
+  const name = String(formData.get("name") ?? "").trim();
+  let slug = String(formData.get("slug") ?? "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+  const isFeatured = formData.get("isFeatured") === "on";
+
+  if (!name) redirect("/webadmin/kategori?e=lengkapi");
+  if (!slug) {
+    slug = name.toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+  }
+
+  const data = {
+    name,
+    slug,
+    isFeatured,
+  };
+
+  try {
+    if (id) {
+      await (prisma as any).category.update({ where: { id }, data });
+    } else {
+      await (prisma as any).category.create({ data });
+    }
+  } catch (err) {
+    if (isUniqueError(err)) {
+      redirect(id ? `/webadmin/kategori?id=${id}&e=slug` : "/webadmin/kategori?e=slug");
+    }
+    throw err;
+  }
+
+  revalidatePath("/");
+  revalidatePath("/webadmin/kategori");
+  redirect("/webadmin/kategori?ok=1");
+}
+
+export async function deleteCategory(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  await (prisma as any).category.delete({ where: { id } }).catch(() => {});
+  revalidatePath("/");
+  revalidatePath("/webadmin/kategori");
+  redirect("/webadmin/kategori?deleted=1");
+}

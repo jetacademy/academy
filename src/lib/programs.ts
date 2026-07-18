@@ -7,8 +7,9 @@ import { FALLBACK_PROGRAMS, type ProgramData, type ProgramType, type Deliverable
  */
 export async function getPrograms(): Promise<{ programs: ProgramData[]; demo: boolean }> {
   try {
-    const rows = await prisma.program.findMany({
+    const rows = await (prisma as any).program.findMany({
       where: { isActive: true },
+      include: { category: true },
       orderBy: { scheduleAt: "asc" },
     });
     if (rows.length === 0) return { programs: FALLBACK_PROGRAMS, demo: true };
@@ -21,7 +22,10 @@ export async function getPrograms(): Promise<{ programs: ProgramData[]; demo: bo
 
 export async function getProgramBySlug(slug: string): Promise<{ program: ProgramData | null; demo: boolean }> {
   try {
-    const row = await prisma.program.findUnique({ where: { slug } });
+    const row = await (prisma as any).program.findUnique({
+      where: { slug },
+      include: { category: true },
+    });
     if (row) return { program: toData(row), demo: false };
     return { program: FALLBACK_PROGRAMS.find((p) => p.slug === slug) ?? null, demo: true };
   } catch {
@@ -36,6 +40,14 @@ function toData(row: {
   waGroupLink: string | null; lmsLink: string | null;
   price: number; priceOld: number | null; certPrice: number; certPriceOld: number | null;
   seatsLeft: number | null;
+  isFeatured: boolean;
+  categoryId?: string | null;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+    isFeatured: boolean;
+  } | null;
 }): ProgramData {
   return {
     id: row.id,
@@ -60,5 +72,13 @@ function toData(row: {
     certPrice: row.certPrice,
     certPriceOld: row.certPriceOld,
     seatsLeft: row.seatsLeft,
+    isFeatured: row.isFeatured,
+    categoryId: row.categoryId,
+    category: row.category ? {
+      id: row.category.id,
+      name: row.category.name,
+      slug: row.category.slug,
+      isFeatured: row.category.isFeatured,
+    } : null,
   };
 }

@@ -32,7 +32,7 @@ export default function CheckoutForm({ programs }: { programs: ProgramOption[] }
       if (!res.ok) throw new Error(json.error ?? "Gagal membuat pembayaran.");
 
       if (json.postTestUrl) {
-        // sudah pernah bayar → langsung ke post-test
+        // sudah pernah bayar → langsung ke dashboard belajar / sertifikat
         window.location.href = json.postTestUrl;
       } else {
         window.fbq?.("track", "InitiateCheckout");

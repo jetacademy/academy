@@ -93,19 +93,19 @@ export async function POST(req: Request) {
         zoomLink: program.zoomLink,
         waGroupLink: program.waGroupLink,
         lmsLink: program.lmsLink,
-        postTestUrl: `${baseUrl}/post-test/${reg.id}`,
+        memberUrl: `${baseUrl}/member`,
       }));
       await sendEmail({
         to: email,
         subject: `Pembayaran Berhasil: Akses Pelatihan ${program.title}`,
-        html: getPaidEmailHtml(name, program.title, `${baseUrl}/post-test/${reg.id}`, program.zoomLink, program.waGroupLink, program.lmsLink)
+        html: getPaidEmailHtml(name, program.title, `${baseUrl}/member`, program.zoomLink, program.waGroupLink, program.lmsLink)
       }).catch((err) => console.error("Gagal mengirim email pembayaran dev:", err));
 
       return NextResponse.json({ ok: true, paid: true, waGroupLink: program.waGroupLink, lmsLink: program.lmsLink });
     }
 
     const invoice = await createInvoice({
-      externalId: reg.id,
+      externalId: `ACADEMY-${reg.id}`,
       amount: program.price,
       payerEmail: email,
       description: `${program.title} (${name})`,

@@ -9,13 +9,13 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Ambil Sertifikat — Jetschool Academy",
-  description: "Klaim e-sertifikat resmi Anda: selesaikan pembayaran dan evaluasi singkat, sertifikat terbit otomatis.",
+  description: "Klaim e-sertifikat resmi Anda: selesaikan pembayaran dan syarat kelulusan, sertifikat terbit otomatis.",
 };
 
 export default async function SertifikatPage() {
   const { programs } = await getPrograms();
   // halaman ini untuk klaim sertifikat webinar gratis (tripwire).
-  // program berbayar sudah otomatis dapat link post-test setelah bayar.
+  // program berbayar otomatis mendapat akses dashboard belajar setelah bayar.
   const claimable = programs.filter((p) => p.price === 0);
   const list = claimable.length > 0 ? claimable : programs;
 
@@ -29,7 +29,7 @@ export default async function SertifikatPage() {
             <span className="kicker center">Khusus Peserta</span>
             <h1 style={{ fontSize: "clamp(1.9rem, 4.5vw, 2.8rem)" }}>Klaim e-Sertifikat <span className="acc-p">Resmi</span> Anda</h1>
             <p className="lead" style={{ margin: ".9rem auto 0" }}>
-              Selesaikan pembayaran dan evaluasi singkat — e-sertifikat terverifikasi terbit otomatis atas nama Anda.
+              Selesaikan pembayaran dan syarat kelulusan program — e-sertifikat terverifikasi terbit otomatis atas nama Anda.
             </p>
           </div>
           <CheckoutForm programs={list.map((p) => ({ slug: p.slug, title: p.title, certPrice: p.certPrice }))} />

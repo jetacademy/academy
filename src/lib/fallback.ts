@@ -28,6 +28,14 @@ export type ProgramData = {
   certPriceOld: number | null;
   seatsLeft: number | null;
   imageUrl?: string | null;
+  categoryId?: string | null;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+    isFeatured: boolean;
+  } | null;
+  isFeatured?: boolean;
 };
 
 /** Label tipe program untuk tampilan */
@@ -85,6 +93,9 @@ export const FALLBACK_PROGRAMS: ProgramData[] = [
     certPrice: 49000,
     certPriceOld: 149000,
     seatsLeft: 100,
+    categoryId: "cat-1",
+    category: { id: "cat-1", name: "Bisnis & Pemasaran", slug: "bisnis-pemasaran", isFeatured: true },
+    isFeatured: true,
   },
   {
     id: "fallback-2",
@@ -119,6 +130,9 @@ export const FALLBACK_PROGRAMS: ProgramData[] = [
     certPrice: 0,
     certPriceOld: null,
     seatsLeft: null,
+    categoryId: "cat-2",
+    category: { id: "cat-2", name: "Teknologi & AI", slug: "teknologi-ai", isFeatured: true },
+    isFeatured: true,
   },
   {
     id: "fallback-3",
@@ -153,5 +167,8 @@ export const FALLBACK_PROGRAMS: ProgramData[] = [
     certPrice: 0,
     certPriceOld: null,
     seatsLeft: 25,
+    categoryId: "cat-3",
+    category: { id: "cat-3", name: "Produktivitas & Desain", slug: "produktivitas-desain", isFeatured: false },
+    isFeatured: false,
   },
 ];

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { memberLogin } from "../actions";
+import { memberLogin, memberLoginWithGoogle } from "../actions";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import GoogleAuthModal from "@/components/GoogleAuthModal";
@@ -25,11 +25,7 @@ export default function MemberLoginPage() {
       if (res?.error) {
         setError(res.error);
       } else if (res?.ok) {
-        if (res.isAdmin) {
-          router.push("/webadmin");
-        } else {
-          router.push("/member");
-        }
+        router.push("/member");
       }
     } catch {
       setError("Terjadi kesalahan sistem. Silakan coba lagi.");
@@ -38,21 +34,18 @@ export default function MemberLoginPage() {
     }
   }
 
-  async function handleGoogleSelect(email: string) {
+  async function handleGoogleSelect(email: string, _name: string, credential?: string) {
     setGoogleOpen(false);
     setError(null);
     setLoading(true);
 
     try {
-      const res = await memberLogin(email);
+      // credential ada = token Google asli → verifikasi di server; tanpa credential = mode dev
+      const res = credential ? await memberLoginWithGoogle(credential) : await memberLogin(email);
       if (res?.error) {
         setError(res.error);
       } else if (res?.ok) {
-        if (res.isAdmin) {
-          router.push("/webadmin");
-        } else {
-          router.push("/member");
-        }
+        router.push("/member");
       }
     } catch {
       setError("Terjadi kesalahan saat masuk dengan Google. Silakan coba lagi.");
@@ -79,7 +72,7 @@ export default function MemberLoginPage() {
               Jetschool <small style={{ color: "var(--purple)", fontSize: ".7rem", fontWeight: 800 }}>MEMBER</small>
             </div>
             <h3 style={{ textAlign: "center" }}>Dashboard Peserta</h3>
-            <p className="sub" style={{ textAlign: "center", marginBottom: "2rem" }}>Masuk untuk mengakses materi kelas, link Zoom, post-test, dan mengunduh e-sertifikat Anda.</p>
+            <p className="sub" style={{ textAlign: "center", marginBottom: "2rem" }}>Masuk untuk mengakses materi kelas, link Zoom, tes, dan mengunduh e-sertifikat Anda.</p>
 
             {error && <div className="form-error" style={{ fontSize: "0.82rem", marginBottom: "1.5rem" }}>{error}</div>}
 
