@@ -68,37 +68,47 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
  * Kirim kode OTP ke WhatsApp/Email member untuk login.
  */
 export async function memberSendOtp(identifier: string, forceEmail: boolean = false) {
-  const hdrs = await headers();
-  const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-otp";
-  const cleanVal = identifier.trim();
-  if (!cleanVal) return { error: "WhatsApp atau Email tidak boleh kosong." };
+  try {
+    const hdrs = await headers();
+    const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-otp";
+    const cleanVal = identifier.trim();
+    if (!cleanVal) return { error: "WhatsApp atau Email tidak boleh kosong." };
 
-  // Rate limit ganda: per IP (cegah bot) + per identifier (cegah bypass VPN)
-  const limitIp = checkRateLimit(`member-otp-ip:${ip}`, 5, 60_000);
-  if (!limitIp.ok) return { error: "Terlalu banyak permintaan OTP. Coba lagi nanti." };
-  const limitId = checkRateLimit(`member-otp-id:${cleanVal}`, 3, 60_000);
-  if (!limitId.ok) return { error: "Terlalu banyak permintaan OTP untuk akun ini. Coba lagi nanti." };
+    // Rate limit ganda: per IP (cegah bot) + per identifier (cegah bypass VPN)
+    const limitIp = checkRateLimit(`member-otp-ip:${ip}`, 5, 60_000);
+    if (!limitIp.ok) return { error: "Terlalu banyak permintaan OTP. Coba lagi nanti." };
+    const limitId = checkRateLimit(`member-otp-id:${cleanVal}`, 3, 60_000);
+    if (!limitId.ok) return { error: "Terlalu banyak permintaan OTP untuk akun ini. Coba lagi nanti." };
 
-  return sendOtp(cleanVal, forceEmail);
+    return await sendOtp(cleanVal, forceEmail);
+  } catch (err: any) {
+    console.error("[memberSendOtp] CRITICAL ERROR:", err);
+    return { error: err?.message || "Gagal mengirim OTP karena kesalahan server." };
+  }
 }
 
 /**
  * Verifikasi OTP dan login.
  */
 export async function memberVerifyOtp(identifier: string, code: string) {
-  const hdrs = await headers();
-  const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-verify";
-  const limit = checkRateLimit(`member-verify:${ip}`, 5, 60_000);
-  if (!limit.ok) return { error: "Terlalu banyak percobaan. Coba lagi nanti." };
+  try {
+    const hdrs = await headers();
+    const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-verify";
+    const limit = checkRateLimit(`member-verify:${ip}`, 5, 60_000);
+    if (!limit.ok) return { error: "Terlalu banyak percobaan. Coba lagi nanti." };
 
-  const cleanVal = identifier.trim();
-  const cleanCode = code.trim();
-  if (!cleanVal || !cleanCode) return { error: "Data tidak lengkap." };
+    const cleanVal = identifier.trim();
+    const cleanCode = code.trim();
+    if (!cleanVal || !cleanCode) return { error: "Data tidak lengkap." };
 
-  const verified = await verifyOtp(cleanVal, cleanCode);
-  if (!verified.ok) return verified;
+    const verified = await verifyOtp(cleanVal, cleanCode);
+    if (!verified.ok) return verified;
 
-  return loginByIdentifier(cleanVal);
+    return await loginByIdentifier(cleanVal);
+  } catch (err: any) {
+    console.error("[memberVerifyOtp] CRITICAL ERROR:", err);
+    return { error: err?.message || "Gagal memverifikasi OTP karena kesalahan server." };
+  }
 }
 
 /**
@@ -106,22 +116,27 @@ export async function memberVerifyOtp(identifier: string, code: string) {
  * Di produksi dengan Google aktif, jalur ini ditolak — wajib lewat token terverifikasi.
  */
 export async function memberLogin(identifier: string) {
-  const hdrs = await headers();
-  const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-login";
-  const limit = checkRateLimit(`member-login:${ip}`, 10, 60_000);
-  if (!limit.ok) return { error: "Terlalu banyak percobaan login. Coba lagi nanti." };
+  try {
+    const hdrs = await headers();
+    const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-login";
+    const limit = checkRateLimit(`member-login:${ip}`, 10, 60_000);
+    if (!limit.ok) return { error: "Terlalu banyak percobaan login. Coba lagi nanti." };
 
-  const cleanVal = identifier.trim();
-  if (!cleanVal) {
-    return { error: "WhatsApp atau Email tidak boleh kosong." };
+    const cleanVal = identifier.trim();
+    if (!cleanVal) {
+      return { error: "WhatsApp atau Email tidak boleh kosong." };
+    }
+
+    const googleConfigured = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+    if (googleConfigured && process.env.NODE_ENV === "production") {
+      return { error: "Silakan masuk menggunakan tombol Google resmi." };
+    }
+
+    return await loginByIdentifier(cleanVal);
+  } catch (err: any) {
+    console.error("[memberLogin] CRITICAL ERROR:", err);
+    return { error: err?.message || "Gagal melakukan login karena kesalahan server." };
   }
-
-  const googleConfigured = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
-  if (googleConfigured && process.env.NODE_ENV === "production") {
-    return { error: "Silakan masuk menggunakan tombol Google resmi." };
-  }
-
-  return loginByIdentifier(cleanVal);
 }
 
 /** Login dengan Google — ID token diverifikasi ke server Google, bukan dipercaya dari client. */
@@ -333,61 +348,66 @@ export async function claimLessonsCertificate(registrationId: string) {
 
 /** Daftar akun baru (tanpa perlu program) — via OTP WhatsApp */
 export async function registerUser(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const whatsappRaw = String(formData.get("whatsapp") ?? "").trim();
+  try {
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    const whatsappRaw = String(formData.get("whatsapp") ?? "").trim();
 
-  if (name.length < 3) return { error: "Nama minimal 3 huruf." };
-  if (!/^[a-zA-Z0-9\s'.,&-]+$/.test(name)) return { error: "Nama mengandung karakter tidak valid." };
-  if (!/^08[0-9]{8,13}$/.test(whatsappRaw)) return { error: "Nomor WhatsApp tidak valid (08xxx)." };
-  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Email tidak valid." };
+    if (name.length < 3) return { error: "Nama minimal 3 huruf." };
+    if (!/^[a-zA-Z0-9\s'.,&-]+$/.test(name)) return { error: "Nama mengandung karakter tidak valid." };
+    if (!/^08[0-9]{8,13}$/.test(whatsappRaw)) return { error: "Nomor WhatsApp tidak valid (08xxx)." };
+    if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Email tidak valid." };
 
-  const hdrs = await headers();
-  const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "register";
-  const limit = checkRateLimit(`register-user:${ip}`, 3, 300_000);
-  if (!limit.ok) return { error: "Terlalu banyak permintaan. Coba 5 menit lagi." };
+    const hdrs = await headers();
+    const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "register";
+    const limit = checkRateLimit(`register-user:${ip}`, 3, 300_000);
+    if (!limit.ok) return { error: "Terlalu banyak permintaan. Coba 5 menit lagi." };
 
-  // Cek apakah email/WA sudah terdaftar sebagai user
-  const existing = await prisma.user.findFirst({
-    where: { OR: [{ email }, { whatsapp: whatsappRaw }] },
-  });
-  if (existing) {
-    return { error: "Email atau nomor WhatsApp sudah terdaftar. Silakan login." };
-  }
-
-  // Cek apakah sudah ada registrasi dengan data ini (backfill)
-  const regs = await prisma.registration.findMany({
-    where: { OR: [{ email }, { whatsapp: whatsappRaw }] },
-  });
-
-  // Buat user
-  const user = await prisma.user.create({
-    data: { name, email, whatsapp: whatsappRaw, role: "STUDENT" },
-  });
-
-  // Hubungkan registrasi yang ada ke user ini
-  if (regs.length > 0) {
-    await prisma.registration.updateMany({
-      where: { id: { in: regs.map((r) => r.id) } },
-      data: { userId: user.id },
+    // Cek apakah email/WA sudah terdaftar sebagai user
+    const existing = await prisma.user.findFirst({
+      where: { OR: [{ email }, { whatsapp: whatsappRaw }] },
     });
+    if (existing) {
+      return { error: "Email atau nomor WhatsApp sudah terdaftar. Silakan login." };
+    }
+
+    // Cek apakah sudah ada registrasi dengan data ini (backfill)
+    const regs = await prisma.registration.findMany({
+      where: { OR: [{ email }, { whatsapp: whatsappRaw }] },
+    });
+
+    // Buat user
+    const user = await prisma.user.create({
+      data: { name, email, whatsapp: whatsappRaw, role: "STUDENT" },
+    });
+
+    // Hubungkan registrasi yang ada ke user ini
+    if (regs.length > 0) {
+      await prisma.registration.updateMany({
+        where: { id: { in: regs.map((r) => r.id) } },
+        data: { userId: user.id },
+      });
+    }
+
+    // Kirim OTP untuk verifikasi + langsung login
+    const otpResult = await sendOtp(email);
+    if (!otpResult.ok) {
+      return { error: otpResult.error ?? "Gagal mengirim OTP." };
+    }
+
+    // Email selamat datang — best-effort
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+    await sendEmail({
+      to: email,
+      subject: "Selamat Datang di Jetschool Academy!",
+      html: getWelcomeMemberEmailHtml(name, `${baseUrl}/member`),
+    }).catch((err) => console.error("[registerUser] Gagal kirim email welcome:", err));
+
+    return { ok: true, userId: user.id };
+  } catch (err: any) {
+    console.error("[registerUser] CRITICAL ERROR:", err);
+    return { error: err?.message || "Gagal membuat akun karena kesalahan server." };
   }
-
-  // Kirim OTP untuk verifikasi + langsung login
-  const otpResult = await sendOtp(email);
-  if (!otpResult.ok) {
-    return { error: otpResult.error ?? "Gagal mengirim OTP." };
-  }
-
-  // Email selamat datang — best-effort
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-  await sendEmail({
-    to: email,
-    subject: "Selamat Datang di Jetschool Academy!",
-    html: getWelcomeMemberEmailHtml(name, `${baseUrl}/member`),
-  }).catch((err) => console.error("[registerUser] Gagal kirim email welcome:", err));
-
-  return { ok: true, userId: user.id };
 }
 
 /**

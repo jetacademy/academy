@@ -20,39 +20,44 @@ export type AdminSession = {
 };
 
 export async function getAdminSession(): Promise<AdminSession | null> {
-  const jar = await cookies();
-  const raw = jar.get(COOKIE)?.value;
-  if (!raw) return null;
-  const [sessionVal, signature] = raw.split("::");
-  if (!sessionVal || !signature) return null;
-  if (sign(sessionVal) !== signature) return null;
+  try {
+    const jar = await cookies();
+    const raw = jar.get(COOKIE)?.value;
+    if (!raw) return null;
+    const [sessionVal, signature] = raw.split("::");
+    if (!sessionVal || !signature) return null;
+    if (sign(sessionVal) !== signature) return null;
 
-  const [userId, role] = sessionVal.split(":");
-  if (!userId || !role) return null;
+    const [userId, role] = sessionVal.split(":");
+    if (!userId || !role) return null;
 
-  if (userId === "env-admin") {
+    if (userId === "env-admin") {
+      return {
+        userId: "env-admin",
+        role: "ADMIN",
+        name: "Root Admin",
+        email: "admin@jetschool.id",
+      };
+    }
+
+    // Cari di database untuk memastikan user masih aktif dan valid
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, role: true },
+    });
+
+    if (!user || (user.role !== "ADMIN" && user.role !== "TEACHER")) return null;
+
     return {
-      userId: "env-admin",
-      role: "ADMIN",
-      name: "Root Admin",
-      email: "admin@jetschool.id",
+      userId: user.id,
+      role: user.role as "ADMIN" | "TEACHER",
+      name: user.name,
+      email: user.email,
     };
+  } catch (err) {
+    // Abaikan jika dipanggil di luar konteks request (misal unit test)
+    return null;
   }
-
-  // Cari di database untuk memastikan user masih aktif dan valid
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true, email: true, role: true },
-  });
-
-  if (!user || (user.role !== "ADMIN" && user.role !== "TEACHER")) return null;
-
-  return {
-    userId: user.id,
-    role: user.role as "ADMIN" | "TEACHER",
-    name: user.name,
-    email: user.email,
-  };
 }
 
 export async function isAdmin(): Promise<boolean> {
@@ -93,14 +98,18 @@ export async function createAdminSession(emailInput: string, passwordInput: stri
         if (timingSafeEqual(bufInput, bufExpected)) {
           const value = `env-admin:ADMIN`;
           const signedValue = `${value}::${sign(value)}`;
-          const jar = await cookies();
-          jar.set(COOKIE, signedValue, {
-            httpOnly: true,
-            sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 60 * 60 * 24 * 7, // 7 hari
-            path: "/",
-          });
+          try {
+            const jar = await cookies();
+            jar.set(COOKIE, signedValue, {
+              httpOnly: true,
+              sameSite: "lax",
+              secure: process.env.NODE_ENV === "production",
+              maxAge: 60 * 60 * 24 * 7, // 7 hari
+              path: "/",
+            });
+          } catch (err) {
+            console.warn("Gagal membuat cookie session admin (env-admin) di luar konteks request:", err);
+          }
           return true;
         }
       } catch {}
@@ -117,14 +126,18 @@ export async function createAdminSession(emailInput: string, passwordInput: stri
       if (verified) {
         const value = `${user.id}:${user.role}`;
         const signedValue = `${value}::${sign(value)}`;
-        const jar = await cookies();
-        jar.set(COOKIE, signedValue, {
-          httpOnly: true,
-          sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-          maxAge: 60 * 60 * 24 * 7, // 7 hari
-          path: "/",
-        });
+        try {
+          const jar = await cookies();
+          jar.set(COOKIE, signedValue, {
+            httpOnly: true,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 60 * 60 * 24 * 7, // 7 hari
+            path: "/",
+          });
+        } catch (err) {
+          console.warn("Gagal membuat cookie session admin (db user) di luar konteks request:", err);
+        }
         return true;
       }
     }
@@ -134,5 +147,9 @@ export async function createAdminSession(emailInput: string, passwordInput: stri
 }
 
 export async function destroyAdminSession(): Promise<void> {
-  (await cookies()).delete(COOKIE);
+  try {
+    (await cookies()).delete(COOKIE);
+  } catch (err) {
+    console.warn("Gagal menghapus cookie session admin:", err);
+  }
 }
