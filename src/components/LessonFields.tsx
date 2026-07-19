@@ -111,9 +111,14 @@ export default function LessonFields({ lesson }: { lesson?: LessonData }) {
                     if (f) handleUpload(f);
                   }}
                 />
-                <label htmlFor={`${uid}-pdf`} className="btn btn-sm btn-purple" style={{ cursor: "pointer" }}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-purple"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   {uploading ? "Mengunggah…" : "Pilih File PDF"}
-                </label>
+                </button>
                 {fileUrl && !uploading && (
                   <a href={fileUrl} target="_blank" rel="noreferrer" style={{ fontSize: ".8rem", fontWeight: 700, color: "var(--purple)" }}>
                     Lihat file terpasang

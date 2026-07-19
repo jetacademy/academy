@@ -713,7 +713,7 @@ export async function uploadFileAction(formData: FormData): Promise<{ url?: stri
     }
 
     const bytes = await file.arrayBuffer();
-    let buffer = Buffer.from(bytes);
+    let buffer: any = Buffer.from(bytes);
     const uploadDir = UPLOADS_DIR;
     await mkdir(uploadDir, { recursive: true });
 
@@ -769,7 +769,7 @@ export async function uploadFileAction(formData: FormData): Promise<{ url?: stri
         const compressedPdfBytes = await pdfDoc.save({
           useObjectStreams: true,
           addCommandLineToProducer: false
-        });
+        } as any);
         buffer = Buffer.from(compressedPdfBytes);
       } catch (pdfError) {
         console.error("[pdfError]", pdfError);

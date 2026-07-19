@@ -6,7 +6,7 @@
  * control time via vi.useFakeTimers().
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { rateLimit, checkRateLimit } from '@/lib/rate-limit';
 
 describe('rateLimit', () => {

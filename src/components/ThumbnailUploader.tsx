@@ -2,12 +2,14 @@
 
 import { useId, useRef, useState } from "react";
 import { uploadFileAction } from "@/app/webadmin/actions";
+import Icon from "@/components/Icon";
 
 /** Upload gambar thumbnail program (PNG/JPG/WebP, maks 20 MB) — atau tempel URL eksternal. */
 export default function ThumbnailUploader({ name, defaultValue }: { name: string; defaultValue: string }) {
   const [imageUrl, setImageUrl] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const uid = useId();
 
@@ -32,46 +34,126 @@ export default function ThumbnailUploader({ name, defaultValue }: { name: string
     }
   }
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) {
+      handleUpload(f);
+    }
+  };
+
   return (
     <div className="field">
-      <label>Gambar Program</label>
+      <label style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+        <Icon name="image" size={16} />
+        Gambar Program
+      </label>
       <input type="hidden" name={name} value={imageUrl} />
-      <div className="upload-box">
-        {imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element -- pratinjau admin, bisa URL eksternal apa saja
-          <img
-            src={imageUrl}
-            alt="Pratinjau gambar program"
-            style={{ width: 96, height: 54, objectFit: "cover", borderRadius: 8, flexShrink: 0, background: "var(--chip)" }}
-          />
-        )}
+      
+      <div 
+        className={`uploader-area ${dragging ? "dragging" : ""} ${imageUrl ? "has-image" : ""}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <input
           ref={inputRef}
           type="file"
           accept="image/png,image/jpeg,image/webp"
-          id={`${uid}-thumb`}
           style={{ display: "none" }}
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (f) handleUpload(f);
           }}
         />
-        <label htmlFor={`${uid}-thumb`} className="btn btn-sm btn-purple" style={{ cursor: uploading ? "wait" : "pointer" }}>
-          {uploading ? "Mengunggah…" : imageUrl ? "Ganti Gambar" : "Upload Gambar"}
-        </label>
-        {imageUrl && !uploading && (
-          <button type="button" className="btn btn-sm" onClick={() => setImageUrl("")}>Hapus</button>
+
+        {imageUrl ? (
+          <div className="uploader-with-image">
+            <div className="uploader-image-wrapper">
+              {/* eslint-disable-next-line @next/next/no-img-element -- pratinjau admin, bisa URL eksternal apa saja */}
+              <img
+                src={imageUrl}
+                alt="Pratinjau gambar program"
+                className="uploader-image-preview"
+              />
+              {uploading && (
+                <div className="uploader-loading-overlay">
+                  <div className="uploader-spinner" />
+                  <span>Mengunggah…</span>
+                </div>
+              )}
+            </div>
+            <div className="uploader-actions">
+              <button 
+                type="button" 
+                className="btn btn-sm btn-purple"
+                disabled={uploading}
+                onClick={() => inputRef.current?.click()}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+              >
+                <Icon name="upload" size={14} />
+                {uploading ? "Mengunggah…" : "Ganti Gambar"}
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-danger"
+                disabled={uploading}
+                onClick={() => setImageUrl("")}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+              >
+                <Icon name="trash" size={14} />
+                Hapus
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div 
+            className="uploader-empty-state"
+            onClick={() => inputRef.current?.click()}
+            style={{ cursor: uploading ? "wait" : "pointer" }}
+          >
+            <div className="uploader-icon-circle">
+              {uploading ? (
+                <div className="uploader-spinner" />
+              ) : (
+                <Icon name="upload" size={22} />
+              )}
+            </div>
+            <div className="uploader-text-main">
+              {uploading ? "Sedang mengunggah gambar..." : "Pilih atau seret berkas gambar ke sini"}
+            </div>
+            <div className="uploader-text-sub">
+              Format PNG, JPEG, atau WebP (Maks. 20MB)
+            </div>
+          </div>
         )}
       </div>
+
       {error && (
-        <span style={{ display: "block", marginTop: ".4rem", fontSize: ".78rem", color: "var(--red)", fontWeight: 700 }}>{error}</span>
+        <span className="uploader-error-message">{error}</span>
       )}
-      <input
-        value={imageUrl}
-        onChange={(e) => setImageUrl(e.target.value.trim())}
-        placeholder="…atau tempel URL gambar eksternal di sini"
-        style={{ marginTop: ".6rem" }}
-      />
+
+      <div className="uploader-url-input-group">
+        <span className="uploader-url-addon">
+          <Icon name="file-text" size={14} />
+        </span>
+        <input
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value.trim())}
+          placeholder="…atau tempel URL gambar eksternal di sini"
+          className="uploader-url-input"
+        />
+      </div>
       <span className="adm-note">Rasio disarankan 16:9 (mis. 1200×675) — dipakai di halaman program, kartu katalog, &amp; pratinjau share medsos.</span>
     </div>
   );

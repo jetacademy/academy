@@ -7,15 +7,11 @@
  * ```
  */
 
+import { vi } from 'vitest';
+
 // ─── Mock Prisma Client ─────────────────────────────────────────
 
-type DeepMocked<T> = {
-  [K in keyof T]: T[K] extends (...args: infer A) => infer R
-    ? A extends [unknown?, ...unknown[]]
-      ? jest.MockInstance<R, A> & DeepMocked<T[K]>
-      : T[K] & DeepMocked<T[K]>
-    : T[K] & DeepMocked<T[K]>;
-};
+type DeepMocked<T> = any;
 
 /** Create a deeply mocked Prisma client that mirrors the schema's models. */
 export function createMockPrisma() {
@@ -88,7 +84,7 @@ export function resetMocks() {
     if (typeof model === 'object' && model !== null) {
       for (const method of Object.values(model as Record<string, any>)) {
         if (typeof method === 'function' && 'mockReset' in method) {
-          method.mockReset();
+          (method as any).mockReset();
         }
       }
     }
@@ -96,7 +92,7 @@ export function resetMocks() {
   // Reset tx mocks too
   for (const method of Object.values(mockPrismaTx)) {
     if (typeof method === 'function' && 'mockReset' in method) {
-      method.mockReset();
+      (method as any).mockReset();
     }
   }
 }

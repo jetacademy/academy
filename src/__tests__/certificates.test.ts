@@ -154,7 +154,7 @@ function resetMocks() {
   }
   for (const method of Object.values(mockPrismaTx)) {
     if (typeof method === 'function' && 'mockReset' in method) {
-      method.mockReset();
+      (method as any).mockReset();
     }
   }
 }

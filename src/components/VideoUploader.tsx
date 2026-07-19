@@ -143,9 +143,9 @@ export default function VideoUploader({ name, defaultValue }: { name: string; de
         </div>
       ) : (
         <>
-          <label
-            htmlFor={`${uid}-video`}
+          <div
             className={`video-drop${dragging ? " dragging" : ""}${error ? " has-error" : ""}`}
+            onClick={() => inputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={(e) => {
@@ -159,7 +159,6 @@ export default function VideoUploader({ name, defaultValue }: { name: string; de
               ref={inputRef}
               type="file"
               accept="video/*"
-              id={`${uid}-video`}
               style={{ display: "none" }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -169,7 +168,7 @@ export default function VideoUploader({ name, defaultValue }: { name: string; de
             <div className="video-drop-icon">▶</div>
             <div className="video-drop-title">Klik untuk pilih video, atau tarik &amp; lepas di sini</div>
             <div className="video-drop-sub">MP4, MOV, MKV — diproses otomatis oleh Bunny Stream (CDN cepat, tanpa iklan)</div>
-          </label>
+          </div>
 
           {error && (
             <span style={{ display: "block", marginTop: ".5rem", fontSize: ".78rem", color: "var(--red)", fontWeight: 700 }}>{error}</span>

@@ -3,7 +3,7 @@
  * No mocks needed; these are deterministic functions.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { formatJadwal, rupiah, getDaysLeft } from '@/lib/format';
 
 describe('formatJadwal', () => {

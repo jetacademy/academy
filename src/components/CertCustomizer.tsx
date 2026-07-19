@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { uploadFileAction, saveCertTemplate } from "@/app/webadmin/actions";
@@ -31,6 +31,7 @@ const DEFAULT_POSITIONS = {
 
 export default function CertCustomizer({ program }: { program: ProgramData }) {
   const materiList = Array.isArray(program.materi) ? (program.materi as string[]) : [];
+  const bgInputRef = useRef<HTMLInputElement>(null);
 
   // Parse initial config
   const initialConfig = program.certConfig || {};
@@ -253,16 +254,21 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           </p>
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <input
+              ref={bgInputRef}
               type="file"
               accept="image/*"
-              id="bg-upload"
               style={{ display: "none" }}
               onChange={(e) => handleFileUpload(e, "bg")}
               disabled={loading}
             />
-            <label htmlFor="bg-upload" className="btn btn-sm btn-purple" style={{ cursor: "pointer" }}>
+            <button
+              type="button"
+              className="btn btn-sm btn-purple"
+              disabled={loading}
+              onClick={() => bgInputRef.current?.click()}
+            >
               {loading ? "Mengunggah..." : "Pilih File Gambar"}
-            </label>
+            </button>
             {bgUrl && (
               <button className="btn btn-sm btn-danger" onClick={() => setBgUrl("")}>
                 Hapus
