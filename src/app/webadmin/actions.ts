@@ -10,6 +10,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { sendWa, msgAccess, msgPaid, normalizeWa } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml } from "@/lib/email";
+import { createBunnyVideo, getBunnyUploadAuth, deleteBunnyVideo } from "@/lib/bunny";
 
 // ─── Auth ────────────────────────────────────────────────────────
 
@@ -405,11 +406,12 @@ export async function saveLmsLesson(formData: FormData) {
   const rawType = String(formData.get("type") ?? "VIDEO");
   const type: LessonTypeStr = (LESSON_TYPES as readonly string[]).includes(rawType) ? (rawType as LessonTypeStr) : "VIDEO";
   const videoUrl = optStr(formData, "videoUrl");
-  // Validasi video URL: hanya YouTube/Vimeo yang diizinkan
+  // Validasi video URL: YouTube/Vimeo, atau video Bunny Stream yang diunggah dari editor ini
   if (videoUrl) {
     const ytRe = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i;
     const vimeoRe = /^(https?:\/\/)?(www\.)?vimeo\.com\/\d+/i;
-    if (!ytRe.test(videoUrl) && !vimeoRe.test(videoUrl)) {
+    const bunnyRe = /^https:\/\/iframe\.mediadelivery\.net\/embed\/\d+\/[a-f0-9-]+/i;
+    if (!ytRe.test(videoUrl) && !vimeoRe.test(videoUrl) && !bunnyRe.test(videoUrl)) {
       redirect(`/webadmin/program/${programId}/lms/lesson/${id || "new"}?e=video`);
     }
   }
@@ -596,6 +598,39 @@ export async function saveRegistration(formData: FormData) {
 }
 
 // ─── Upload & Sertifikat ─────────────────────────────────────────
+
+// ─── Video (Bunny.net Stream) ─────────────────────────────────────
+
+/**
+ * Siapkan sesi upload video langsung dari browser ke Bunny (protokol TUS) —
+ * file video TIDAK lewat server Next.js (body size limit server action kecil).
+ * Kembalikan tanda tangan sekali-pakai, BUKAN write API key itu sendiri.
+ */
+export async function createBunnyUploadSession(title: string): Promise<
+  { guid: string; libraryId: string; expire: number; signature: string; cdnHostname: string } | { error: string }
+> {
+  await requireAdmin();
+  try {
+    const { guid } = await createBunnyVideo(title || "Materi tanpa judul");
+    const auth = getBunnyUploadAuth(guid);
+    return {
+      guid,
+      libraryId: auth.libraryId,
+      expire: auth.expire,
+      signature: auth.signature,
+      cdnHostname: process.env.BUNNY_STREAM_CDN_HOSTNAME ?? "",
+    };
+  } catch (err) {
+    console.error("[createBunnyUploadSession]", err);
+    return { error: err instanceof Error ? err.message : "Gagal menyiapkan upload video." };
+  }
+}
+
+/** Hapus video Bunny lama saat diganti dengan video baru — best-effort. */
+export async function deleteBunnyVideoAction(guid: string) {
+  await requireAdmin();
+  await deleteBunnyVideo(guid);
+}
 
 const ALLOWED_UPLOAD_EXT = ["pdf", "png", "jpg", "jpeg", "webp"];
 const ALLOWED_UPLOAD_MIME = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
