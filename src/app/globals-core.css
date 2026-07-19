@@ -108,6 +108,10 @@ h3 { font-size: 1.15rem; line-height: 1.25; letter-spacing: -.015em; }
   0%, 100% { box-shadow: 0 0 0 3px rgba(35,33,118,.18); }
   50% { box-shadow: 0 0 0 6px rgba(35,33,118,.06); }
 }
+@keyframes pulse-dot-white {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(255,255,255,.45); }
+  50% { box-shadow: 0 0 0 6px rgba(255,255,255,.08); }
+}
 @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 @keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 @keyframes ticker { to { transform: translateX(-50%); } }

@@ -157,8 +157,8 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           a: "Tidak sama sekali. Workshop ini menggunakan antarmuka visual — jika bisa menggunakan WhatsApp dan browser, Anda sudah bisa mengikuti.",
         },
         {
-          q: "Apa yang akan saya bawa pulang?",
-          a: "6 AI Agent siap pakai yang sudah terhubung ke WhatsApp Anda: Customer Service, Content, Marketing, Sales, Developer, dan Report Agent.",
+          q: "Apa yang akan saya pelajari dan praktekkan?",
+          a: "Anda akan mempraktekkan langsung pembuatan 6 AI Agent dan menghubungkannya ke WhatsApp: Customer Service, Content, Marketing, Sales, Developer, dan Report Agent — semuanya dibangun oleh Anda sendiri selama workshop.",
         },
         {
           q: "Apakah Agent langsung bisa dipakai setelah workshop?",
@@ -508,10 +508,26 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             <div className="container">
               <div className="section-head center">
                 <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>6 AI Agent Siap Pakai</span>
-                <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Dalam 3 Jam, Pulang dengan 6 AI Agent untuk Bisnis Anda</h2>
+                <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Dalam 3 Jam, Praktekkan Langsung 6 AI Agent untuk Bisnis Anda</h2>
                 <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
-                  Bukan teori — langsung bangun dan hubungkan Agent Anda ke WhatsApp. Siap jalan setelah workshop selesai.
+                  Bukan teori — Anda yang membangun sendiri, dipandu langkah demi langkah. Agent Anda terhubung ke WhatsApp sebelum workshop selesai.
                 </p>
+              </div>
+              
+              <div className="eb-card" style={{ marginTop: "1rem", marginBottom: "2rem" }}>
+                <div className="eb-top">
+                  <span className="eb-badge">
+                    <span className="eb-badge-dot" />
+                    🔥 Early Bird
+                  </span>
+                  <span className="eb-deadline">⏰ Sampai H-4 sebelum workshop</span>
+                </div>
+                <div className="eb-price-row">
+                  <span className="eb-price">Rp 225.000</span>
+                  <span className="eb-price-old">Rp 490.000</span>
+                  <span className="eb-save">Hemat 54%</span>
+                </div>
+                <p className="eb-note">Kunci harga spesial ini sekarang — setelah H-4 sebelum workshop, harga kembali ke Rp 490.000.</p>
               </div>
 
               <div className="hero-card" style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.2rem" }}>

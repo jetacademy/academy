@@ -1101,6 +1101,105 @@
 .guarantee p { color: var(--ink-soft); font-size: .86rem; }
 @media (max-width: 520px) { .guarantee { flex-direction: column; align-items: flex-start; } }
 
+/* ---------- Early bird pricing card ---------- */
+.eb-card {
+  position: relative;
+  overflow: hidden;
+  max-width: 34rem;
+  margin-inline: auto;
+  background: linear-gradient(160deg, #FFFEFC 0%, var(--orange-soft) 120%);
+  border: 1px solid rgba(247, 148, 29, .25);
+  border-radius: var(--r-lg);
+  box-shadow: 0 24px 50px -20px rgba(247, 148, 29, .45), var(--shadow-sm);
+  padding: clamp(1.5rem, 4vw, 2.1rem) clamp(1.5rem, 4vw, 2.3rem);
+}
+.eb-card::before {
+  content: '';
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(247,148,29,.22) 0%, rgba(247,148,29,0) 70%);
+  top: -110px; right: -80px;
+  pointer-events: none;
+}
+.eb-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin-bottom: 1.1rem;
+}
+.eb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .5em;
+  background: linear-gradient(120deg, #FFB648, var(--orange) 55%, #E87F0C);
+  color: #fff;
+  font-weight: 800;
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .5em 1em;
+  border-radius: 999px;
+  box-shadow: 0 8px 18px -6px rgba(232, 127, 12, .6);
+}
+.eb-badge-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #fff;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.45);
+  animation: pulse-dot-white 1.8s ease-in-out infinite;
+}
+.eb-deadline {
+  position: relative;
+  font-size: .74rem;
+  font-weight: 700;
+  color: var(--orange);
+  background: rgba(255,255,255,.65);
+  border: 1px solid rgba(247,148,29,.2);
+  padding: .4em .85em;
+  border-radius: 999px;
+}
+.eb-price-row {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .55rem .7rem;
+  margin-bottom: .3rem;
+}
+.eb-price {
+  font-size: clamp(1.8rem, 5vw, 2.3rem);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--purple);
+}
+.eb-price-old {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink-faint);
+  text-decoration: line-through;
+}
+.eb-save {
+  font-size: .72rem;
+  font-weight: 800;
+  color: var(--green);
+  background: rgba(23, 160, 94, .1);
+  padding: .3em .7em;
+  border-radius: 999px;
+}
+.eb-note {
+  position: relative;
+  font-size: .82rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+@media (max-width: 480px) {
+  .eb-top { flex-direction: column; align-items: flex-start; }
+}
+
 /* ---------- Editor Halaman Program: blok konten ----------
    Prinsip: setiap blok "berat" (teks/gambar/video/daftar/stack) dibungkus kartu
    .bento yang sama persis dengan sisa halaman (.bento, .stack, .check-list) —

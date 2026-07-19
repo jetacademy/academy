@@ -107,6 +107,19 @@ export async function POST(req: Request) {
       batchId = batch.id;
     }
 
+    // ── EARLY BIRD PRICE: zero-human-company ──────────────────────
+    // Harga Rp 225.000 sampai H-4, setelah itu Rp 490.000
+    let effectivePrice = program.price;
+    if (program.slug === "zero-human-company") {
+      const EARLY_BIRD_PRICE = 225000;
+      const FULL_PRICE = 490000;
+      const sessionDate = batchId
+        ? (await prisma.programBatch.findUnique({ where: { id: batchId } }))?.scheduleAt ?? program.scheduleAt
+        : program.scheduleAt;
+      const earlyBirdDeadline = new Date(sessionDate.getTime() - 4 * 24 * 60 * 60 * 1000);
+      effectivePrice = new Date() <= earlyBirdDeadline ? EARLY_BIRD_PRICE : FULL_PRICE;
+    }
+
     // ── [FIX C2] Validasi duplikasi yang lebih ketat ──
     // Cari registrasi existing dengan kombinasi whatsapp ATAU email
     const existingReg = await prisma.registration.findFirst({
@@ -214,7 +227,7 @@ export async function POST(req: Request) {
       await prisma.$transaction([
         prisma.payment.upsert({
           where: { registrationId: reg.id },
-          create: { registrationId: reg.id, amount: program.price, status: "PAID", paidAt: new Date() },
+          create: { registrationId: reg.id, amount: effectivePrice, status: "PAID", paidAt: new Date() },
           update: { status: "PAID", paidAt: new Date() },
         }),
         prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
@@ -239,7 +252,7 @@ export async function POST(req: Request) {
 
     const invoice = await createInvoice({
       externalId: `ACADEMY-${reg.id}`,
-      amount: program.price,
+      amount: effectivePrice,
       payerEmail: email,
       description: `${program.title} (${name})`,
       successRedirectUrl: `${baseUrl}/member`, // [FIX G5] Redirect ke dashboard, bukan program page
@@ -247,14 +260,14 @@ export async function POST(req: Request) {
 
     await prisma.payment.upsert({
       where: { registrationId: reg.id },
-      create: { registrationId: reg.id, amount: program.price, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url },
-      update: { xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING", amount: program.price },
+      create: { registrationId: reg.id, amount: effectivePrice, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url },
+      update: { xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING", amount: effectivePrice },
     });
 
     await sendEmail({
       to: email,
       subject: `Selesaikan Pembayaran: ${program.title}`,
-      html: getInvoiceEmailHtml({ name, programTitle: program.title, price: program.price, invoiceUrl: invoice.invoice_url }),
+      html: getInvoiceEmailHtml({ name, programTitle: program.title, price: effectivePrice, invoiceUrl: invoice.invoice_url }),
     }).catch((err) => console.error("Gagal mengirim email invoice:", err));
 
     return NextResponse.json({ ok: true, invoiceUrl: invoice.invoice_url });
