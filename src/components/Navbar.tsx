@@ -43,6 +43,7 @@ export default function Navbar({ minimal = false, ctaHref = "/program", ctaLabel
           <nav className={`nav-links${open ? " open" : ""}`} onClick={() => setOpen(false)}>
             <Link href="/program">Program</Link>
             <Link href="/#cara">Cara Kerja</Link>
+            <Link href="/artikel">Artikel</Link>
             <Link href="/daftar">Daftar</Link>
             <Link href="/#faq">FAQ</Link>
           </nav>

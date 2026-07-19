@@ -8,6 +8,7 @@ const TABS = [
   { href: "/webadmin", label: "Dashboard" },
   { href: "/webadmin/program", label: "Program" },
   { href: "/webadmin/kategori", label: "Kategori" },
+  { href: "/webadmin/artikel", label: "Artikel" },
   { href: "/webadmin/pendaftar", label: "Pendaftar" },
   { href: "/webadmin/sertifikat", label: "Sertifikat" },
   { href: "/webadmin/user", label: "User" },

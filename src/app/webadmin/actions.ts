@@ -11,6 +11,8 @@ import { sendWa, msgAccess, msgPaid, normalizeWa } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml } from "@/lib/email";
 import { createBunnyVideo, getBunnyUploadAuth, deleteBunnyVideo } from "@/lib/bunny";
+import { sanitizeHtml } from "@/lib/sanitize";
+import { slugify } from "@/lib/slug";
 
 // ─── Auth ────────────────────────────────────────────────────────
 
@@ -63,53 +65,6 @@ function optStr(formData: FormData, key: string): string | null {
 
 function isUniqueError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
-}
-
-// ─── DOMPurify singleton (inisialisasi sekali di module level) ────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let purifyInstance: any = null;
-
-async function getPurify() {
-  if (purifyInstance) return purifyInstance;
-  const { JSDOM } = await import("jsdom");
-  const dom = new JSDOM("");
-  const createDOMPurify = await import("isomorphic-dompurify");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  purifyInstance = createDOMPurify.default(dom.window as any);
-  // Hook: bersihkan javascript: dan data: dari href
-  purifyInstance.addHook("afterSanitizeAttributes", function (node: Element) {
-    if (node.tagName === "A" && node.getAttribute("href")) {
-      const href = node.getAttribute("href")!;
-      if (/^\s*(javascript|data|vbscript):/i.test(href)) {
-        node.setAttribute("href", "#");
-      }
-    }
-    if (node.tagName === "IMG" && node.getAttribute("src")) {
-      const src = node.getAttribute("src")!;
-      if (/^\s*(javascript|data):/i.test(src)) {
-        node.removeAttribute("src");
-      }
-    }
-  });
-  return purifyInstance;
-}
-
-/** Sanitasi HTML dari rich text editor — pakai DOMPurify singleton di atas. */
-async function sanitizeHtml(html: string | null): Promise<string | null> {
-  if (!html) return null;
-  const purify = await getPurify();
-  const cleaned = purify.sanitize(html, {
-    ALLOWED_TAGS: [
-      "p", "br", "b", "i", "u", "strong", "em", "a", "ul", "ol", "li",
-      "h1", "h2", "h3", "h4", "h5", "h6", "img", "hr", "blockquote",
-      "pre", "code", "span", "div", "table", "thead", "tbody", "tr", "th", "td",
-    ],
-    ALLOWED_ATTR: ["href", "src", "alt", "target", "rel", "class"],
-    ALLOW_DATA_ATTR: false,
-  });
-  const trimmed = cleaned.trim();
-  const textOnly = trimmed.replace(/<[^>]*>/g, "").trim();
-  return textOnly.length > 0 || /<img\b/i.test(trimmed) ? trimmed : null;
 }
 
 // ─── Program ─────────────────────────────────────────────────────
@@ -861,4 +816,57 @@ export async function regenerateApiKey() {
   });
   revalidatePath("/webadmin/integrasi");
   redirect("/webadmin/integrasi?ok=1");
+}
+
+// ─── Artikel ───────────────────────────────────────────────────────
+
+export async function saveArticle(formData: FormData) {
+  await requireAdmin();
+
+  const id = optStr(formData, "id");
+  const title = String(formData.get("title") ?? "").trim();
+  let slug = slugify(String(formData.get("slug") ?? ""));
+  const excerpt = String(formData.get("excerpt") ?? "").trim();
+  const contentRaw = String(formData.get("content") ?? "").trim();
+  const coverImageUrl = optStr(formData, "coverImageUrl");
+  const authorName = String(formData.get("authorName") ?? "").trim() || "Tim Jetschool Academy";
+  const isPublished = formData.get("isPublished") === "on";
+
+  if (!title || !excerpt) redirect(`/webadmin/artikel/${id ?? "new"}?e=lengkapi`);
+  if (!slug) slug = slugify(title);
+
+  const content = await sanitizeHtml(contentRaw);
+  if (!content) redirect(`/webadmin/artikel/${id ?? "new"}?e=konten`);
+
+  // Set publishedAt sekali saat pertama kali dipublikasikan — tidak berubah lagi di edit berikutnya
+  const existing = id ? await prisma.article.findUnique({ where: { id }, select: { publishedAt: true } }) : null;
+  const publishedAt = isPublished ? (existing?.publishedAt ?? new Date()) : existing?.publishedAt ?? null;
+
+  const data = { title, slug, excerpt, content, coverImageUrl, authorName, isPublished, publishedAt };
+
+  try {
+    if (id) {
+      await prisma.article.update({ where: { id }, data });
+    } else {
+      await prisma.article.create({ data });
+    }
+  } catch (err) {
+    if (isUniqueError(err)) {
+      redirect(`/webadmin/artikel/${id ?? "new"}?e=slug`);
+    }
+    throw err;
+  }
+
+  revalidatePath("/webadmin/artikel");
+  revalidatePath("/artikel");
+  redirect("/webadmin/artikel?ok=1");
+}
+
+export async function deleteArticle(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  await prisma.article.delete({ where: { id } }).catch((err) => console.error("[deleteArticle] Gagal:", err));
+  revalidatePath("/webadmin/artikel");
+  revalidatePath("/artikel");
+  redirect("/webadmin/artikel?deleted=1");
 }

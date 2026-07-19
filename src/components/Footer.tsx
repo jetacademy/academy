@@ -19,6 +19,7 @@ export default function Footer() {
           <nav className="footer-links">
             <Link href="/about">Tentang Kami</Link>
             <Link href="/program">Program</Link>
+            <Link href="/artikel">Artikel</Link>
             <Link href="/faq">FAQ</Link>
             <Link href="/contact">Hubungi Kami</Link>
             <Link href="/terms">Syarat & Ketentuan</Link>
