@@ -13,6 +13,7 @@ import { sendEmail, getPaidEmailHtml } from "@/lib/email";
 import { createBunnyVideo, getBunnyUploadAuth, deleteBunnyVideo } from "@/lib/bunny";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
+import { isValidVideoUrl } from "@/lib/video";
 
 // ─── Auth ────────────────────────────────────────────────────────
 
@@ -126,6 +127,75 @@ export async function saveProgram(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/webadmin/program");
   redirect("/webadmin/program?ok=1");
+}
+
+const CONTENT_BLOCK_TYPES = ["heading", "text", "image", "video", "list", "stack", "quote"];
+
+/** Validasi & sanitasi blok mentah dari editor sebelum disimpan — blok yang tidak valid/kosong dibuang. */
+export async function sanitizeContentBlocks(input: unknown): Promise<Prisma.InputJsonValue> {
+  if (!Array.isArray(input)) return [];
+  const out: Record<string, unknown>[] = [];
+  for (const raw of input) {
+    if (!raw || typeof raw !== "object") continue;
+    const b = raw as Record<string, unknown>;
+    const type = String(b.type ?? "");
+    if (!CONTENT_BLOCK_TYPES.includes(type)) continue;
+    const id = typeof b.id === "string" && b.id ? b.id : `blk_${out.length}`;
+
+    if (type === "heading") {
+      const text = String(b.text ?? "").trim();
+      if (text) out.push({ id, type, text });
+    } else if (type === "text") {
+      const html = await sanitizeHtml(String(b.html ?? "").trim());
+      if (html) out.push({ id, type, html });
+    } else if (type === "image") {
+      const url = String(b.url ?? "").trim();
+      const caption = String(b.caption ?? "").trim();
+      if (url) out.push({ id, type, url, ...(caption ? { caption } : {}) });
+    } else if (type === "video") {
+      const url = String(b.url ?? "").trim();
+      const caption = String(b.caption ?? "").trim();
+      if (url && isValidVideoUrl(url)) out.push({ id, type, url, ...(caption ? { caption } : {}) });
+    } else if (type === "list") {
+      const items = Array.isArray(b.items) ? b.items.map((v) => String(v).trim()).filter(Boolean) : [];
+      const title = String(b.title ?? "").trim();
+      if (items.length) out.push({ id, type, items, ...(title ? { title } : {}) });
+    } else if (type === "stack") {
+      const items = Array.isArray(b.items)
+        ? (b.items as unknown[])
+            .map((v) => {
+              const item = v as { label?: unknown; value?: unknown };
+              return { label: String(item.label ?? "").trim(), value: Number(item.value ?? 0) || 0 };
+            })
+            .filter((it) => it.label)
+        : [];
+      const title = String(b.title ?? "").trim();
+      if (items.length) out.push({ id, type, items, ...(title ? { title } : {}) });
+    } else if (type === "quote") {
+      const text = String(b.text ?? "").trim();
+      const author = String(b.author ?? "").trim();
+      if (text) out.push({ id, type, text, ...(author ? { author } : {}) });
+    }
+  }
+  return out as Prisma.InputJsonValue;
+}
+
+/** Simpan blok konten editor halaman program (dipanggil langsung dari client, bukan lewat <form>). */
+export async function saveProgramContentBlocks(
+  programId: string,
+  blocks: unknown
+): Promise<{ ok?: true; error?: string }> {
+  await requireAdmin();
+  try {
+    const clean = await sanitizeContentBlocks(blocks);
+    const updated = await prisma.program.update({ where: { id: programId }, data: { contentBlocks: clean }, select: { slug: true } });
+    revalidatePath(`/program/${updated.slug}`);
+    revalidatePath(`/webadmin/program/${programId}/konten`);
+    return { ok: true };
+  } catch (err) {
+    console.error("[saveProgramContentBlocks]", err);
+    return { error: "Gagal menyimpan blok konten. Coba lagi." };
+  }
 }
 
 /** Pengaturan kriteria kelulusan & sertifikat (tab Kelulusan) */
@@ -362,13 +432,8 @@ export async function saveLmsLesson(formData: FormData) {
   const type: LessonTypeStr = (LESSON_TYPES as readonly string[]).includes(rawType) ? (rawType as LessonTypeStr) : "VIDEO";
   const videoUrl = optStr(formData, "videoUrl");
   // Validasi video URL: YouTube/Vimeo, atau video Bunny Stream yang diunggah dari editor ini
-  if (videoUrl) {
-    const ytRe = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i;
-    const vimeoRe = /^(https?:\/\/)?(www\.)?vimeo\.com\/\d+/i;
-    const bunnyRe = /^https:\/\/iframe\.mediadelivery\.net\/embed\/\d+\/[a-f0-9-]+/i;
-    if (!ytRe.test(videoUrl) && !vimeoRe.test(videoUrl) && !bunnyRe.test(videoUrl)) {
-      redirect(`/webadmin/program/${programId}/lms/lesson/${id || "new"}?e=video`);
-    }
+  if (videoUrl && !isValidVideoUrl(videoUrl)) {
+    redirect(`/webadmin/program/${programId}/lms/lesson/${id || "new"}?e=video`);
   }
   const fileUrl = optStr(formData, "fileUrl");
   const content = await sanitizeHtml(optStr(formData, "content"));

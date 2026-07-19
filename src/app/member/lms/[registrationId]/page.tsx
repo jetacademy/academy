@@ -11,6 +11,7 @@ import LessonQuiz, { type LessonQuizQuestion } from "@/components/LessonQuiz";
 import ClaimCertButton from "@/components/ClaimCertButton";
 import MemberPayCertButton from "@/components/MemberPayCertButton";
 import LessonVideoPlayer from "@/components/LessonVideoPlayer";
+import { getEmbedUrl } from "@/lib/video";
 
 export const dynamic = "force-dynamic";
 
@@ -20,21 +21,6 @@ const TYPE_LABEL: Record<string, string> = {
   PDF: "PDF",
   QUIZ: "Kuis",
 };
-
-function getEmbedUrl(url: string | null): string | null {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  if (match && match[2].length === 11) {
-    return `https://www.youtube.com/embed/${match[2]}`;
-  }
-  const vimeoReg = /vimeo\.com\/(\d+)/;
-  const vimeoMatch = url.match(vimeoReg);
-  if (vimeoMatch) {
-    return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-  }
-  return url;
-}
 
 export default async function LmsPage({
   params,

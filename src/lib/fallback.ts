@@ -1,6 +1,8 @@
 // Data contoh yang tampil sebelum database MySQL terhubung / di-seed.
 // Bentuknya sama dengan model Program di Prisma.
 
+import type { ContentBlock } from "@/lib/content-blocks";
+
 export type ProgramType = "WEBINAR" | "KELAS" | "WORKSHOP" | "BOOTCAMP";
 
 export type Deliverable = { label: string; value: number };
@@ -18,6 +20,7 @@ export type ProgramData = {
   materi: string[];
   deliverables: Deliverable[];
   guarantee: string | null;
+  contentBlocks?: ContentBlock[];
   scheduleAt: Date;
   durationLabel: string;
   waGroupLink: string | null;

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { authorizeApiRequest } from "@/lib/api-auth";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
+import { sanitizeContentBlocks } from "@/app/webadmin/actions";
 
 const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL?.includes("localhost")
   ? process.env.NEXT_PUBLIC_BASE_URL
@@ -13,6 +14,17 @@ const PROGRAM_TYPES = ["WEBINAR", "KELAS", "WORKSHOP", "BOOTCAMP"] as const;
 /**
  * PATCH /api/v1/programs/[id] — perbarui sebagian field program.
  * Body JSON: field mana pun dari POST /api/v1/programs — semua opsional.
+ *
+ * contentBlocks: array blok editor halaman — jika diisi (walau array kosong `[]`),
+ * MENGGANTIKAN tampilan deskripsi/materi/deliverables/mentor/garansi bawaan di halaman publik.
+ * Tiap blok: { id?, type, ...field } — type salah satu dari:
+ *   heading  { text }
+ *   text     { html }                         (HTML disanitasi server-side)
+ *   image    { url, caption? }
+ *   video    { url, caption? }                 (YouTube/Vimeo/embed Bunny Stream)
+ *   list     { title?, items: string[] }
+ *   stack    { title?, items: {label,value}[] }
+ *   quote    { text, author? }
  */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizeApiRequest(req, { rateLimitKey: "api-v1-programs-write", max: 20, windowMs: 60_000 });
@@ -91,6 +103,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (typeof body.guarantee === "string") {
     const guarantee = body.guarantee.trim();
     data.guarantee = guarantee ? (await sanitizeHtml(guarantee)) ?? guarantee : null;
+  }
+  if (body.contentBlocks !== undefined) {
+    data.contentBlocks = await sanitizeContentBlocks(body.contentBlocks);
   }
 
   if (Object.keys(data).length === 0) {

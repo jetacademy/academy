@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { FALLBACK_PROGRAMS, type ProgramData, type ProgramType, type Deliverable } from "@/lib/fallback";
+import type { ContentBlock } from "@/lib/content-blocks";
 
 /**
  * Ambil program dari MySQL. Jika database belum terhubung / belum di-seed,
@@ -44,7 +45,7 @@ export async function getProgramBySlug(slug: string): Promise<{ program: Program
 function toData(row: {
   id: string; slug: string; type: string; title: string; tagline: string; description: string;
   emoji: string; imageUrl?: string | null; mentorName: string; mentorBio: string; materi: unknown; deliverables: unknown;
-  guarantee: string | null; scheduleAt: Date; durationLabel: string;
+  guarantee: string | null; contentBlocks?: unknown; scheduleAt: Date; durationLabel: string;
   waGroupLink: string | null; lmsLink: string | null;
   price: number; priceOld: number | null; certPrice: number; certPriceOld: number | null;
   seatsLeft: number | null;
@@ -77,6 +78,7 @@ function toData(row: {
     materi: Array.isArray(row.materi) ? (row.materi as string[]) : [],
     deliverables: Array.isArray(row.deliverables) ? (row.deliverables as Deliverable[]) : [],
     guarantee: row.guarantee,
+    contentBlocks: Array.isArray(row.contentBlocks) ? (row.contentBlocks as ContentBlock[]) : [],
     scheduleAt: nextScheduleAt,
     durationLabel: row.durationLabel,
     waGroupLink: row.waGroupLink,

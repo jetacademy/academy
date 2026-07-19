@@ -13,11 +13,14 @@ export default function RichTextEditor({
   defaultValue,
   placeholder,
   minHeight = "12rem",
+  onChange,
 }: {
-  name: string;
+  name?: string;
   defaultValue?: string | null;
   placeholder?: string;
   minHeight?: string;
+  /** Dipanggil tiap konten berubah — dipakai editor yang butuh live preview (bukan submit via form). */
+  onChange?: (html: string) => void;
 }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [html, setHtml] = useState(defaultValue ?? "");
@@ -31,7 +34,11 @@ export default function RichTextEditor({
   }, []);
 
   function sync() {
-    if (editorRef.current) setHtml(editorRef.current.innerHTML);
+    if (editorRef.current) {
+      const next = editorRef.current.innerHTML;
+      setHtml(next);
+      onChange?.(next);
+    }
   }
 
   function exec(command: string, value?: string) {
@@ -60,7 +67,7 @@ export default function RichTextEditor({
 
   return (
     <div className="rte">
-      <input type="hidden" name={name} value={html} />
+      {name && <input type="hidden" name={name} value={html} />}
       <div className="rte-toolbar">
         {tools.map((t) => (
           <button key={t.label} type="button" title={t.title} style={t.style} onMouseDown={(e) => e.preventDefault()} onClick={t.onClick}>

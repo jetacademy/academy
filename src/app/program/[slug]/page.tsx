@@ -9,6 +9,7 @@ import ValueStack from "@/components/ValueStack";
 import OfferTimer from "@/components/OfferTimer";
 import Testimonials from "@/components/Testimonials";
 import Icon from "@/components/Icon";
+import ProgramContentBlocks from "@/components/ProgramContentBlocks";
 import { getProgramBySlug } from "@/lib/programs";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 import Image from "next/image";
@@ -111,6 +112,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   }
 
   const isFree = program.price === 0;
+  const hasBlocks = !!(program.contentBlocks && program.contentBlocks.length > 0);
   const isTeacherProgram = program.slug === "modul-ajar-ai-untuk-guru";
   const jadwal = formatJadwal(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
@@ -227,11 +229,13 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       {/* ===== DESCRIPTION & CTA BAR ===== */}
       <section className="section-sm" style={{ paddingTop: "2rem", paddingBottom: "2rem" }}>
         <div className="container">
-          <div className="prg-desc-cta-card">
-            <div className="prg-desc-col">
-              <h3 className="prg-desc-title">Deskripsi Program</h3>
-              <p className="prg-desc-text">{program.description}</p>
-            </div>
+          <div className={hasBlocks ? "prg-desc-cta-card no-desc" : "prg-desc-cta-card"}>
+            {!hasBlocks && (
+              <div className="prg-desc-col">
+                <h3 className="prg-desc-title">Deskripsi Program</h3>
+                <p className="prg-desc-text">{program.description}</p>
+              </div>
+            )}
             <div className="prg-cta-col">
               <a href="#daftar" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", textAlign: "center" }}>
                 {isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`}
@@ -263,6 +267,15 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
 
+      {/* ===== BODY: editor blok (jika ada) menggantikan seluruh section di bawah ini ===== */}
+      {hasBlocks ? (
+        <section className="section">
+          <div className="container">
+            <ProgramContentBlocks blocks={program.contentBlocks ?? []} />
+          </div>
+        </section>
+      ) : (
+      <>
       {/* ===== KHUSUS GURU: PERSUASIF & RELEVAN ===== */}
       {isTeacherProgram && (
         <>
@@ -433,6 +446,9 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             </div>
           </div>
         </section>
+      )}
+
+      </>
       )}
 
       {/* ===== TESTIMONI ===== */}

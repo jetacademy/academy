@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { suffix: "", label: "Info Program" },
+  { suffix: "/konten", label: "Editor Halaman" },
   { suffix: "/batch", label: "Jadwal & Batch" },
   { suffix: "/lms", label: "Kurikulum" },
   { suffix: "/kelulusan", label: "Kelulusan" },

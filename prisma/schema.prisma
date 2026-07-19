@@ -65,6 +65,7 @@ model Program {
   materi             Json // array string: poin "apa yang akan dipelajari"
   deliverables       Json // value stack: array { label, value } — "yang kamu bawa pulang"
   guarantee          String?            @db.Text // teks garansi / risk reversal
+  contentBlocks      Json? // editor blok halaman (teks/gambar/video/dll) — jika terisi, GANTIKAN tampilan body lama (description/materi/deliverables/guarantee) di halaman publik
   scheduleAt         DateTime // jadwal mulai (webinar/workshop/bootcamp) atau tanggal akses (kelas)
   durationLabel      String             @default("2 jam") // "2 jam", "4 minggu", "6 sesi live"
   zoomLink           String? // dikirim via WA setelah daftar/bayar
