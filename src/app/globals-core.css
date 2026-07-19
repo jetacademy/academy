@@ -29,6 +29,7 @@
   --r-md: 18px;              /* chip */
   --r-sm: 12px;
   --shadow: 0 10px 40px rgba(25, 25, 25, .08);
+  --shadow-sm: 0 2px 10px rgba(25, 25, 25, .06);
 
   /* alias utk komponen lama (admin dll.) */
   --paper: var(--bg);

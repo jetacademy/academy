@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import ScrollReveal from "@/components/ScrollReveal";
 import MetaPixel from "@/components/MetaPixel";
@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   title: "Jetschool Academy — Belajar Skill, Pulang Bawa Sertifikat",
   description:
     "Webinar gratis, kelas online, workshop, dan bootcamp bersertifikat resmi. Daftar 1 menit, semua lewat WhatsApp.",
+};
+
+// Tanpa ini, mobile browser merender halaman di lebar virtual desktop (~980px)
+// lalu zoom-out paksa — bikin semua halaman terlihat kepotong/berantakan di HP.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

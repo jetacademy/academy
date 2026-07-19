@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/admin-auth";
 import { adminLogin } from "../actions";
 import Image from "next/image";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -43,16 +42,6 @@ export default async function AdminLoginPage({ searchParams }: {
             <input id="pw" name="password" type="password" placeholder="••••••••" required />
           </div>
           <button type="submit" className="btn btn-ink btn-lg btn-block">Masuk Ke Panel</button>
-
-          <div style={{ margin: "1.2rem 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ height: "1px", background: "var(--line)", flexGrow: 1 }} />
-            <span style={{ fontSize: ".74rem", color: "var(--ink-faint)", padding: "0 .8rem", fontWeight: 700 }}>ATAU</span>
-            <span style={{ height: "1px", background: "var(--line)", flexGrow: 1 }} />
-          </div>
-
-          <Link href="/member/login" className="btn btn-purple btn-lg btn-block" style={{ display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>
-            Masuk dengan Google (Superadmin)
-          </Link>
 
           <p className="reg-note" style={{ textAlign: "center", marginTop: "1.5rem" }}>
             Hubungi administrator jika lupa kata sandi.

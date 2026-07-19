@@ -104,25 +104,9 @@ export default function ProgramListClient({
       <section className="section" style={{ minHeight: "60vh", padding: "2.5rem 0 5rem" }}>
         <div className="container">
           {/* Search & Sort Panel */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr auto",
-            gap: "1rem",
-            alignItems: "center",
-            marginBottom: "2rem"
-          }}>
-            {/* Search Input */}
-            <div style={{ position: "relative", width: "100%" }}>
-              <span style={{
-                position: "absolute",
-                left: "1.2rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--ink-faint)",
-                display: "flex",
-                alignItems: "center",
-                pointerEvents: "none"
-              }}>
+          <div className="prg-toolbar">
+            <div className="prg-search">
+              <span className="prg-search-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -130,85 +114,36 @@ export default function ProgramListClient({
               </span>
               <input
                 type="text"
+                className="prg-search-input"
                 placeholder="Cari pelatihan, topik, atau nama mentor..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setVisibleCount(12);
                 }}
-                style={{
-                  width: "100%",
-                  padding: "1rem 1rem 1rem 3rem",
-                  borderRadius: "999px",
-                  border: "1px solid var(--line)",
-                  background: "var(--white)",
-                  fontSize: "0.95rem",
-                  fontWeight: 600,
-                  color: "var(--ink)",
-                  boxShadow: "var(--shadow-sm)",
-                  outline: "none",
-                  transition: "all 0.2s ease"
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "var(--purple)";
-                  e.target.style.boxShadow = "0 0 0 4px var(--purple-soft)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "var(--line)";
-                  e.target.style.boxShadow = "var(--shadow-sm)";
-                }}
               />
             </div>
 
-            {/* Sort Select */}
-            <div>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as "schedule" | "price-asc" | "price-desc")}
-                style={{
-                  padding: "1rem 2rem 1rem 1.2rem",
-                  borderRadius: "999px",
-                  border: "1px solid var(--line)",
-                  background: "var(--white)",
-                  fontSize: "0.9rem",
-                  fontWeight: 700,
-                  color: "var(--ink)",
-                  boxShadow: "var(--shadow-sm)",
-                  cursor: "pointer",
-                  outline: "none",
-                  appearance: "none",
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3748' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "right 1rem center",
-                  backgroundSize: "1rem"
-                }}
-              >
-                <option value="schedule">Jadwal Terdekat</option>
-                <option value="price-asc">Harga Terendah</option>
-                <option value="price-desc">Harga Tertinggi</option>
-              </select>
-            </div>
+            <select
+              className="prg-sort"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "schedule" | "price-asc" | "price-desc")}
+            >
+              <option value="schedule">Jadwal Terdekat</option>
+              <option value="price-asc">Harga Terendah</option>
+              <option value="price-desc">Harga Tertinggi</option>
+            </select>
           </div>
 
           {/* Filter Chips Container */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "3rem" }}>
+          <div className="prg-filters">
             {/* Category Pills */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--ink-faint)", textTransform: "uppercase", letterSpacing: "0.05em", marginRight: "0.5rem" }}>Kategori:</span>
+            <div className="prg-filter-row">
+              <span className="prg-filter-label">Kategori:</span>
               <button
                 type="button"
+                className={`prg-pill${selectedCategory === "all" ? " on-purple" : ""}`}
                 onClick={() => { setSelectedCategory("all"); setVisibleCount(12); }}
-                style={{
-                  padding: "0.5rem 1.2rem",
-                  borderRadius: "999px",
-                  border: "1px solid " + (selectedCategory === "all" ? "var(--purple)" : "var(--line)"),
-                  background: selectedCategory === "all" ? "var(--purple)" : "var(--white)",
-                  color: selectedCategory === "all" ? "#fff" : "var(--ink-soft)",
-                  fontWeight: 700,
-                  fontSize: "0.82rem",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease"
-                }}
               >
                 Semua Kategori
               </button>
@@ -216,18 +151,8 @@ export default function ProgramListClient({
                 <button
                   key={cat.id}
                   type="button"
+                  className={`prg-pill${selectedCategory === cat.slug ? " on-purple" : ""}`}
                   onClick={() => { setSelectedCategory(cat.slug); setVisibleCount(12); }}
-                  style={{
-                    padding: "0.5rem 1.2rem",
-                    borderRadius: "999px",
-                    border: "1px solid " + (selectedCategory === cat.slug ? "var(--purple)" : "var(--line)"),
-                    background: selectedCategory === cat.slug ? "var(--purple)" : "var(--white)",
-                    color: selectedCategory === cat.slug ? "#fff" : "var(--ink-soft)",
-                    fontWeight: 700,
-                    fontSize: "0.82rem",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease"
-                  }}
                 >
                   {cat.name}
                 </button>
@@ -235,22 +160,12 @@ export default function ProgramListClient({
             </div>
 
             {/* Type Pills */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--ink-faint)", textTransform: "uppercase", letterSpacing: "0.05em", marginRight: "0.5rem" }}>Tipe Program:</span>
+            <div className="prg-filter-row">
+              <span className="prg-filter-label">Tipe Program:</span>
               <button
                 type="button"
+                className={`prg-pill${selectedType === "ALL" ? " on-ink" : ""}`}
                 onClick={() => { setSelectedType("ALL"); setVisibleCount(12); }}
-                style={{
-                  padding: "0.5rem 1.2rem",
-                  borderRadius: "999px",
-                  border: "1px solid " + (selectedType === "ALL" ? "var(--ink)" : "var(--line)"),
-                  background: selectedType === "ALL" ? "var(--ink)" : "var(--white)",
-                  color: selectedType === "ALL" ? "#fff" : "var(--ink-soft)",
-                  fontWeight: 700,
-                  fontSize: "0.82rem",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease"
-                }}
               >
                 Semua Tipe
               </button>
@@ -258,18 +173,8 @@ export default function ProgramListClient({
                 <button
                   key={type}
                   type="button"
+                  className={`prg-pill${selectedType === type ? " on-ink" : ""}`}
                   onClick={() => { setSelectedType(type); setVisibleCount(12); }}
-                  style={{
-                    padding: "0.5rem 1.2rem",
-                    borderRadius: "999px",
-                    border: "1px solid " + (selectedType === type ? "var(--ink)" : "var(--line)"),
-                    background: selectedType === type ? "var(--ink)" : "var(--white)",
-                    color: selectedType === type ? "#fff" : "var(--ink-soft)",
-                    fontWeight: 700,
-                    fontSize: "0.82rem",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease"
-                  }}
                 >
                   {TYPE_LABEL[type]}
                 </button>
@@ -325,13 +230,8 @@ export default function ProgramListClient({
             </>
           ) : (
             /* No Results State */
-            <div className="bento" style={{ textAlign: "center", padding: "4rem 2rem", background: "var(--white)" }}>
-              <div style={{
-                width: "4rem", height: "4rem", borderRadius: "50%",
-                background: "var(--purple-soft)", color: "var(--purple)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "1.8rem", margin: "0 auto 1.5rem"
-              }}>
+            <div className="bento prg-empty">
+              <div className="prg-empty-icon">
                 🔍
               </div>
               <h3 style={{ fontSize: "1.35rem", marginBottom: "0.5rem" }}>Program tidak ditemukan</h3>
