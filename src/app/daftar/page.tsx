@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { registerUser, memberVerifyOtp, memberLogin, memberLoginWithGoogle, memberSendOtp } from "../member/actions";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import WaFloat from "@/components/WaFloat";
 import GoogleAuthModal from "@/components/GoogleAuthModal";
 import Link from "next/link";
 
@@ -148,6 +149,7 @@ export default function DaftarPage() {
           </div>
         </section>
         <Footer />
+        <WaFloat />
       </>
     );
   }
@@ -328,6 +330,7 @@ export default function DaftarPage() {
       />
 
       <Footer />
+      <WaFloat />
     </>
   );
 }

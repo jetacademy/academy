@@ -5,6 +5,7 @@ import { getMemberSession } from "@/lib/member-auth";
 import { checkCertEligibility } from "@/lib/certificates";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import WaFloat from "@/components/WaFloat";
 import { completeLesson } from "@/app/member/actions";
 import LessonQuiz, { type LessonQuizQuestion } from "@/components/LessonQuiz";
 import ClaimCertButton from "@/components/ClaimCertButton";
@@ -114,6 +115,7 @@ export default async function LmsPage({
           </div>
         </section>
         <Footer />
+        <WaFloat />
       </>
     );
   }
@@ -483,6 +485,7 @@ export default async function LmsPage({
       </div>
 
       <Footer />
+      <WaFloat />
     </>
   );
 }

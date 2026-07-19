@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { memberLogin, memberLoginWithGoogle, memberSendOtp, memberVerifyOtp } from "../actions";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import WaFloat from "@/components/WaFloat";
 import GoogleAuthModal from "@/components/GoogleAuthModal";
 import Image from "next/image";
 import Link from "next/link";
@@ -232,6 +233,7 @@ export default function MemberLoginPage() {
       />
 
       <Footer />
+      <WaFloat />
     </>
   );
 }

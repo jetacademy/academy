@@ -149,6 +149,27 @@ export function getCertEmailHtml(name: string, programTitle: string, certUrl: st
   `;
 }
 
+export function getContactMessageEmailHtml(params: { name: string; email: string; whatsapp: string; message: string }): string {
+  const safeName = escapeHtml(params.name);
+  const safeEmail = escapeHtml(params.email);
+  const safeWhatsapp = escapeHtml(params.whatsapp);
+  const safeMessage = escapeHtml(params.message).replace(/\n/g, "<br/>");
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
+      <h2 style="color: #232176; margin-top: 0;">Pesan Baru dari Formulir Hubungi Kami</h2>
+      <div style="background: #f7f6f8; padding: 15px; border-radius: 6px; margin: 20px 0;">
+        <p style="margin: 0 0 8px 0;"><strong>Nama:</strong> ${safeName}</p>
+        <p style="margin: 0 0 8px 0;"><strong>WhatsApp:</strong> ${safeWhatsapp}</p>
+        <p style="margin: 0;"><strong>Email:</strong> ${safeEmail || "(tidak diisi)"}</p>
+      </div>
+      <p style="margin: 0 0 8px 0;"><strong>Pesan:</strong></p>
+      <p style="white-space: pre-wrap;">${safeMessage}</p>
+      <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
+      <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Dikirim otomatis dari halaman /contact Jetschool Academy.</p>
+    </div>
+  `;
+}
+
 export function getOtpEmailHtml(code: string): string {
   return `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">

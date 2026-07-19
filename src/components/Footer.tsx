@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function Footer() {
-  const waAdmin = process.env.NEXT_PUBLIC_WA_ADMIN ?? "6281234567890";
   return (
     <footer className="footer">
       <div className="container">
@@ -25,7 +24,6 @@ export default function Footer() {
             <Link href="/terms">Syarat & Ketentuan</Link>
             <Link href="/privacy-policy">Kebijakan Privasi</Link>
             <Link href="/sertifikat">Ambil Sertifikat</Link>
-            <a href={`https://wa.me/${waAdmin}`} target="_blank" rel="noopener noreferrer">WhatsApp Admin</a>
           </nav>
           <span style={{ fontSize: ".78rem" }}>© {new Date().getFullYear()} Jetschool Academy</span>
         </div>

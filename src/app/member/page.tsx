@@ -6,6 +6,7 @@ import { isAdmin } from "@/lib/admin-auth";
 import { memberLogout } from "./actions";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import WaFloat from "@/components/WaFloat";
 import ClaimCertButton from "@/components/ClaimCertButton";
 import MemberPayCertButton from "@/components/MemberPayCertButton";
 import { rupiah, formatJadwal } from "@/lib/format";
@@ -308,6 +309,7 @@ export default async function MemberDashboardPage() {
       </section>
 
       <Footer />
+      <WaFloat />
     </>
   );
 }

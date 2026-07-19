@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import WaFloat from "@/components/WaFloat";
 import PrintButton from "@/components/PrintButton";
 import Link from "next/link";
 import Image from "next/image";
@@ -511,6 +512,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
       </section>
 
       <Footer />
+      <WaFloat />
     </>
   );
 }

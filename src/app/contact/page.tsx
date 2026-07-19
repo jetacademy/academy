@@ -4,24 +4,41 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WaFloat from "@/components/WaFloat";
+import { sendContactMessage } from "./actions";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({ name: "", email: "", whatsapp: "", message: "" });
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.whatsapp || !formData.message) {
+      setErrorMsg("Harap lengkapi semua kolom yang wajib diisi (*).");
       setStatus("error");
       return;
     }
     setStatus("sending");
-    
-    // Simulate sending message to admin
-    setTimeout(() => {
+
+    const fd = new FormData();
+    fd.append("name", formData.name);
+    fd.append("email", formData.email);
+    fd.append("whatsapp", formData.whatsapp);
+    fd.append("message", formData.message);
+
+    try {
+      const res = await sendContactMessage(fd);
+      if (res.error) {
+        setErrorMsg(res.error);
+        setStatus("error");
+        return;
+      }
       setStatus("success");
       setFormData({ name: "", email: "", whatsapp: "", message: "" });
-    }, 1200);
+    } catch {
+      setErrorMsg("Terjadi kendala jaringan. Silakan coba lagi.");
+      setStatus("error");
+    }
   };
 
   const waAdmin = process.env.NEXT_PUBLIC_WA_ADMIN ?? "6281234567890";
@@ -86,7 +103,7 @@ export default function ContactPage() {
 
                 {/* Email Bento */}
                 <a
-                  href="mailto:support@jetschoolacademy.id"
+                  href="mailto:info@academy.jetschool.id"
                   className="bento"
                   style={{
                     padding: "1.5rem",
@@ -117,7 +134,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 style={{ fontSize: "1.05rem", fontWeight: 700, margin: 0, color: "var(--ink)" }}>Surel (Email)</h3>
-                    <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", margin: ".1rem 0 0 0" }}>support@jetschoolacademy.id</p>
+                    <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", margin: ".1rem 0 0 0" }}>info@academy.jetschool.id</p>
                   </div>
                 </a>
 
@@ -254,7 +271,7 @@ export default function ContactPage() {
 
                 {status === "error" && (
                   <p style={{ color: "red", fontSize: "0.85rem", fontWeight: 600, margin: 0 }}>
-                    Harap lengkapi semua kolom yang wajib diisi (*).
+                    {errorMsg}
                   </p>
                 )}
 
