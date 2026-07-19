@@ -67,7 +67,7 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
 /**
  * Kirim kode OTP ke WhatsApp/Email member untuk login.
  */
-export async function memberSendOtp(identifier: string, forceEmail: boolean = false) {
+export async function memberSendOtp(identifier: string, forceEmail: boolean = false): Promise<{ ok?: boolean; error?: string; channel?: "whatsapp" | "email" | "none" | null }> {
   try {
     const hdrs = await headers();
     const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-otp";
@@ -81,16 +81,16 @@ export async function memberSendOtp(identifier: string, forceEmail: boolean = fa
     if (!limitId.ok) return { error: "Terlalu banyak permintaan OTP untuk akun ini. Coba lagi nanti." };
 
     return await sendOtp(cleanVal, forceEmail);
-  } catch (err: any) {
+  } catch (err) {
     console.error("[memberSendOtp] CRITICAL ERROR:", err);
-    return { error: err?.message || "Gagal mengirim OTP karena kesalahan server." };
+    return { error: err instanceof Error ? err.message : "Gagal mengirim OTP karena kesalahan server." };
   }
 }
 
 /**
  * Verifikasi OTP dan login.
  */
-export async function memberVerifyOtp(identifier: string, code: string) {
+export async function memberVerifyOtp(identifier: string, code: string): Promise<{ ok?: boolean; error?: string }> {
   try {
     const hdrs = await headers();
     const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-verify";
@@ -105,9 +105,9 @@ export async function memberVerifyOtp(identifier: string, code: string) {
     if (!verified.ok) return verified;
 
     return await loginByIdentifier(cleanVal);
-  } catch (err: any) {
+  } catch (err) {
     console.error("[memberVerifyOtp] CRITICAL ERROR:", err);
-    return { error: err?.message || "Gagal memverifikasi OTP karena kesalahan server." };
+    return { error: err instanceof Error ? err.message : "Gagal memverifikasi OTP karena kesalahan server." };
   }
 }
 
@@ -115,7 +115,7 @@ export async function memberVerifyOtp(identifier: string, code: string) {
  * Login fallback tanpa Google (mode dev / Google belum dikonfigurasi).
  * Di produksi dengan Google aktif, jalur ini ditolak — wajib lewat token terverifikasi.
  */
-export async function memberLogin(identifier: string) {
+export async function memberLogin(identifier: string): Promise<{ ok?: boolean; error?: string }> {
   try {
     const hdrs = await headers();
     const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-login";
@@ -133,9 +133,9 @@ export async function memberLogin(identifier: string) {
     }
 
     return await loginByIdentifier(cleanVal);
-  } catch (err: any) {
+  } catch (err) {
     console.error("[memberLogin] CRITICAL ERROR:", err);
-    return { error: err?.message || "Gagal melakukan login karena kesalahan server." };
+    return { error: err instanceof Error ? err.message : "Gagal melakukan login karena kesalahan server." };
   }
 }
 
@@ -347,7 +347,7 @@ export async function claimLessonsCertificate(registrationId: string) {
 }
 
 /** Daftar akun baru (tanpa perlu program) — via OTP WhatsApp */
-export async function registerUser(formData: FormData) {
+export async function registerUser(formData: FormData): Promise<{ ok?: boolean; error?: string; userId?: string }> {
   try {
     const name = String(formData.get("name") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -404,9 +404,9 @@ export async function registerUser(formData: FormData) {
     }).catch((err) => console.error("[registerUser] Gagal kirim email welcome:", err));
 
     return { ok: true, userId: user.id };
-  } catch (err: any) {
+  } catch (err) {
     console.error("[registerUser] CRITICAL ERROR:", err);
-    return { error: err?.message || "Gagal membuat akun karena kesalahan server." };
+    return { error: err instanceof Error ? err.message : "Gagal membuat akun karena kesalahan server." };
   }
 }
 

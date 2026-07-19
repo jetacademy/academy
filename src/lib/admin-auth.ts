@@ -54,7 +54,7 @@ export async function getAdminSession(): Promise<AdminSession | null> {
       name: user.name,
       email: user.email,
     };
-  } catch (err) {
+  } catch {
     // Abaikan jika dipanggil di luar konteks request (misal unit test)
     return null;
   }

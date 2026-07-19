@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { registerUser, memberVerifyOtp, memberLogin, memberLoginWithGoogle, memberSendOtp } from "../member/actions";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -20,7 +19,7 @@ export default function DaftarPage() {
   const [countdown, setCountdown] = useState(0);
   const [resendLoading, setResendLoading] = useState(false);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
-  const router = useRouter();
+
 
   async function handleGoogleSelect(email: string, name: string, credential?: string) {
     setGoogleOpen(false);

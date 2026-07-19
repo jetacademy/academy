@@ -38,9 +38,7 @@ function decodeJwt(token: string) {
 }
 
 export default function GoogleAuthModal({ isOpen, onClose, onSelect }: GoogleAuthModalProps) {
-  const [customEmail, setCustomEmail] = useState("");
-  const [customName, setCustomName] = useState("");
-  const [showCustom, setShowCustom] = useState(false);
+  const showCustom = false;
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
 

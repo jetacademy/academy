@@ -17,7 +17,6 @@ export default function MemberLoginPage() {
   const [googleOpen, setGoogleOpen] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [otpCode, setOtpCode] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [otpChannel, setOtpChannel] = useState<"whatsapp" | "email" | "none" | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [resendLoading, setResendLoading] = useState(false);
@@ -107,8 +106,7 @@ export default function MemberLoginPage() {
       setError(res.error);
       setStep("pilih-metode");
     } else {
-      setOtpSent(true);
-      setOtpChannel(("channel" in res ? res.channel : null) ?? null);
+      setOtpChannel(res.channel ?? null);
       setStep("otp");
       setCountdown(60);
     }
@@ -310,7 +308,7 @@ export default function MemberLoginPage() {
                   type="button"
                   className="btn btn-line btn-sm"
                   style={{ width: "100%", marginTop: "1rem" }}
-                  onClick={() => { setStep("pilih-metode"); setOtpCode(""); setOtpSent(false); setInfoMessage(null); }}
+                  onClick={() => { setStep("pilih-metode"); setOtpCode(""); setInfoMessage(null); }}
                   disabled={isBusy}
                 >
                   Ganti metode login

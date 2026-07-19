@@ -20,7 +20,7 @@ export async function getMemberSession(): Promise<string | null> {
     if (!value || !signature) return null;
     if (sign(value) !== signature) return null;
     return value;
-  } catch (err) {
+  } catch {
     // Abaikan jika dipanggil di luar konteks request (misal unit test)
     return null;
   }
