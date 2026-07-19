@@ -42,14 +42,12 @@ export default function ConfirmButton({
   };
 
   // Tutup otomatis setelah pengiriman selesai (dari true ke false)
-  useEffect(() => {
-    if (pending) {
-      setWasPending(true);
-    } else if (wasPending && !pending) {
-      setWasPending(false);
-      setIsOpen(false);
-    }
-  }, [pending, wasPending]);
+  if (pending && !wasPending) {
+    setWasPending(true);
+  } else if (!pending && wasPending) {
+    setWasPending(false);
+    setIsOpen(false);
+  }
 
   // Tutup dengan ESC
   useEffect(() => {
