@@ -90,12 +90,12 @@ export default async function AdminDashboard() {
           <tbody>
             {perProgram.map((p) => (
               <tr key={p.id}>
-                <td><Link href={`/webadmin/program/${p.id}`} style={{ fontWeight: 600 }}>{p.title}</Link></td>
-                <td><span className={`badge${p.price === 0 ? " y" : ""}`}>{TYPE_LABEL[p.type as ProgramType]}</span></td>
-                <td>{p.totalRegs}</td>
-                <td>{p.paid}</td>
-                <td>{rupiah(p.income)}</td>
-                <td>{p.isActive ? <span className="badge g">Aktif</span> : <span className="badge dim">Nonaktif</span>}</td>
+                <td data-label="Program"><Link href={`/webadmin/program/${p.id}`} style={{ fontWeight: 600 }}>{p.title}</Link></td>
+                <td data-label="Tipe"><span className={`badge${p.price === 0 ? " y" : ""}`}>{TYPE_LABEL[p.type as ProgramType]}</span></td>
+                <td data-label="Pendaftar">{p.totalRegs}</td>
+                <td data-label="Lunas">{p.paid}</td>
+                <td data-label="Pendapatan">{rupiah(p.income)}</td>
+                <td data-label="Status">{p.isActive ? <span className="badge g">Aktif</span> : <span className="badge dim">Nonaktif</span>}</td>
               </tr>
             ))}
             {perProgram.length === 0 && (
@@ -119,11 +119,11 @@ export default async function AdminDashboard() {
               const b = STATUS_BADGE[r.status];
               return (
                 <tr key={r.id}>
-                  <td style={{ fontWeight: 600 }}>{r.name}</td>
-                  <td>{r.whatsapp}</td>
-                  <td className="muted">{r.program.title}</td>
-                  <td><span className={`badge ${b.cls}`}>{b.label}</span></td>
-                  <td className="muted">{new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(r.createdAt)}</td>
+                  <td data-label="Nama" style={{ fontWeight: 600 }}>{r.name}</td>
+                  <td data-label="WhatsApp">{r.whatsapp}</td>
+                  <td data-label="Program" className="muted">{r.program.title}</td>
+                  <td data-label="Status"><span className={`badge ${b.cls}`}>{b.label}</span></td>
+                  <td data-label="Waktu" className="muted">{new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(r.createdAt)}</td>
                 </tr>
               );
             })}

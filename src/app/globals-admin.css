@@ -4,13 +4,49 @@
    ============================================================ */
 
 /* ---------- Panel Admin (/webadmin) ---------- */
-.adm-top { background: var(--white); box-shadow: var(--shadow); }
-.adm-top-inner { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; height: 66px; flex-wrap: wrap; }
+.adm-top { background: var(--white); box-shadow: var(--shadow); position: relative; z-index: 100; }
+.adm-top-inner { display: flex; align-items: center; gap: 1.5rem; height: 66px; }
+.adm-burger {
+  display: none;
+  width: 2.4rem; height: 2.4rem; border-radius: 8px;
+  align-items: center; justify-content: center;
+  font-size: 1.2rem; color: var(--ink); background: var(--chip);
+  margin-left: auto; flex-shrink: 0;
+}
+
+/* Bungkus nav-tabs + tombol aksi header — baris tunggal di desktop, panel dropdown di mobile */
+.adm-nav-panel { display: flex; align-items: center; gap: 1.5rem; flex: 1; min-width: 0; justify-content: space-between; }
 .adm-tabs { display: flex; gap: 1.5rem; font-size: .82rem; font-weight: 800; color: var(--ink-soft); overflow-x: auto; }
 .adm-tabs a { padding: .5em 0; border-bottom: 3px solid transparent; white-space: nowrap; }
 .adm-tabs a:hover { color: var(--ink); }
 .adm-tabs a.on { color: var(--purple); border-color: var(--purple); }
-.adm-main { padding: 2rem 0 4rem; }
+.adm-panel-actions { display: flex; align-items: center; gap: .7rem; flex-shrink: 0; }
+
+@media (max-width: 860px) {
+  .adm-burger { display: inline-flex; }
+  .adm-nav-panel {
+    display: none;
+    position: absolute; top: 100%; left: 1rem; right: 1rem;
+    flex-direction: column; align-items: stretch; gap: 0;
+    background: var(--white); border-radius: 0 0 var(--r-md) var(--r-md);
+    box-shadow: var(--shadow);
+    padding: .4rem 1rem 1rem;
+    max-height: calc(100vh - 66px);
+    overflow-y: auto;
+  }
+  .adm-nav-panel.open { display: flex; }
+  .adm-tabs { flex-direction: column; gap: 0; overflow-x: visible; width: 100%; }
+  .adm-tabs a { padding: .9em .5em; border-bottom: 1px solid var(--chip); border-left: 3px solid transparent; }
+  .adm-tabs a.on { background: #F6F4FE; border-left-color: var(--purple); border-bottom-color: var(--chip); padding-left: .8em; }
+  .adm-panel-actions {
+    flex-direction: column; align-items: stretch; gap: .5rem;
+    padding-top: .8rem; margin-top: .4rem; border-top: 2px solid var(--chip);
+  }
+  .adm-panel-actions .btn { width: 100%; }
+}
+
+.adm-main { padding: 1.4rem 0 4rem; }
+@media (min-width: 861px) { .adm-main { padding: 2rem 0 4rem; } }
 .adm-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1.4rem; flex-wrap: wrap; }
 .adm-head h1 { font-size: clamp(1.4rem, 3vw, 1.9rem); }
 
@@ -33,6 +69,33 @@
 .tbl td { padding: .85rem 1rem; border-bottom: 1px solid var(--chip); vertical-align: middle; }
 .tbl tr:last-child td { border-bottom: 0; }
 .tbl .muted { color: var(--ink-faint); font-size: .78rem; }
+
+/* Tabel → kartu di mobile: tiap baris jadi kartu, tiap sel dapat label kecil dari data-label */
+@media (max-width: 640px) {
+  .tbl-wrap { overflow-x: visible; }
+  .tbl thead { display: none; }
+  .tbl, .tbl tbody, .tbl tr, .tbl td { display: block; width: 100%; }
+  .tbl tr { padding: .9rem 1rem; border-bottom: 8px solid var(--bg); }
+  .tbl tr:last-child { border-bottom: 0; }
+  .tbl td { padding: .4rem 0; border-bottom: 0; }
+  .tbl td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: .64rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-faint); margin-bottom: .25rem;
+  }
+}
+
+/* Layout 2 kolom (tabel + form) yang dipakai halaman User & Kategori */
+.adm-split { display: grid; grid-template-columns: 1.3fr .7fr; gap: 1.5rem; align-items: start; }
+@media (max-width: 860px) { .adm-split { grid-template-columns: 1fr; } }
+
+/* Baris filter (search/select/tombol) — menciut rapi di layar sempit */
+.adm-filter-row { display: flex; gap: .8rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+.adm-filter-row input, .adm-filter-row select {
+  padding: .6em 1em; border: 1px solid var(--line-strong, #ddd); border-radius: var(--r-sm);
+  background: var(--white); flex: 1 1 12rem; min-width: 0; max-width: 100%;
+}
 
 .badge {
   display: inline-block;

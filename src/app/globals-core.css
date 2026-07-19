@@ -70,6 +70,9 @@ body::before, body::after {
 body::before { width: 340px; height: 340px; left: -160px; bottom: -160px; }
 body::after { width: 260px; height: 260px; right: -110px; bottom: 120px; background: #FFC85C; opacity: .85; }
 
+/* Panel admin (.adm-scope) tidak pakai hiasan marketing — terlalu ramai utk UI data-dense */
+body:has(.adm-scope)::before, body:has(.adm-scope)::after { content: none; }
+
 .container { width: min(1120px, 94%); margin-inline: auto; }
 
 /* ---------- Tipografi: besar, tebal, rapat ---------- */

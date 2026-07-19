@@ -66,7 +66,7 @@ export default async function AdminUserList({
       {e === "lengkapi" && <div className="adm-alert err">Nama dan email wajib diisi.</div>}
       {e === "password-wajib" && <div className="adm-alert err">Password wajib diisi untuk Admin/Pengajar baru.</div>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 0.7fr", gap: "1.5rem" }}>
+      <div className="adm-split">
         {/* Kolom Kiri: Tabel User */}
         <div className="tbl-wrap">
           <table className="tbl">
@@ -83,22 +83,22 @@ export default async function AdminUserList({
             <tbody>
               {users.map((u: UserItem) => (
                 <tr key={u.id}>
-                  <td style={{ fontWeight: 600 }}>{u.name}</td>
-                  <td>{u.email}</td>
-                  <td className="muted">{u.whatsapp || "-"}</td>
-                  <td>
+                  <td data-label="Nama" style={{ fontWeight: 600 }}>{u.name}</td>
+                  <td data-label="Email">{u.email}</td>
+                  <td data-label="WhatsApp" className="muted">{u.whatsapp || "-"}</td>
+                  <td data-label="Role">
                     {u.role === "ADMIN" && <span className="badge r">Admin</span>}
                     {u.role === "TEACHER" && <span className="badge y">Pengajar</span>}
                     {u.role === "STUDENT" && <span className="badge dim">Peserta</span>}
                   </td>
-                  <td className="muted" style={{ fontSize: "0.78rem" }}>
+                  <td data-label="Terdaftar" className="muted" style={{ fontSize: "0.78rem" }}>
                     {new Date(u.createdAt).toLocaleDateString("id-ID", {
                       day: "2-digit",
                       month: "short",
                       year: "numeric"
                     })}
                   </td>
-                  <td>
+                  <td data-label="Aksi">
                     <div style={{ display: "flex", gap: ".4rem" }}>
                       <Link href={`/webadmin/user?id=${u.id}${roleFilter ? `&role=${roleFilter}` : ""}`} className="btn btn-sm">
                         Edit

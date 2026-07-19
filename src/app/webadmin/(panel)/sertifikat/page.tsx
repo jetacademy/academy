@@ -35,11 +35,11 @@ export default async function AdminSertifikat({ searchParams }: {
           <tbody>
             {certs.map((c) => (
               <tr key={c.id}>
-                <td style={{ fontWeight: 600 }}>{c.number}</td>
-                <td>{c.registration.name}</td>
-                <td className="muted">{c.registration.program.title}</td>
-                <td className="muted">{new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(c.issuedAt)}</td>
-                <td><a href={`/sertifikat/${c.number}`} target="_blank" className="btn btn-sm">Lihat ↗</a></td>
+                <td data-label="Nomor" style={{ fontWeight: 600 }}>{c.number}</td>
+                <td data-label="Nama">{c.registration.name}</td>
+                <td data-label="Program" className="muted">{c.registration.program.title}</td>
+                <td data-label="Terbit" className="muted">{new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(c.issuedAt)}</td>
+                <td data-label="Aksi"><a href={`/sertifikat/${c.number}`} target="_blank" className="btn btn-sm">Lihat ↗</a></td>
               </tr>
             ))}
             {certs.length === 0 && <tr><td colSpan={5} className="muted">Belum ada sertifikat terbit.</td></tr>}

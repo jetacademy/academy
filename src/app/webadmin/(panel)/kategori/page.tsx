@@ -45,7 +45,7 @@ export default async function AdminCategoryList({
       )}
       {e === "lengkapi" && <div className="adm-alert err">Nama kategori wajib diisi.</div>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 0.7fr", gap: "1.5rem" }}>
+      <div className="adm-split">
         {/* Kolom Kiri: Tabel Kategori */}
         <div className="tbl-wrap">
           <table className="tbl">
@@ -61,17 +61,17 @@ export default async function AdminCategoryList({
             <tbody>
               {categories.map((c: CategoryWithCount) => (
                 <tr key={c.id}>
-                  <td style={{ fontWeight: 600 }}>{c.name}</td>
-                  <td className="muted">/{c.slug}</td>
-                  <td>
+                  <td data-label="Nama Kategori" style={{ fontWeight: 600 }}>{c.name}</td>
+                  <td data-label="Slug" className="muted">/{c.slug}</td>
+                  <td data-label="Unggulan">
                     {c.isFeatured ? (
                       <span className="badge y">Unggulan</span>
                     ) : (
                       <span className="badge dim">Biasa</span>
                     )}
                   </td>
-                  <td>{c._count.programs} program</td>
-                  <td>
+                  <td data-label="Jumlah Program">{c._count.programs} program</td>
+                  <td data-label="Aksi">
                     <div style={{ display: "flex", gap: ".4rem" }}>
                       <Link href={`/webadmin/kategori?id=${c.id}`} className="btn btn-sm">
                         Edit

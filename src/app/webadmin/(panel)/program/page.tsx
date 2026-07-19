@@ -25,17 +25,17 @@ export default async function AdminProgramList() {
           <tbody>
             {programs.map((p) => (
               <tr key={p.id}>
-                <td>
+                <td data-label="Program">
                   <Link href={`/webadmin/program/${p.id}`} style={{ fontWeight: 600 }}>{p.title}</Link>
                   <div className="muted">/program/{p.slug}</div>
                 </td>
-                <td><span className={`badge${p.price === 0 ? " y" : ""}`}>{TYPE_LABEL[p.type as ProgramType]}</span></td>
-                <td className="muted">{formatHari(p.scheduleAt)}, {formatJam(p.scheduleAt)}</td>
-                <td>{p.price === 0 ? `Gratis · Sert. ${rupiah(p.certPrice)}` : rupiah(p.price)}</td>
-                <td>{p._count.registrations}</td>
-                <td><Link href={`/webadmin/program/${p.id}/soal`} className="btn btn-sm">{p._count.questions} soal</Link></td>
-                <td>{p.isActive ? <span className="badge g">Aktif</span> : <span className="badge dim">Nonaktif</span>}</td>
-                <td>
+                <td data-label="Tipe"><span className={`badge${p.price === 0 ? " y" : ""}`}>{TYPE_LABEL[p.type as ProgramType]}</span></td>
+                <td data-label="Jadwal" className="muted">{formatHari(p.scheduleAt)}, {formatJam(p.scheduleAt)}</td>
+                <td data-label="Harga">{p.price === 0 ? `Gratis · Sert. ${rupiah(p.certPrice)}` : rupiah(p.price)}</td>
+                <td data-label="Pendaftar">{p._count.registrations}</td>
+                <td data-label="Soal"><Link href={`/webadmin/program/${p.id}/soal`} className="btn btn-sm">{p._count.questions} soal</Link></td>
+                <td data-label="Status">{p.isActive ? <span className="badge g">Aktif</span> : <span className="badge dim">Nonaktif</span>}</td>
+                <td data-label="Aksi">
                   <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
                     <Link href={`/webadmin/program/${p.id}`} className="btn btn-sm">Edit</Link>
                     <form action={toggleProgram}>

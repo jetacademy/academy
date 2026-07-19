@@ -13,7 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <>
-      <header className="adm-top">
+      <header className="adm-top adm-scope">
         <div className="container adm-top-inner">
           <Link href="/webadmin" className="brand" style={{ fontSize: "1.2rem" }}>
             <Image
@@ -25,13 +25,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             />
             Jetschool <small style={{ color: "var(--ink-faint)", fontSize: ".7rem", fontWeight: 800 }}>ADMIN</small>
           </Link>
-          <AdminTabs />
-          <div style={{ display: "flex", gap: ".7rem", alignItems: "center" }}>
+          <AdminTabs>
             <a href="/" target="_blank" className="btn btn-sm">Lihat Website ↗</a>
             <form action={adminLogout}>
               <button type="submit" className="btn btn-sm btn-danger">Keluar</button>
             </form>
-          </div>
+          </AdminTabs>
         </div>
       </header>
       <main className="container adm-main">{children}</main>

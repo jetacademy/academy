@@ -46,16 +46,13 @@ export default async function AdminPendaftar({ searchParams }: {
       </div>
 
       {/* filter */}
-      <form method="get" style={{ display: "flex", gap: ".8rem", flexWrap: "wrap", marginBottom: "1.4rem" }}>
-        <input name="q" defaultValue={q} placeholder="Cari nama / WA / email..."
-          style={{ padding: ".6em 1em", border: "1px solid var(--line-strong)", borderRadius: "var(--r)", background: "var(--white)", minWidth: "16rem" }} />
-        <select name="program" defaultValue={program ?? ""}
-          style={{ padding: ".6em 1em", border: "1px solid var(--line-strong)", borderRadius: "var(--r)", background: "var(--white)" }}>
+      <form method="get" className="adm-filter-row">
+        <input name="q" defaultValue={q} placeholder="Cari nama / WA / email..." style={{ flexBasis: "16rem" }} />
+        <select name="program" defaultValue={program ?? ""}>
           <option value="">Semua Program</option>
           {programs.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
         </select>
-        <select name="status" defaultValue={status ?? ""}
-          style={{ padding: ".6em 1em", border: "1px solid var(--line-strong)", borderRadius: "var(--r)", background: "var(--white)" }}>
+        <select name="status" defaultValue={status ?? ""}>
           <option value="">Semua Status</option>
           <option value="REGISTERED">Terdaftar</option>
           <option value="PAID">Lunas</option>
@@ -74,19 +71,19 @@ export default async function AdminPendaftar({ searchParams }: {
               const b = STATUS_BADGE[r.status];
               return (
                 <tr key={r.id}>
-                  <td style={{ fontWeight: 600 }}>{r.name}
+                  <td data-label="Nama" style={{ fontWeight: 600 }}>{r.name}
                     {r.institution && <div style={{ fontSize: "0.75rem", color: "var(--purple)", fontWeight: "normal" }}>Lembaga: {r.institution}</div>}
                     <div className="muted">{new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" }).format(r.createdAt)}</div>
                   </td>
-                  <td>{r.whatsapp}<div className="muted">{r.email}</div></td>
-                  <td className="muted">{r.program.title}</td>
-                  <td><span className={`badge ${b.cls}`}>{b.label}</span></td>
-                  <td>
+                  <td data-label="Kontak">{r.whatsapp}<div className="muted">{r.email}</div></td>
+                  <td data-label="Program" className="muted">{r.program.title}</td>
+                  <td data-label="Status"><span className={`badge ${b.cls}`}>{b.label}</span></td>
+                  <td data-label="Pembayaran">
                     {r.payment
                       ? <>{rupiah(r.payment.amount)}<div className="muted">{r.payment.status}</div></>
                       : <span className="muted">—</span>}
                   </td>
-                  <td>
+                  <td data-label="Aksi">
                     <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
                       <Link href={`/webadmin/pendaftar/${r.id}`} className="btn btn-sm">Edit</Link>
                       {["REGISTERED", "EXPIRED", "FAILED"].includes(r.status) && (

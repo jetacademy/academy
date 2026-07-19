@@ -75,16 +75,16 @@ export default async function AdminBatch({
               const past = b.scheduleAt < now;
               return (
                 <tr key={b.id}>
-                  <td>
+                  <td data-label="Jadwal">
                     {formatJadwal(b.scheduleAt)}
                     {past && <div className="muted">Sudah lewat</div>}
                   </td>
-                  <td>{b.seatsLeft ?? <span className="muted">Tak terbatas</span>}</td>
-                  <td>{b._count.registrations}</td>
-                  <td>
+                  <td data-label="Kuota">{b.seatsLeft ?? <span className="muted">Tak terbatas</span>}</td>
+                  <td data-label="Pendaftar">{b._count.registrations}</td>
+                  <td data-label="Status">
                     <span className={`badge ${b.isActive ? "g" : "dim"}`}>{b.isActive ? "Aktif" : "Nonaktif"}</span>
                   </td>
-                  <td>
+                  <td data-label="Aksi">
                     <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
                       <form action={toggleBatch}>
                         <input type="hidden" name="id" value={b.id} />
