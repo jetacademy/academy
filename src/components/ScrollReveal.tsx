@@ -53,15 +53,24 @@ function ScrollRevealActive() {
       mo.observe(document.body, { childList: true, subtree: true });
     };
 
-    // Tunggu sampai browser idle/selesai hidrasi sebelum mengamati DOM
+    // Tunggu sampai halaman fully loaded & hydrated sebelum mengamati DOM
     if (typeof window !== "undefined") {
-      if (window.requestIdleCallback) {
-        window.requestIdleCallback(() => {
-          initObservers();
-        }, { timeout: 1000 });
+      const handleInit = () => {
+        timerId = setTimeout(initObservers, 500);
+      };
+
+      if (document.readyState === "complete") {
+        handleInit();
       } else {
-        timerId = setTimeout(initObservers, 200);
+        window.addEventListener("load", handleInit);
       }
+
+      return () => {
+        if (timerId) clearTimeout(timerId);
+        window.removeEventListener("load", handleInit);
+        io?.disconnect();
+        mo?.disconnect();
+      };
     }
 
     return () => {

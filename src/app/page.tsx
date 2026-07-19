@@ -119,7 +119,10 @@ export default async function Home() {
                 <Link key={p.slug} href={`/program/${p.slug}`} className="prg-card">
                   <div className="prg-card-thumb">
                     {p.imageUrl ? (
-                      <Image src={p.imageUrl} alt={p.title} fill style={{ objectFit: "contain" }} sizes="(max-width: 780px) 92vw, 46vw" />
+                      <>
+                        <Image src={p.imageUrl} alt="" fill className="prg-card-thumb-bg" sizes="10px" />
+                        <Image src={p.imageUrl} alt={p.title} fill className="prg-card-thumb-fg" sizes="(max-width: 780px) 92vw, 46vw" />
+                      </>
                     ) : (
                       <span className="prg-card-thumb-fallback">{p.emoji}</span>
                     )}
