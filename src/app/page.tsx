@@ -46,13 +46,12 @@ export default async function Home() {
     ? getDaysLeft(programTerdekat.scheduleAt)
     : null;
 
-  // Filter programs based on featured status. Fallback to all if none are featured.
-  const featuredPrograms = programs.filter((p) => p.isFeatured);
-  const displayPrograms = featuredPrograms.length > 0 ? featuredPrograms : programs;
+  // Filter programs based on featured status.
+  const displayPrograms = programs.filter((p) => p.isFeatured);
 
   return (
     <>
-      <Navbar ctaHref="/#program" ctaLabel="Lihat Program" />
+      <Navbar ctaHref="/program" ctaLabel="Lihat Program" />
 
       {/* ===== HERO ===== */}
       <section className="hero">
@@ -72,7 +71,7 @@ export default async function Home() {
                 Belajar AI dari praktisi, ikuti pelatihan bersertifikat, dapatkan pendampingan, dan bergabung dengan komunitas yang terus berkembang.
               </p>
               <div className="hero-cta">
-                <a href="#program" className="btn btn-purple btn-lg">Lihat Program</a>
+                <Link href="/program" className="btn btn-purple btn-lg">Lihat Program</Link>
                 <a href="#cara" className="btn btn-line btn-lg">Cara Kerjanya</a>
               </div>
             </div>
@@ -238,7 +237,7 @@ export default async function Home() {
                   </span>
                 )}
               </div>
-              <Link href={webinarGratis ? `/program/${webinarGratis.slug}` : "#program"} className="btn btn-lime btn-lg" style={{ alignSelf: "flex-start" }}>
+              <Link href={webinarGratis ? `/program/${webinarGratis.slug}` : "/program"} className="btn btn-lime btn-lg" style={{ alignSelf: "flex-start" }}>
                 Daftar Sekarang
               </Link>
             </div>

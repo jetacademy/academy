@@ -66,7 +66,7 @@ export default async function MemberDashboardPage() {
 
   return (
     <>
-      <Navbar minimal ctaHref="/#program" ctaLabel="Cari Pelatihan Baru" />
+      <Navbar minimal ctaHref="/program" ctaLabel="Cari Pelatihan Baru" />
 
       <section className="section" style={{ minHeight: "85vh", background: "var(--bg-panel)", paddingTop: "2.5rem" }}>
         <div className="container">
@@ -123,7 +123,7 @@ export default async function MemberDashboardPage() {
               <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem", marginBottom: "1.8rem" }}>
                 Anda belum terdaftar pada program pelatihan apa pun saat ini.
               </p>
-              <Link href="/#program" className="btn btn-purple btn-lg">Cari Pelatihan Sekarang</Link>
+              <Link href="/program" className="btn btn-purple btn-lg">Cari Pelatihan Sekarang</Link>
             </div>
           ) : (
             <div style={{ display: "grid", gap: "1.5rem" }}>
@@ -234,7 +234,7 @@ export default async function MemberDashboardPage() {
 
                       {/* Kasus 5: EXPIRED — pembayaran kedaluwarsa, bisa bayar ulang */}
                       {reg.status === "EXPIRED" && (
-                        <Link href={`/#program`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                        <Link href={`/program`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
                           Bayar Ulang
                         </Link>
                       )}

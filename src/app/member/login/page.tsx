@@ -132,7 +132,7 @@ export default function MemberLoginPage() {
 
   return (
     <>
-      <Navbar minimal ctaHref="/#program" ctaLabel="Kembali" />
+      <Navbar minimal ctaHref="/program" ctaLabel="Kembali" />
 
       <section className="section" style={{ minHeight: "80vh", display: "grid", placeItems: "center" }}>
         <div style={{ width: "min(28rem, 92%)" }}>

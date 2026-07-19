@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
  * - full    : beranda — 2 tautan + 1 CTA
  * - minimal : halaman iklan — hanya logo + 1 CTA (fokus closing)
  */
-export default function Navbar({ minimal = false, ctaHref = "/#program", ctaLabel = "Lihat Program" }: {
+export default function Navbar({ minimal = false, ctaHref = "/program", ctaLabel = "Lihat Program" }: {
   minimal?: boolean;
   ctaHref?: string;
   ctaLabel?: string;
@@ -41,7 +41,7 @@ export default function Navbar({ minimal = false, ctaHref = "/#program", ctaLabe
 
         {!minimal && (
           <nav className={`nav-links${open ? " open" : ""}`} onClick={() => setOpen(false)}>
-            <Link href="/#program">Program</Link>
+            <Link href="/program">Program</Link>
             <Link href="/#cara">Cara Kerja</Link>
             <Link href="/daftar">Daftar</Link>
             <Link href="/#faq">FAQ</Link>

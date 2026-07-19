@@ -18,7 +18,7 @@ export default function Footer() {
             Jetschool Academy
           </div>
           <nav className="footer-links">
-            <Link href="/#program">Program</Link>
+            <Link href="/program">Program</Link>
             <Link href="/sertifikat">Ambil Sertifikat</Link>
             <a href={`https://wa.me/${waAdmin}`}>WhatsApp Admin</a>
           </nav>

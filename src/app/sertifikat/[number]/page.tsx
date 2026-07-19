@@ -123,7 +123,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
 
   return (
     <>
-      <Navbar minimal ctaHref="/#program" ctaLabel="Ikut Kelas Lain" />
+      <Navbar minimal ctaHref="/program" ctaLabel="Ikut Kelas Lain" />
 
       <section className="section" style={{ minHeight: "80vh", background: "var(--bg-warm)", padding: "2rem 0 4rem" }}>
         <div className="container cert-premium-container">
@@ -501,7 +501,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
           {/* Action Buttons (Hide when printing) */}
           <div className="no-print" style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "2.5rem", flexWrap: "wrap" }}>
             <PrintButton />
-            <Link className="btn" href="/#program">Ikut Kelas Berikutnya</Link>
+            <Link className="btn" href="/program">Ikut Kelas Berikutnya</Link>
           </div>
           <p className="reg-note no-print" style={{ textAlign: "center", marginTop: "1rem" }}>
             Simpan sebagai PDF: klik &ldquo;Cetak / Simpan PDF&rdquo; lalu pilih tujuan &ldquo;Simpan sebagai PDF&rdquo; (Save as PDF).

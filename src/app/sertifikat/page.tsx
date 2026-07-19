@@ -28,7 +28,7 @@ export default async function SertifikatPage() {
 
   return (
     <>
-      <Navbar minimal ctaHref="/#program" ctaLabel="Lihat Program" />
+      <Navbar minimal ctaHref="/program" ctaLabel="Lihat Program" />
 
       <section className="section" style={{ minHeight: "72vh" }}>
         <div className="container">

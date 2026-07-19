@@ -36,6 +36,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
   const [result] = useState<{ name: string } & Result | null>(null);
   const [googleOpen, setGoogleOpen] = useState(false);
   const [googleSelected, setGoogleSelected] = useState(!!memberProfile);
+  const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
 
   const [nameVal, setNameVal] = useState(memberProfile?.name ?? "");
@@ -45,6 +46,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
   const [credentialVal, setCredentialVal] = useState<string | undefined>(undefined);
 
   const isPaid = price > 0;
+  const hasCompletedProfile = !!(whatsappVal.trim() && institutionVal.trim());
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -107,6 +109,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     setEmailVal(email);
     setCredentialVal(credential);
     setGoogleSelected(true);
+    setIsEditing(false);
   }
 
   async function handleResetGoogle() {
@@ -116,6 +119,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     setInstitutionVal("");
     setCredentialVal(undefined);
     setGoogleSelected(false);
+    setIsEditing(false);
     try {
       await memberLogout();
     } catch (err) {
@@ -154,90 +158,195 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
         {googleSelected ? (
           /* CASE 1: Akun sudah terhubung / User sudah Login */
           <form onSubmit={onSubmit}>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "1rem",
-              background: "rgba(108, 92, 231, 0.05)",
-              padding: "0.6rem 0.8rem",
-              borderRadius: "8px",
-              border: "1px solid rgba(108, 92, 231, 0.1)"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71" }}></div>
-                <span style={{ fontSize: "0.75rem", color: "var(--purple)", fontWeight: 700 }}>
-                  Terhubung: {emailVal}
-                </span>
+            {hasCompletedProfile && !isEditing ? (
+              /* State 1: User memiliki profil lengkap - 1-Click Registration */
+              <div style={{ textAlign: "center" }}>
+                <div style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  background: "rgba(46, 204, 113, 0.08)",
+                  border: "1px solid rgba(46, 204, 113, 0.15)",
+                  padding: "0.4rem 0.8rem",
+                  borderRadius: "20px",
+                  marginBottom: "1.2rem"
+                }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }}></span>
+                  <span style={{ fontSize: "0.75rem", color: "#27ae60", fontWeight: 700 }}>
+                    Sudah Login: {emailVal}
+                  </span>
+                </div>
+
+                <h3 style={{ marginBottom: "0.4rem" }}>Konfirmasi Pendaftaran</h3>
+                <p className="sub" style={{ marginBottom: "1.5rem" }}>
+                  Satu langkah lagi untuk mendaftar menggunakan profil Anda:
+                </p>
+
+                <div style={{
+                  background: "var(--chip)",
+                  borderRadius: "10px",
+                  padding: "1.2rem",
+                  textAlign: "left",
+                  marginBottom: "1.5rem",
+                  border: "1px solid var(--line)"
+                }}>
+                  <div style={{ display: "grid", gap: "0.6rem", fontSize: "0.88rem" }}>
+                    <div>
+                      <span style={{ color: "var(--ink-soft)", display: "block", fontSize: "0.75rem", fontWeight: 700 }}>NAMA LENGKAP</span>
+                      <strong style={{ color: "var(--ink)" }}>{nameVal}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: "var(--ink-soft)", display: "block", fontSize: "0.75rem", fontWeight: 700 }}>WHATSAPP</span>
+                      <strong style={{ color: "var(--ink)" }}>{whatsappVal}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: "var(--ink-soft)", display: "block", fontSize: "0.75rem", fontWeight: 700 }}>INSTANSI / LEMBAGA</span>
+                      <strong style={{ color: "var(--ink)" }}>{institutionVal}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={state === "loading"} style={{ width: "100%" }}>
+                  {state === "loading"
+                    ? "Memproses..."
+                    : isPaid ? `Konfirmasi & Bayar — ${priceLabel}` : "Konfirmasi & Daftar Sekarang"}
+                </button>
+
+                <div style={{ display: "flex", justifyContent: "center", gap: "0.8rem", marginTop: "1.2rem" }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--purple)",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      textDecoration: "underline"
+                    }}
+                  >
+                    Edit Data Profil
+                  </button>
+                  <span style={{ color: "var(--line)" }}>|</span>
+                  <button
+                    type="button"
+                    onClick={handleResetGoogle}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--ink-soft)",
+                      fontSize: "0.78rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      textDecoration: "underline"
+                    }}
+                  >
+                    Ganti Akun
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={handleResetGoogle}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--ink-soft)",
-                  fontSize: "0.72rem",
-                  textDecoration: "underline",
-                  cursor: "pointer",
-                  padding: 0
-                }}
-              >
-                Ganti Akun
-              </button>
-            </div>
+            ) : (
+              /* State 2: Onboarding Mode (hanya mengisi WhatsApp & Instansi) */
+              <>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "1rem",
+                  background: "rgba(108, 92, 231, 0.05)",
+                  padding: "0.6rem 0.8rem",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(108, 92, 231, 0.1)"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", flexShrink: 0 }}></div>
+                    <span style={{
+                      fontSize: "0.75rem",
+                      color: "var(--purple)",
+                      fontWeight: 700,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: "14rem"
+                    }}>
+                      Terhubung: {emailVal}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleResetGoogle}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--ink-soft)",
+                      fontSize: "0.72rem",
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                      padding: 0,
+                      flexShrink: 0
+                    }}
+                  >
+                    Ganti Akun
+                  </button>
+                </div>
 
-            <h3 style={{ marginBottom: "0.2rem" }}>Konfirmasi Data</h3>
-            <p className="sub" style={{ marginBottom: "1.2rem" }}>Silakan lengkapi profil Anda untuk menyelesaikan pendaftaran.</p>
+                <h3 style={{ marginBottom: "0.2rem" }}>Lengkapi Data Profil</h3>
+                <p className="sub" style={{ marginBottom: "1.2rem" }}>Silakan masukkan WhatsApp & Instansi untuk menyelesaikan pendaftaran.</p>
 
-            {error && <div className="form-error" style={{ marginBottom: "1rem" }}>{error}</div>}
+                {error && <div className="form-error" style={{ marginBottom: "1rem" }}>{error}</div>}
 
-            <div className="field">
-              <label htmlFor="fNama">Nama Lengkap (untuk di sertifikat)</label>
-              <input
-                id="fNama"
-                name="name"
-                type="text"
-                placeholder="Contoh: Budi Santoso, S.Pd."
-                required
-                minLength={3}
-                value={nameVal}
-                onChange={(e) => setNameVal(e.target.value)}
-              />
-            </div>
+                {/* Tampilkan field Nama hanya jika user menekan tombol Edit Data Profil */}
+                {isEditing && (
+                  <div className="field">
+                    <label htmlFor="fNama">Nama Lengkap (untuk di sertifikat)</label>
+                    <input
+                      id="fNama"
+                      name="name"
+                      type="text"
+                      placeholder="Contoh: Budi Santoso, S.Pd."
+                      required
+                      minLength={3}
+                      value={nameVal}
+                      onChange={(e) => setNameVal(e.target.value)}
+                    />
+                  </div>
+                )}
 
-            <div className="field">
-              <label htmlFor="fWa">Nomor WhatsApp Aktif</label>
-              <input
-                id="fWa"
-                name="whatsapp"
-                type="tel"
-                placeholder="Contoh: 081234567890"
-                pattern="^08[0-9]{8,13}$"
-                required
-                value={whatsappVal}
-                onChange={(e) => setWhatsappVal(e.target.value)}
-              />
-            </div>
+                <div className="field">
+                  <label htmlFor="fWa">Nomor WhatsApp Aktif</label>
+                  <input
+                    id="fWa"
+                    name="whatsapp"
+                    type="tel"
+                    placeholder="Contoh: 081234567890"
+                    pattern="^08[0-9]{8,13}$"
+                    required
+                    value={whatsappVal}
+                    onChange={(e) => setWhatsappVal(e.target.value)}
+                  />
+                </div>
 
-            <div className="field">
-              <label htmlFor="fInst">Asal Lembaga / Instansi</label>
-              <input
-                id="fInst"
-                name="institution"
-                type="text"
-                placeholder="Contoh: SDN 1 Bandung / Umum"
-                required
-                value={institutionVal}
-                onChange={(e) => setInstitutionVal(e.target.value)}
-              />
-            </div>
+                <div className="field">
+                  <label htmlFor="fInst">Asal Lembaga / Instansi</label>
+                  <input
+                    id="fInst"
+                    name="institution"
+                    type="text"
+                    placeholder="Contoh: SDN 1 Bandung / Umum"
+                    required
+                    value={institutionVal}
+                    onChange={(e) => setInstitutionVal(e.target.value)}
+                  />
+                </div>
 
-            <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={state === "loading"} style={{ width: "100%" }}>
-              {state === "loading"
-                ? "Memproses..."
-                : isPaid ? `Konfirmasi & Bayar — ${priceLabel}` : "Konfirmasi & Daftar"}
-            </button>
+                <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={state === "loading"} style={{ width: "100%" }}>
+                  {state === "loading"
+                    ? "Memproses..."
+                    : isPaid ? `Konfirmasi & Bayar — ${priceLabel}` : "Konfirmasi & Daftar"}
+                </button>
+              </>
+            )}
           </form>
         ) : (
           /* CASE 2: Guest / Belum Login — Form Manual + Google Auth Terpadu */

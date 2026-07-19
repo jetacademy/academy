@@ -47,7 +47,6 @@ export default function DaftarPage() {
       } else {
         // User belum punya akun — daftarkan dulu lewat form
         // Data Google sudah disimpan di googleName & googleEmail, form akan terisi otomatis
-        setError("Akun Google belum terdaftar. Silakan lengkapi data di bawah.");
         setStep("form");
       }
     } catch (err: unknown) {
