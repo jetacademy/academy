@@ -22,6 +22,8 @@ const nextConfig: NextConfig = {
       // YouTube thumbnails (untuk preview video LMS)
       { protocol: "https", hostname: "img.youtube.com" },
       { protocol: "https", hostname: "i.ytimg.com" },
+      // Picsum photos (untuk dummy/placeholder images)
+      { protocol: "https", hostname: "picsum.photos" },
     ],
   },
   async headers() {
