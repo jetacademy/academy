@@ -26,7 +26,7 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
 
   // Jika tidak ada user maupun registrasi → identifier tidak dikenal
   if (!user && registrations.length === 0) {
-    return { error: "Nomor WhatsApp atau Email belum terdaftar. Silakan buat akun atau daftar program terlebih dahulu." };
+    return { error: "Nomor WhatsApp atau Email belum terdaftar. Silakan buat akun baru terlebih dahulu." };
   }
 
   let userId = user?.id ?? null;

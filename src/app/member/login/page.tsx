@@ -117,7 +117,32 @@ export default function MemberLoginPage() {
             <h3 style={{ textAlign: "center" }}>Dashboard Peserta</h3>
             <p className="sub" style={{ textAlign: "center", marginBottom: "2rem" }}>Masuk untuk mengakses materi kelas, link Zoom, tes, dan mengunduh e-sertifikat Anda.</p>
 
-            {error && <div className="form-error" style={{ fontSize: "0.82rem", marginBottom: "1.5rem" }}>{error}</div>}
+            {error && (
+              <div className="form-error" style={{ fontSize: "0.82rem", marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                <span>{error}</span>
+                {error.includes("belum terdaftar") && (
+                  <div>
+                    <Link
+                      href="/daftar"
+                      className="btn btn-purple"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        fontSize: "0.78rem",
+                        padding: "0.4rem 0.8rem",
+                        textDecoration: "none",
+                        fontWeight: 700,
+                        backgroundColor: "var(--purple)",
+                        color: "#fff",
+                        borderRadius: "var(--r-sm)"
+                      }}
+                    >
+                      Buat Akun Baru Sekarang
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
 
             {step === "pilih-metode" && (
               <>

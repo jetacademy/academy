@@ -28,7 +28,7 @@ export async function sendOtp(identifier: string): Promise<{ ok: boolean; channe
     },
   });
   if (!existsReg && !existsUser) {
-    return { ok: false, error: "Nomor WhatsApp/Email belum terdaftar." };
+    return { ok: false, error: "Nomor WhatsApp atau Email belum terdaftar. Silakan buat akun baru terlebih dahulu." };
   }
 
   // Hapus OTP lama yang sudah expire (cleanup global, bukan hanya identifier ini)
