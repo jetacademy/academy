@@ -10,6 +10,7 @@ import WaFloat from "@/components/WaFloat";
 import ClaimCertButton from "@/components/ClaimCertButton";
 import MemberPayCertButton from "@/components/MemberPayCertButton";
 import BonusCountdown from "@/components/BonusCountdown";
+import FreeWebinarClaimSection from "@/components/FreeWebinarClaimSection";
 import { rupiah, formatJadwal } from "@/lib/format";
 import { Registration, Program, Payment, Certificate } from "@prisma/client";
 
@@ -267,78 +268,17 @@ export default async function MemberDashboardPage() {
                           )}
 
                           {/* ── Gerbang certClaimOpen ── */}
-                          {claimIsOpen ? (
-                            <div className="bonus-unlocked-card">
-                              <div className="bonus-unlocked-header">
-                                <span className="bonus-unlocked-icon">🎉</span>
-                                <div>
-                                  <p className="bonus-unlocked-title">Bonus Peserta Tersedia!</p>
-                                  <p className="bonus-unlocked-sub">
-                                    {certPaid
-                                      ? "Akses eksklusif Anda sudah terbuka penuh"
-                                      : "Selesaikan pembayaran untuk akses materi & sertifikat"}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Daftar benefit — dikunci jika belum bayar */}
-                              <div className="bonus-unlocked-items">
-                                {hasInternalLms && (
-                                  <div className={`bonus-item${!certPaid ? " bonus-item-locked" : ""}`}>
-                                    {certPaid ? "📚" : "🔒"} Video Rekaman + Modul PDF + Post-Test
-                                  </div>
-                                )}
-                                {hasExternalLms && !hasInternalLms && (
-                                  <div className={`bonus-item${!certPaid ? " bonus-item-locked" : ""}`}>
-                                    {certPaid ? "📚" : "🔒"} Video Rekaman &amp; Materi Eksklusif
-                                  </div>
-                                )}
-                                <div className={`bonus-item${!certPaid ? " bonus-item-locked" : ""}`}>
-                                  {certPaid ? "🎓" : "🔒"} e-Sertifikat (terbit setelah lulus post-test)
-                                </div>
-                              </div>
-
-                              {/* Tombol aksi: gerbang certPrice */}
-                              {certPaid ? (
-                                /* Lunas → akses LMS */
-                                <>
-                                  {hasInternalLms ? (
-                                    <Link href={`/member/lms/${reg.id}`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
-                                      📚 Akses Materi &amp; Post-Test
-                                    </Link>
-                                  ) : hasExternalLms ? (
-                                    <a href={prog.lmsLink!} target="_blank" rel="noopener noreferrer" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
-                                      📚 Akses Rekaman &amp; Materi
-                                    </a>
-                                  ) : (
-                                    <ClaimCertButton registrationId={reg.id} />
-                                  )}
-                                </>
-                              ) : pendingCertPay ? (
-                                /* Invoice sudah ada, belum lunas */
-                                <a
-                                  href={pendingCertPay.invoiceUrl ?? "#"}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="btn btn-yellow btn-block"
-                                  style={{ textAlign: "center", color: "#78350f", fontWeight: 700 }}
-                                >
-                                  Selesaikan Pembayaran Sertifikat ({rupiah(pendingCertPay.amount)})
-                                </a>
-                              ) : prog.certPrice > 0 ? (
-                                /* Belum punya invoice */
-                                <MemberPayCertButton registrationId={reg.id} certPrice={prog.certPrice} />
-                              ) : (
-                                <ClaimCertButton registrationId={reg.id} />
-                              )}
-                            </div>
-                          ) : (
-                            /* Bonus TERKUNCI — countdown atau waiting */
-                            <BonusCountdown
-                              eventEndIso={eventEndTime.toISOString()}
-                              eventEnded={eventHasEnded}
-                            />
-                          )}
+                          <FreeWebinarClaimSection
+                            registrationId={reg.id}
+                            claimIsOpen={claimIsOpen}
+                            certPaid={certPaid}
+                            pendingCertPay={pendingCertPay}
+                            certPrice={prog.certPrice}
+                            hasInternalLms={hasInternalLms}
+                            hasExternalLms={hasExternalLms}
+                            lmsLink={prog.lmsLink}
+                            programTitle={prog.title}
+                          />
                         </>
                       )}
 

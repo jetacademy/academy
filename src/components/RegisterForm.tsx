@@ -179,7 +179,6 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
               {batches.map((b) => (
                 <option key={b.id} value={b.id}>
                   {formatJadwal(new Date(b.scheduleAt))}
-                  {b.seatsLeft != null ? ` — ${b.seatsLeft} kursi tersisa` : ""}
                 </option>
               ))}
             </select>
