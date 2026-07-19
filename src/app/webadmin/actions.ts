@@ -14,6 +14,7 @@ import { createBunnyVideo, getBunnyUploadAuth, deleteBunnyVideo } from "@/lib/bu
 import { sanitizeHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
 import { isValidVideoUrl } from "@/lib/video";
+import { join } from "path";
 
 // ─── Auth ────────────────────────────────────────────────────────
 
@@ -653,6 +654,9 @@ export async function deleteBunnyVideoAction(guid: string) {
 }
 
 const ALLOWED_UPLOAD_EXT = ["pdf", "png", "jpg", "jpeg", "webp"];
+
+/** Direktori penyimpanan file upload — pakai env UPLOADS_DIR atau fallback ke ./uploads (luar public/ agar tidak hilang saat redeploy). */
+const UPLOADS_DIR = process.env.UPLOADS_DIR ?? join(process.cwd(), "uploads");
 const ALLOWED_UPLOAD_MIME = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20 MB
 
@@ -663,7 +667,6 @@ const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20 MB
 export async function uploadFileAction(formData: FormData): Promise<{ url?: string; error?: string }> {
   try {
     const { writeFile, mkdir } = await import("fs/promises");
-    const { join } = await import("path");
 
     await requireAdmin();
     const file = formData.get("file") as File;
@@ -681,14 +684,14 @@ export async function uploadFileAction(formData: FormData): Promise<{ url?: stri
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const uploadDir = join(process.cwd(), "public", "uploads");
+    const uploadDir = UPLOADS_DIR;
     await mkdir(uploadDir, { recursive: true });
 
     const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filename = `${Date.now()}-${cleanName}`;
     await writeFile(join(uploadDir, filename), buffer);
 
-    return { url: `/uploads/${filename}` };
+    return { url: `/api/uploads/${filename}` };
   } catch (err) {
     console.error("[uploadFileAction]", err);
     return { error: `Gagal menyimpan file di server: ${err instanceof Error ? err.message : "kesalahan tak dikenal"}.` };
