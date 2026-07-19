@@ -1,11 +1,9 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import { Upload as TusUpload } from "tus-js-client";
-import { uploadFileAction, createBunnyUploadSession, deleteBunnyVideoAction } from "@/app/webadmin/actions";
+import { uploadFileAction } from "@/app/webadmin/actions";
 import RichTextEditor from "@/components/RichTextEditor";
-
-const BUNNY_EMBED_RE = /iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i;
+import VideoUploader from "@/components/VideoUploader";
 
 type LessonData = {
   title?: string;
@@ -19,7 +17,7 @@ type LessonData = {
 };
 
 const TYPES: { value: string; label: string; hint: string }[] = [
-  { value: "VIDEO", label: "Video", hint: "Tempel URL YouTube atau Vimeo — otomatis di-embed di halaman belajar." },
+  { value: "VIDEO", label: "Video", hint: "Upload video langsung (diproses Bunny Stream), atau tempel URL YouTube/Vimeo." },
   { value: "TEXT", label: "Teks / Artikel", hint: "Tulis materi bacaan dengan format lengkap: judul bagian, tebal, daftar, tautan." },
   { value: "PDF", label: "PDF / Dokumen", hint: "Upload file PDF (maks 20 MB) atau tempel URL PDF eksternal." },
   { value: "QUIZ", label: "Kuis", hint: "Kuis bisa ditempatkan di posisi mana pun dalam modul. Peserta harus lulus agar materi dianggap selesai." },
@@ -36,59 +34,6 @@ export default function LessonFields({ lesson }: { lesson?: LessonData }) {
   const [uploadErr, setUploadErr] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uid = useId();
-
-  const [videoUrl, setVideoUrl] = useState(lesson?.videoUrl ?? "");
-  const [videoUploading, setVideoUploading] = useState(false);
-  const [videoProgress, setVideoProgress] = useState(0);
-  const [videoUploadErr, setVideoUploadErr] = useState<string | null>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const isBunnyVideo = BUNNY_EMBED_RE.test(videoUrl);
-
-  async function handleVideoUpload(file: File) {
-    setVideoUploadErr(null);
-    setVideoUploading(true);
-    setVideoProgress(0);
-    try {
-      const session = await createBunnyUploadSession(file.name);
-      if ("error" in session) {
-        setVideoUploadErr(session.error);
-        return;
-      }
-      const { guid, libraryId, expire, signature, cdnHostname } = session;
-      void cdnHostname; // dipakai server-side saat play (HLS); embed player cukup pakai libraryId+guid
-
-      const oldEmbed = videoUrl;
-
-      await new Promise<void>((resolve, reject) => {
-        const upload = new TusUpload(file, {
-          endpoint: "https://video.bunnycdn.com/tusupload",
-          retryDelays: [0, 3000, 5000, 10000],
-          headers: {
-            AuthorizationSignature: signature,
-            AuthorizationExpire: String(expire),
-            VideoId: guid,
-            LibraryId: libraryId,
-          },
-          metadata: { filetype: file.type, title: file.name },
-          onError: (err) => reject(err),
-          onProgress: (sent, total) => setVideoProgress(Math.round((sent / total) * 100)),
-          onSuccess: () => resolve(),
-        });
-        upload.start();
-      });
-
-      setVideoUrl(`https://iframe.mediadelivery.net/embed/${libraryId}/${guid}`);
-
-      // Video lama (kalau ada & beda) dihapus dari Bunny — best-effort, tidak blocking
-      const oldMatch = oldEmbed.match(BUNNY_EMBED_RE);
-      if (oldMatch) deleteBunnyVideoAction(oldMatch[2]).catch(() => {});
-    } catch (err) {
-      setVideoUploadErr(err instanceof Error ? err.message : "Upload video gagal. Coba lagi.");
-    } finally {
-      setVideoUploading(false);
-      if (videoInputRef.current) videoInputRef.current.value = "";
-    }
-  }
 
   const activeType = TYPES.find((t) => t.value === type) ?? TYPES[0];
 
@@ -146,37 +91,7 @@ export default function LessonFields({ lesson }: { lesson?: LessonData }) {
           {type === "VIDEO" && (
             <div className="field">
               <label>Video</label>
-              <input type="hidden" name="videoUrl" value={videoUrl} />
-              <div className="upload-box">
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*"
-                  id={`${uid}-video`}
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleVideoUpload(f);
-                  }}
-                />
-                <label htmlFor={`${uid}-video`} className="btn btn-sm btn-purple" style={{ cursor: videoUploading ? "wait" : "pointer" }}>
-                  {videoUploading ? `Mengunggah… ${videoProgress}%` : "Upload Video (Bunny)"}
-                </label>
-                {isBunnyVideo && !videoUploading && (
-                  <span style={{ fontSize: ".8rem", fontWeight: 700, color: "var(--purple)" }}>Video Bunny terpasang</span>
-                )}
-              </div>
-              {videoUploadErr && (
-                <span style={{ display: "block", marginTop: ".4rem", fontSize: ".78rem", color: "var(--red)", fontWeight: 700 }}>{videoUploadErr}</span>
-              )}
-              <input
-                value={isBunnyVideo ? "" : videoUrl}
-                onChange={(e) => setVideoUrl(e.target.value.trim())}
-                placeholder={isBunnyVideo ? "Video Bunny sudah terpasang — upload ulang utk mengganti" : "…atau tempel URL YouTube/Vimeo di sini"}
-                disabled={isBunnyVideo}
-                style={{ marginTop: ".6rem" }}
-              />
-              <span className="adm-note">Upload langsung diproses Bunny Stream (CDN cepat, tanpa iklan). Atau pakai URL YouTube/Vimeo.</span>
+              <VideoUploader name="videoUrl" defaultValue={lesson?.videoUrl ?? ""} />
             </div>
           )}
 

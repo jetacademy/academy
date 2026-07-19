@@ -122,6 +122,39 @@
   margin: 0 auto;
 }
 
+/* ---------- Video Player (Bunny Stream / YouTube / Vimeo) ---------- */
+.lms-video-frame {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: #000;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+}
+.lms-video-frame iframe {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; border: 0;
+  transition: opacity .25s ease;
+}
+.lms-video-skeleton {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .8rem;
+  background: linear-gradient(135deg, #17161a, #232176);
+  color: rgba(255,255,255,.75);
+  font-size: .82rem; font-weight: 700;
+}
+.lms-video-spinner {
+  width: 2rem; height: 2rem;
+  border: 3px solid rgba(255,255,255,.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: lms-spin .8s linear infinite;
+}
+@keyframes lms-spin { to { transform: rotate(360deg); } }
+
 .lms-lesson-card {
   background: var(--white);
   border-radius: var(--r-md);

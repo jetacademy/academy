@@ -9,6 +9,7 @@ import { completeLesson } from "@/app/member/actions";
 import LessonQuiz, { type LessonQuizQuestion } from "@/components/LessonQuiz";
 import ClaimCertButton from "@/components/ClaimCertButton";
 import MemberPayCertButton from "@/components/MemberPayCertButton";
+import LessonVideoPlayer from "@/components/LessonVideoPlayer";
 
 export const dynamic = "force-dynamic";
 
@@ -245,23 +246,7 @@ export default async function LmsPage({
               <div className="lms-inner-container">
                 {/* Embed Video */}
                 {currentLesson.type === "VIDEO" && embedUrl && (
-                  <div style={{
-                    position: "relative",
-                    paddingBottom: "56.25%",
-                    height: 0,
-                    overflow: "hidden",
-                    borderRadius: "var(--r-md)",
-                    background: "#000",
-                    boxShadow: "var(--shadow)",
-                    marginBottom: "1.5rem"
-                  }}>
-                    <iframe
-                      src={embedUrl}
-                      style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                    />
-                  </div>
+                  <LessonVideoPlayer src={embedUrl} title={currentLesson.title} />
                 )}
 
                 {/* Embed PDF */}
