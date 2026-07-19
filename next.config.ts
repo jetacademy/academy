@@ -27,8 +27,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Halaman publik — cache di CDN
-        source: "/program/:path*",
+        // Katalog program — statis, tanpa data personal → aman di-cache publik di CDN.
+        // JANGAN pakai wildcard ":path*" di sini: /program/[slug] merender data
+        // personal member (nama/email/WA/instansi dari sesi) ke dalam HTML lewat
+        // getMemberSession(), jadi tidak boleh ikut cache publik — kalau tidak,
+        // CDN bisa menyajikan data satu member ke pengunjung lain (kebocoran PII).
+        // Halaman detail dibiarkan tanpa override di sini supaya Next menerapkan
+        // Cache-Control dinamis bawaannya sendiri (private, no-store).
+        source: "/program",
         headers: [
           { key: "Cache-Control", value: "public, s-maxage=3600, stale-while-revalidate=60" },
         ],

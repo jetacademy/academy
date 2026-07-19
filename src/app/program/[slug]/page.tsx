@@ -16,7 +16,12 @@ import { formatJadwal, formatHari, formatJam, rupiah } from "@/lib/format";
 import { getMemberSession } from "@/lib/member-auth";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 3600; // ISR: re-generate every 1 hour
+// Catatan: halaman ini membaca sesi member (cookie) untuk mengisi otomatis
+// form pendaftaran, jadi Next selalu merender secara dinamis per-permintaan —
+// `revalidate` di sini tidak berlaku efektif (tidak ada shell statis untuk
+// di-ISR). Jangan tambahkan header Cache-Control publik untuk rute ini di
+// next.config.ts karena HTML-nya bisa memuat data pribadi member (nama,
+// email, WhatsApp, instansi).
 
 const TYPE_CLASS: Record<ProgramType, string> = {
   WEBINAR: "type-webinar",
