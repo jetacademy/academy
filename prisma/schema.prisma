@@ -302,6 +302,7 @@ model User {
   name         String
   email        String         @unique
   whatsapp     String?        @unique
+  institution  String?
   passwordHash String?        // Kata sandi terenkripsi (untuk ADMIN / TEACHER / STUDENT)
   role         Role           @default(STUDENT)
   createdAt    DateTime       @default(now())
