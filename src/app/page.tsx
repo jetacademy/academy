@@ -117,12 +117,16 @@ export default async function Home() {
             <div className="prg-grid">
               {displayPrograms.map((p) => (
                 <Link key={p.slug} href={`/program/${p.slug}`} className="prg-card">
-                  <div className="prg-card-thumb">
+                  <div className={`prg-card-thumb ${p.imageUrl ? "prg-card-thumb-dynamic" : ""}`}>
                     {p.imageUrl ? (
-                      <>
-                        <Image src={p.imageUrl} alt="" fill className="prg-card-thumb-bg" sizes="10px" />
-                        <Image src={p.imageUrl} alt={p.title} fill className="prg-card-thumb-fg" sizes="(max-width: 780px) 92vw, 46vw" />
-                      </>
+                      <Image
+                        src={p.imageUrl}
+                        alt={p.title}
+                        width={600}
+                        height={480}
+                        className="prg-card-thumb-img-dynamic"
+                        sizes="(max-width: 780px) 92vw, 46vw"
+                      />
                     ) : (
                       <span className="prg-card-thumb-fallback">{p.emoji}</span>
                     )}

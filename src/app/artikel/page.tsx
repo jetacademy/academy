@@ -53,7 +53,7 @@ export default async function ArtikelListPage() {
                 <Link key={a.slug} href={`/artikel/${a.slug}`} className="prg-card" style={{ display: "flex", flexDirection: "column" }}>
                   <div className="prg-card-thumb">
                     {a.coverImageUrl ? (
-                      <Image src={a.coverImageUrl} alt={a.title} fill style={{ objectFit: "contain" }} sizes="(max-width: 780px) 92vw, 46vw" />
+                      <Image src={a.coverImageUrl} alt={a.title} fill style={{ objectFit: "cover" }} sizes="(max-width: 780px) 92vw, 46vw" />
                     ) : (
                       <span className="prg-card-thumb-fallback">📰</span>
                     )}

@@ -689,25 +689,35 @@
   transform: translateY(0);
 }
 
-/* ---------- Panel Gambar Hero (Modern Frame) ---------- */
 .prg-hero-image-panel {
   position: relative;
   border-radius: var(--r-lg);
   overflow: hidden;
   transition: transform 0.4s ease;
+  aspect-ratio: 3 / 2;
 }
 .prg-hero-image-panel:hover {
   transform: translateY(-4px) scale(1.02);
 }
 .prg-hero-image {
   width: 100%;
-  height: auto;
-  display: block;
-  object-fit: contain !important;
+  height: 100%;
+  object-fit: cover !important;
   transition: transform 0.6s ease;
 }
 .prg-hero-image-panel:hover .prg-hero-image {
   transform: scale(1.04);
+}
+.prg-hero-image-panel-dynamic {
+  aspect-ratio: auto !important;
+  height: auto !important;
+}
+.prg-hero-image-dynamic {
+  width: 100% !important;
+  height: auto !important;
+  position: relative !important;
+  object-fit: contain !important;
+  display: block;
 }
 
 /* ---------- Program Description & CTA Box ---------- */
@@ -810,8 +820,24 @@
   position: relative;
   flex-shrink: 0;
 }
-.prg-card-thumb img { object-fit: contain !important; transition: transform .25s ease; }
+.prg-card-thumb img {
+  object-fit: cover !important;
+  transition: transform .25s ease;
+}
 .prg-card:hover .prg-card-thumb img { transform: scale(1.04); }
+.prg-card-thumb-dynamic {
+  aspect-ratio: auto !important;
+  height: auto !important;
+}
+.prg-card-thumb-img-dynamic {
+  width: 100% !important;
+  height: auto !important;
+  position: relative !important;
+  object-fit: contain !important;
+  display: block;
+  transition: transform .25s ease;
+}
+.prg-card:hover .prg-card-thumb-img-dynamic { transform: scale(1.04); }
 .prg-card-thumb-fallback {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;

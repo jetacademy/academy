@@ -126,6 +126,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const hasBlocks = !!(program.contentBlocks && program.contentBlocks.length > 0);
   const isTeacherProgram = program.slug === "modul-ajar-ai-untuk-guru";
   const isAiForTeachers = program.slug === "ai-for-teachers";
+  const isZeroHuman = program.slug === "zero-human-company";
   const jadwal = formatJadwal(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
 
@@ -241,16 +242,26 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
 
             {/* Kolom kanan — Gambar Program (upload admin) atau ilustrasi bawaan */}
             <div className="prg-hero-visual">
-              <div className="prg-hero-image-panel">
-                <Image
-                  src={program.imageUrl || "/hero2.webp"}
-                  alt={program.title}
-                  width={600}
-                  height={400}
-                  className="prg-hero-image"
-                  style={{ objectFit: "contain" }}
-                  priority
-                />
+              <div className={`prg-hero-image-panel ${program.imageUrl ? "prg-hero-image-panel-dynamic" : ""}`}>
+                {program.imageUrl ? (
+                  <Image
+                    src={program.imageUrl}
+                    alt={program.title}
+                    width={600}
+                    height={400}
+                    className="prg-hero-image-dynamic"
+                    priority
+                  />
+                ) : (
+                  <Image
+                    src="/hero2.webp"
+                    alt={program.title}
+                    fill
+                    className="prg-hero-image"
+                    style={{ objectFit: "cover" }}
+                    priority
+                  />
+                )}
               </div>
             </div>
 
