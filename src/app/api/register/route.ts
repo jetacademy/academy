@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: limit.error }, { status: limit.status });
   }
 
-  let body: { name?: string; whatsapp?: string; email?: string; programSlug?: string; institution?: string; batchId?: string };
+  let body: { name?: string; whatsapp?: string; email?: string; programSlug?: string; institution?: string; batchId?: string; credential?: string };
   try {
     body = await req.json();
   } catch {
@@ -37,16 +37,55 @@ export async function POST(req: Request) {
   const programSlug = (body.programSlug ?? "").trim();
   const institution = (body.institution ?? "").trim().slice(0, 100).replace(/<[^>]*>/g, "");
   const batchIdInput = (body.batchId ?? "").trim();
+  const credential = (body.credential ?? "").trim();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
   if (name.length < 3) return NextResponse.json({ error: "Nama minimal 3 huruf." }, { status: 400 });
   if (!/^628[0-9]{8,13}$/.test(whatsapp)) return NextResponse.json({ error: "Nomor WhatsApp tidak valid (contoh: 081234567890)." }, { status: 400 });
   if (!/^\S+@\S+\.\S+$/.test(email)) return NextResponse.json({ error: "Email tidak valid." }, { status: 400 });
 
+  // ── [FIX C1] Verifikasi Google credential jika dikirim ──────────
+  if (credential) {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return NextResponse.json({ error: "Login Google belum dikonfigurasi." }, { status: 503 });
+    }
+    try {
+      const res = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) {
+        return NextResponse.json({ error: "Token Google tidak valid." }, { status: 401 });
+      }
+      const payload = (await res.json()) as {
+        aud?: string;
+        email?: string;
+        email_verified?: string;
+        error_description?: string;
+      };
+      if (payload.error_description) {
+        return NextResponse.json({ error: "Sesi Google sudah kedaluwarsa." }, { status: 401 });
+      }
+      if (payload.aud !== clientId) {
+        return NextResponse.json({ error: "Token tidak cocok dengan aplikasi ini." }, { status: 401 });
+      }
+      if (!payload.email || payload.email.toLowerCase() !== email) {
+        return NextResponse.json({ error: "Email tidak cocok dengan akun Google." }, { status: 400 });
+      }
+      if (payload.email_verified !== "true") {
+        return NextResponse.json({ error: "Email Google belum diverifikasi." }, { status: 400 });
+      }
+    } catch {
+      return NextResponse.json({ error: "Gagal memverifikasi token Google. Coba lagi." }, { status: 503 });
+    }
+  }
+
   try {
     const program = await prisma.program.findUnique({ where: { slug: programSlug } });
     if (!program || !program.isActive) {
-      return NextResponse.json({ error: "Program tidak ditemukan. (Sudah jalankan `npm run db:seed`?)" }, { status: 404 });
+      // [FIX M2] Hapus petunjuk internal dari pesan error
+      return NextResponse.json({ error: "Program tidak ditemukan atau tidak aktif." }, { status: 404 });
     }
 
     // batchId opsional — kalau dikirim, pastikan benar-benar milik program ini (bukan program lain)
@@ -54,28 +93,51 @@ export async function POST(req: Request) {
     if (batchIdInput) {
       const batch = await prisma.programBatch.findFirst({ where: { id: batchIdInput, programId: program.id, isActive: true } });
       if (!batch) return NextResponse.json({ error: "Jadwal batch tidak valid. Silakan pilih ulang." }, { status: 400 });
+
+      // [FIX C5] Validasi seatsLeft batch
+      if (batch.seatsLeft !== null && batch.seatsLeft !== undefined) {
+        const regCount = await prisma.registration.count({
+          where: { batchId: batch.id, programId: program.id },
+        });
+        if (regCount >= batch.seatsLeft) {
+          return NextResponse.json({ error: "Maaf, kursus untuk batch ini sudah penuh." }, { status: 400 });
+        }
+      }
+
       batchId = batch.id;
     }
 
-    // Validasi apakah nomor WA atau Email sudah digunakan & lunas / terdaftar di program ini
+    // ── [FIX C2] Validasi duplikasi yang lebih ketat ──
+    // Cari registrasi existing dengan kombinasi whatsapp ATAU email
     const existingReg = await prisma.registration.findFirst({
       where: {
         programId: program.id,
-        OR: [
-          { whatsapp },
-          { email }
-        ]
+        OR: [{ whatsapp }, { email }],
       },
-      include: { payment: true }
+      include: { payment: true },
     });
 
     if (existingReg) {
+      // Kasus 1: WA sama tapi email berbeda → tolak (cegah timpa email)
+      if (existingReg.whatsapp === whatsapp && existingReg.email !== email) {
+        return NextResponse.json({
+          error: "Nomor WhatsApp ini sudah terdaftar dengan email berbeda. Gunakan email yang sama saat pendaftaran awal.",
+        }, { status: 400 });
+      }
+
+      // Kasus 2: Email sama tapi WA berbeda → tolak (cegah false positive antar user beda)
+      if (existingReg.email === email && existingReg.whatsapp !== whatsapp) {
+        return NextResponse.json({
+          error: "Email ini sudah terdaftar untuk program ini dengan nomor WhatsApp berbeda.",
+        }, { status: 400 });
+      }
+
+      // Kasus 3: WA+Email sama persis → cek apakah masih boleh daftar ulang
       const isPaidOrFree = program.price === 0 || existingReg.status === "PAID" || existingReg.status === "PASSED" || existingReg.payment?.status === "PAID";
       if (isPaidOrFree) {
-        const fieldUsed = existingReg.whatsapp === whatsapp ? "Nomor WhatsApp" : "Email";
         const message = program.price === 0
-          ? `${fieldUsed} ini sudah terdaftar untuk program ini. Silakan cek WhatsApp/Email Anda.`
-          : `${fieldUsed} ini sudah terdaftar dan lunas untuk program ini. Silakan masuk ke menu Member.`;
+          ? `Nomor WhatsApp ini sudah terdaftar untuk program ini. Silakan cek WhatsApp/Email Anda.`
+          : `Nomor WhatsApp ini sudah terdaftar dan lunas untuk program ini. Silakan masuk ke menu Member.`;
         return NextResponse.json({ error: message }, { status: 400 });
       }
     }
@@ -101,7 +163,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // idempoten: daftar dua kali dengan nomor sama = tetap sukses
+    // idempoten: daftar dua kali dengan nomor sama = tetap sukses (update data terbaru)
     const reg = await prisma.registration.upsert({
       where: { whatsapp_programId: { whatsapp, programId: program.id } },
       create: { name, whatsapp, email, institution, programId: program.id, userId: user.id, batchId },
@@ -180,7 +242,7 @@ export async function POST(req: Request) {
       amount: program.price,
       payerEmail: email,
       description: `${program.title} (${name})`,
-      successRedirectUrl: `${baseUrl}/program/${program.slug}?status=sukses`,
+      successRedirectUrl: `${baseUrl}/member`, // [FIX G5] Redirect ke dashboard, bukan program page
     });
 
     await prisma.payment.upsert({

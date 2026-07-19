@@ -4,20 +4,12 @@ import { useState } from "react";
 import Icon from "@/components/Icon";
 import GoogleAuthModal from "@/components/GoogleAuthModal";
 import { useRouter } from "next/navigation";
-import { memberLogin, memberLogout } from "@/app/member/actions";
+import { memberLogout } from "@/app/member/actions";
 import { formatJadwal } from "@/lib/format";
 
 declare global {
   interface Window { fbq?: (...args: unknown[]) => void }
 }
-
-type Result = {
-  paid?: boolean;
-  free?: boolean;
-  invoiceUrl?: string;
-  waGroupLink?: string | null;
-  lmsLink?: string | null;
-};
 
 export default function RegisterForm({ programSlug, programTitle, jadwal, price, priceLabel, memberProfile, batches }: {
   programSlug: string;
@@ -35,7 +27,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
 }) {
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   const [error, setError] = useState("");
-  const [result] = useState<{ name: string } & Result | null>(null);
+  const [result, setResult] = useState<{ name: string; paid?: boolean; free?: boolean; invoiceUrl?: string; waGroupLink?: string | null; lmsLink?: string | null } | null>(null);
   const [googleOpen, setGoogleOpen] = useState(false);
   const [googleSelected, setGoogleSelected] = useState(!!memberProfile);
   const [isEditing, setIsEditing] = useState(false);
@@ -75,33 +67,33 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      const json: Result & { error?: string } = await res.json();
+      const json: Record<string, unknown> & { error?: string } = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Pendaftaran gagal. Silakan coba kembali.");
 
-      // Auto login setelah registrasi sukses
-      try {
-        await memberLogin(emailVal.trim());
-      } catch (err) {
-        console.error("Gagal auto-login:", err);
-      }
+      // [FIX C4+N2] Session sudah dibuat oleh /api/register (createMemberSession).
+      // Tidak perlu panggil memberLogin lagi — cukup redirect.
+      // API route sudah set cookie session di response. Browser akan menyimpannya.
 
       if (json.invoiceUrl) {
         window.fbq?.("track", "InitiateCheckout");
-        window.location.href = json.invoiceUrl; // halaman pembayaran Xendit
+        window.location.href = json.invoiceUrl as string; // halaman pembayaran Xendit
         return;
       }
 
+      // [FIX G2] Set result agar tampilan sukses muncul
       window.fbq?.("track", "Lead");
-      // Cek apakah auto-login berhasil — jika tidak, arahkan ke login
-      try {
-        const checkSession = await fetch("/member?check=1");
-        if (checkSession.ok) {
-          router.push("/member");
-        } else {
-          router.push("/member/login?registered=1");
-        }
-      } catch {
-        router.push("/member/login?registered=1");
+      setResult({
+        name: nameVal.trim(),
+        paid: (json.paid as boolean) ?? false,
+        free: (json.free as boolean) ?? true,
+        waGroupLink: json.waGroupLink as string | null ?? null,
+        lmsLink: json.lmsLink as string | null ?? null,
+      });
+      setState("done");
+
+      // Redirect ke dashboard untuk program gratis (session sudah ada)
+      if (!json.invoiceUrl) {
+        router.push("/member");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kendala. Silakan coba kembali.");
@@ -344,6 +336,9 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                     type="tel"
                     placeholder="Contoh: 081234567890"
                     required
+                    // [FIX C6] Tambah pattern validation WhatsApp — konsisten dengan /daftar
+                    pattern="^08[0-9]{8,13}$"
+                    title="Format: 08xxxxxxxxx (min 10 digit, max 15 digit)"
                     value={whatsappVal}
                     onChange={(e) => setWhatsappVal(e.target.value)}
                   />

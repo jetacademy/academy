@@ -15,6 +15,7 @@ export default function DaftarPage() {
   const [otpCode, setOtpCode] = useState("");
   const [googleOpen, setGoogleOpen] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] = useState("");
   const [googleName, setGoogleName] = useState("");
   const [googleEmail, setGoogleEmail] = useState("");
   const [countdown, setCountdown] = useState(0);
@@ -94,33 +95,48 @@ export default function DaftarPage() {
     setInfoMessage(null);
     setLoading(true);
 
-    const form = new FormData(e.currentTarget);
-    const res = await registerUser(form);
+    try {
+      const form = new FormData(e.currentTarget);
+      const res = await registerUser(form);
 
-    if (res?.error) {
-      setError(res.error);
-      setLoading(false);
-    } else if (res?.ok) {
-      setUserEmail(String(form.get("email") ?? "").trim());
-      setStep("otp");
-      setCountdown(60);
+      if (res?.error) {
+        setError(res.error);
+        setLoading(false);
+      } else if (res?.ok) {
+        const name = String(form.get("name") ?? "").trim();
+        setUserName(name || googleName || "Member");
+        setUserEmail(String(form.get("email") ?? "").trim());
+        setStep("otp");
+        setCountdown(60);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Register error:", err);
+      setError("Terjadi kendala. Silakan coba lagi.");
       setLoading(false);
     }
   }
 
   async function handleVerifyOtp() {
     setError(null);
-    if (!otpCode.trim() || otpCode.trim().length < 4) {
-      setError("Masukkan kode OTP dengan benar.");
+    // [FIX N3] OTP adalah 6 digit — validasi panjang exact
+    if (!otpCode.trim() || otpCode.trim().length !== 6) {
+      setError("Masukkan kode OTP 6 digit dengan benar.");
       return;
     }
     setLoading(true);
-    const res = await memberVerifyOtp(userEmail, otpCode.trim());
-    if (res?.error) {
-      setError(res.error);
-      setLoading(false);
-    } else if (res?.ok) {
-      setStep("done");
+    try {
+      const res = await memberVerifyOtp(userEmail, otpCode.trim());
+      if (res?.error) {
+        setError(res.error);
+        setLoading(false);
+      } else if (res?.ok) {
+        setStep("done");
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Verify OTP error:", err);
+      setError("Gagal memverifikasi kode. Silakan coba lagi.");
       setLoading(false);
     }
   }
@@ -140,7 +156,7 @@ export default function DaftarPage() {
               }}>✓</div>
               <h3>Akun berhasil dibuat!</h3>
               <p className="sub" style={{ margin: "0.8rem 0 1.5rem" }}>
-                Selamat datang, {userEmail}. Silakan lanjutkan ke dashboard.
+                Selamat datang, <b>{userName}</b>. Silakan lanjutkan ke dashboard.
               </p>
               <Link href="/member" className="btn btn-purple btn-lg btn-block" style={{ width: "100%" }}>
                 Buka Dashboard
@@ -269,7 +285,7 @@ export default function DaftarPage() {
             {step === "otp" && (
               <div>
                 <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", marginBottom: "1.2rem", textAlign: "center" }}>
-                  Kode verifikasi telah dikirim ke <strong>{userEmail}</strong> via WhatsApp atau Email
+                  Kode verifikasi 6 digit telah dikirim ke <strong>{userEmail}</strong> via WhatsApp atau Email
                 </p>
                 
                 {infoMessage && (
