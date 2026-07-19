@@ -16,3 +16,8 @@ export function verifyPassword(password: string, stored: string): boolean {
     return false;
   }
 }
+
+/** Key untuk integrasi mesin-ke-mesin (mis. Hermes agent) — bukan password, tidak di-hash. */
+export function generateApiKey(): string {
+  return `jsa_${randomBytes(24).toString("hex")}`;
+}

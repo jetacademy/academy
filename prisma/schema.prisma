@@ -52,47 +52,68 @@ enum AnswerKey {
 
 // Program pelatihan
 model Program {
-  id            String         @id @default(cuid())
-  slug          String         @unique // dipakai di URL: /program/digital-marketing-pemula
-  type          ProgramType    @default(WEBINAR)
-  title         String
-  tagline       String         @db.Text // headline penjualan yang spesifik (hasil akhir, bukan ilmu)
-  description   String         @db.Text
-  emoji         String         @default("🎓")
-  imageUrl      String?
-  mentorName    String
-  mentorBio     String         @db.Text
-  materi        Json // array string: poin "apa yang akan dipelajari"
-  deliverables  Json // value stack: array { label, value } — "yang kamu bawa pulang"
-  guarantee     String?        @db.Text // teks garansi / risk reversal
-  scheduleAt    DateTime // jadwal mulai (webinar/workshop/bootcamp) atau tanggal akses (kelas)
-  durationLabel String         @default("2 jam") // "2 jam", "4 minggu", "6 sesi live"
-  zoomLink      String? // dikirim via WA setelah daftar/bayar
-  waGroupLink   String? // link grup WhatsApp peserta
-  lmsLink       String? // link akses LMS (kelas/bonus) — dikirim via WA
-  price         Int            @default(0) // harga program (Rp). 0 = gratis (webinar)
-  priceOld      Int? // harga coret program
-  certPrice     Int            @default(49000) // WEBINAR saja: harga paket sertifikat (tripwire)
-  certPriceOld  Int? // harga coret paket sertifikat
-  seatsLeft     Int? // sisa kursi utk scarcity (opsional, tampil jika diisi)
-  passingScore  Int            @default(60) // skor minimal lulus post-test (0-100)
+  id                 String             @id @default(cuid())
+  slug               String             @unique // dipakai di URL: /program/digital-marketing-pemula
+  type               ProgramType        @default(WEBINAR)
+  title              String
+  tagline            String             @db.Text // headline penjualan yang spesifik (hasil akhir, bukan ilmu)
+  description        String             @db.Text
+  emoji              String             @default("🎓")
+  imageUrl           String?
+  mentorName         String
+  mentorBio          String             @db.Text
+  materi             Json // array string: poin "apa yang akan dipelajari"
+  deliverables       Json // value stack: array { label, value } — "yang kamu bawa pulang"
+  guarantee          String?            @db.Text // teks garansi / risk reversal
+  scheduleAt         DateTime // jadwal mulai (webinar/workshop/bootcamp) atau tanggal akses (kelas)
+  durationLabel      String             @default("2 jam") // "2 jam", "4 minggu", "6 sesi live"
+  zoomLink           String? // dikirim via WA setelah daftar/bayar
+  waGroupLink        String? // link grup WhatsApp peserta
+  lmsLink            String? // link akses LMS (kelas/bonus) — dikirim via WA
+  price              Int                @default(0) // harga program (Rp). 0 = gratis (webinar)
+  priceOld           Int? // harga coret program
+  certPrice          Int                @default(49000) // WEBINAR saja: harga paket sertifikat (tripwire)
+  certPriceOld       Int? // harga coret paket sertifikat
+  seatsLeft          Int? // sisa kursi utk scarcity (opsional, tampil jika diisi)
+  passingScore       Int                @default(60) // skor minimal lulus post-test (0-100)
   completionCriteria CompletionCriteria @default(ALL_LESSONS) // syarat sertifikat terbit
   certKind           CertKind           @default(ACHIEVEMENT) // jenis sertifikat yang terbit
-  maxTestAttempts    Int       @default(0) // 0 = tak terbatas; >0 = batas percobaan per kuis
-  isActive      Boolean        @default(true)
-  isFeatured    Boolean        @default(false)
-  certBgUrl     String?        @db.Text
-  certConfig    Json?
-  questions     Question[]
+  maxTestAttempts    Int                @default(0) // 0 = tak terbatas; >0 = batas percobaan per kuis
+  isActive           Boolean            @default(true)
+  isFeatured         Boolean            @default(false)
+  certBgUrl          String?            @db.Text
+  certConfig         Json?
+  questions          Question[]
+  registrations      Registration[]
+  modules            LmsModule[]
+  groups             LmsGroup[]
+  batches            ProgramBatch[]
+  categoryId         String?
+  category           Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([categoryId])
+}
+
+// Jadwal berulang (angkatan/batch) untuk satu program. Program tetap satu
+// (kurikulum, materi, harga sama) — batch cuma beda tanggal mulai & kuota.
+// Program.scheduleAt tetap dipakai sebagai fallback jika program belum
+// punya batch (program non-berulang, perilaku lama tidak berubah).
+model ProgramBatch {
+  id            String         @id @default(cuid())
+  program       Program        @relation(fields: [programId], references: [id], onDelete: Cascade)
+  programId     String
+  scheduleAt    DateTime
+  seatsLeft     Int? // sisa kursi khusus batch ini (opsional)
+  isActive      Boolean        @default(true) // nonaktifkan tanpa hapus (histori pendaftaran tetap utuh)
   registrations Registration[]
-  modules       LmsModule[]
-  groups        LmsGroup[]
-  categoryId    String?
-  category      Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  @@index([categoryId])
+  @@index([programId])
+  @@index([programId, scheduleAt])
+  @@index([scheduleAt])
 }
 
 // Pendaftar webinar (leads dari iklan Meta)
@@ -106,6 +127,8 @@ model Registration {
   institution String? // asal lembaga / instansi
   program     Program            @relation(fields: [programId], references: [id])
   programId   String
+  batch       ProgramBatch?      @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  batchId     String? // batch/angkatan yang dipilih peserta (null = program tanpa batch, pakai Program.scheduleAt)
   status      RegistrationStatus @default(REGISTERED)
   payment     Payment?
   attempts    TestAttempt[]
@@ -116,11 +139,12 @@ model Registration {
 
   @@unique([whatsapp, programId]) // satu nomor WA = satu pendaftaran per program
   @@index([email])
-  @@index([email, programId])     // login lookup lebih efisien
-  @@index([whatsapp])             // lookup WA saja (OTP login)
+  @@index([email, programId]) // login lookup lebih efisien
+  @@index([whatsapp]) // lookup WA saja (OTP login)
   @@index([programId])
+  @@index([batchId])
   @@index([status])
-  @@index([status, programId])    // filter status per program di dashboard
+  @@index([status, programId]) // filter status per program di dashboard
   @@index([createdAt])
   @@index([userId])
 }
@@ -188,8 +212,8 @@ model TestAttempt {
 
   @@index([registrationId])
   @@index([registrationId, lessonId])
-  @@index([lessonId])             // untuk agregasi hasil kuis per materi
-  @@index([passed, registrationId])  // cek apakah sudah pernah lulus
+  @@index([lessonId]) // untuk agregasi hasil kuis per materi
+  @@index([passed, registrationId]) // cek apakah sudah pernah lulus
 }
 
 // Sertifikat — terbit otomatis saat lulus post-test
@@ -262,22 +286,22 @@ model Completion {
   @@unique([registrationId, lessonId])
   @@index([registrationId])
   @@index([lessonId])
-  @@index([lessonId, registrationId])  // agregasi completion per pelajaran
+  @@index([lessonId, registrationId]) // agregasi completion per pelajaran
 }
 
 // OTP untuk login member — dikirim via WhatsApp, berlaku 5 menit
 model OtpCode {
-  id        String   @id @default(cuid())
-  identifier String  // whatsapp atau email — yang dipakai untuk login
-  code      String   // 6 digit angka
-  used      Boolean  @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  identifier String // whatsapp atau email — yang dipakai untuk login
+  code       String // 6 digit angka
+  used       Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
 
   @@index([identifier])
-  @@index([identifier, code])     // verifikasi OTP
-  @@index([expiresAt])            // cleanup job: hapus OTP kedaluwarsa
-  @@index([used, expiresAt])      // hapus OTP lama yang tidak terpakai
+  @@index([identifier, code]) // verifikasi OTP
+  @@index([expiresAt]) // cleanup job: hapus OTP kedaluwarsa
+  @@index([used, expiresAt]) // hapus OTP lama yang tidak terpakai
 }
 
 // Kategori program
@@ -298,19 +322,30 @@ enum Role {
 }
 
 model User {
-  id           String         @id @default(cuid())
-  name         String
-  email        String         @unique
-  whatsapp     String?        @unique
-  institution  String?
-  passwordHash String?        // Kata sandi terenkripsi (untuk ADMIN / TEACHER / STUDENT)
-  role         Role           @default(STUDENT)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  whatsapp      String?        @unique
+  institution   String?
+  passwordHash  String? // Kata sandi terenkripsi (untuk ADMIN / TEACHER / STUDENT)
+  role          Role           @default(STUDENT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   registrations Registration[]
 
-  @@index([role])               // filter by role di halaman user management
-  @@index([createdAt])          // sort terbaru di daftar user
+  @@index([role]) // filter by role di halaman user management
+  @@index([createdAt]) // sort terbaru di daftar user
 }
 
+// API key untuk integrasi mesin-ke-mesin (mis. Hermes agent marketing) —
+// bukan untuk login manusia. Dicek via header X-API-Key di /api/v1/*.
+model ApiKey {
+  id         String    @id @default(cuid())
+  label      String    @default("Hermes Agent Marketing")
+  key        String    @unique
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
 
+  @@index([key])
+}

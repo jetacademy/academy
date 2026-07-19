@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import GoogleAuthModal from "@/components/GoogleAuthModal";
 import { useRouter } from "next/navigation";
 import { memberLogin, memberLogout } from "@/app/member/actions";
+import { formatJadwal } from "@/lib/format";
 
 declare global {
   interface Window { fbq?: (...args: unknown[]) => void }
@@ -18,7 +19,7 @@ type Result = {
   lmsLink?: string | null;
 };
 
-export default function RegisterForm({ programSlug, programTitle, jadwal, price, priceLabel, memberProfile }: {
+export default function RegisterForm({ programSlug, programTitle, jadwal, price, priceLabel, memberProfile, batches }: {
   programSlug: string;
   programTitle: string;
   jadwal: string;
@@ -30,6 +31,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     whatsapp: string;
     institution: string | null;
   } | null;
+  batches?: { id: string; scheduleAt: string; seatsLeft: number | null }[];
 }) {
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   const [error, setError] = useState("");
@@ -44,6 +46,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
   const [whatsappVal, setWhatsappVal] = useState(memberProfile?.whatsapp ?? "");
   const [institutionVal, setInstitutionVal] = useState(memberProfile?.institution ?? "");
   const [credentialVal, setCredentialVal] = useState<string | undefined>(undefined);
+  const [batchId, setBatchId] = useState<string | undefined>(batches?.[0]?.id);
 
   const isPaid = price > 0;
   const hasCompletedProfile = !!(whatsappVal.trim() && institutionVal.trim());
@@ -61,6 +64,9 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     };
     if (credentialVal) {
       data.credential = credentialVal;
+    }
+    if (batchId) {
+      data.batchId = batchId;
     }
 
     try {
@@ -155,6 +161,19 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
   return (
     <>
       <div className="reg-card">
+        {batches && batches.length > 1 && (
+          <div className="field" style={{ marginBottom: "1.2rem" }}>
+            <label htmlFor="fBatch">Pilih Jadwal</label>
+            <select id="fBatch" value={batchId} onChange={(e) => setBatchId(e.target.value)}>
+              {batches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {formatJadwal(new Date(b.scheduleAt))}
+                  {b.seatsLeft != null ? ` — ${b.seatsLeft} kursi tersisa` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         {googleSelected ? (
           /* CASE 1: Akun sudah terhubung / User sudah Login */
           <form onSubmit={onSubmit}>

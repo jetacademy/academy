@@ -5,11 +5,17 @@ import { FALLBACK_PROGRAMS, type ProgramData, type ProgramType, type Deliverable
  * Ambil program dari MySQL. Jika database belum terhubung / belum di-seed,
  * pakai data contoh supaya website tetap tampil (mode demo).
  */
+const upcomingBatchesInclude = {
+  where: { isActive: true, scheduleAt: { gte: new Date() } },
+  orderBy: { scheduleAt: "asc" as const },
+  select: { id: true, scheduleAt: true, seatsLeft: true },
+};
+
 export async function getPrograms(): Promise<{ programs: ProgramData[]; demo: boolean }> {
   try {
     const rows = await prisma.program.findMany({
       where: { isActive: true },
-      include: { category: true },
+      include: { category: true, batches: upcomingBatchesInclude },
       orderBy: { scheduleAt: "asc" },
     });
     if (rows.length === 0) return { programs: [], demo: false };
@@ -24,7 +30,7 @@ export async function getProgramBySlug(slug: string): Promise<{ program: Program
   try {
     const row = await prisma.program.findUnique({
       where: { slug },
-      include: { category: true },
+      include: { category: true, batches: upcomingBatchesInclude },
     });
     if (row) return { program: toData(row), demo: false };
     // DB query sukses tapi tidak ditemukan — jangan pakai fallback
@@ -50,7 +56,13 @@ function toData(row: {
     slug: string;
     isFeatured: boolean;
   } | null;
+  batches?: { id: string; scheduleAt: Date; seatsLeft: number | null }[];
 }): ProgramData {
+  const batches = row.batches ?? [];
+  // Batch aktif terdekat menggantikan scheduleAt program sebagai "jadwal berikutnya"
+  // yang ditampilkan di mana pun — program tanpa batch tetap pakai scheduleAt-nya sendiri.
+  const nextScheduleAt = batches[0]?.scheduleAt ?? row.scheduleAt;
+
   return {
     id: row.id,
     slug: row.slug,
@@ -65,7 +77,7 @@ function toData(row: {
     materi: Array.isArray(row.materi) ? (row.materi as string[]) : [],
     deliverables: Array.isArray(row.deliverables) ? (row.deliverables as Deliverable[]) : [],
     guarantee: row.guarantee,
-    scheduleAt: row.scheduleAt,
+    scheduleAt: nextScheduleAt,
     durationLabel: row.durationLabel,
     waGroupLink: row.waGroupLink,
     lmsLink: row.lmsLink,
@@ -82,5 +94,6 @@ function toData(row: {
       slug: row.category.slug,
       isFeatured: row.category.isFeatured,
     } : null,
+    batches,
   };
 }

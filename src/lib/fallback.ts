@@ -36,6 +36,7 @@ export type ProgramData = {
     isFeatured: boolean;
   } | null;
   isFeatured?: boolean;
+  batches?: { id: string; scheduleAt: Date; seatsLeft: number | null }[];
 };
 
 /** Label tipe program untuk tampilan */

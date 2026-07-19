@@ -10,6 +10,7 @@ const TABS = [
   { href: "/webadmin/pendaftar", label: "Pendaftar" },
   { href: "/webadmin/sertifikat", label: "Sertifikat" },
   { href: "/webadmin/user", label: "User" },
+  { href: "/webadmin/integrasi", label: "Integrasi API" },
 ];
 
 export default function AdminTabs() {

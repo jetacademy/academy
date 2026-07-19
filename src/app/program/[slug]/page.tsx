@@ -23,6 +23,10 @@ import { prisma } from "@/lib/prisma";
 // next.config.ts karena HTML-nya bisa memuat data pribadi member (nama,
 // email, WhatsApp, instansi).
 
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL?.includes("localhost")
+  ? process.env.NEXT_PUBLIC_BASE_URL
+  : "https://academy.jetschool.id";
+
 const TYPE_CLASS: Record<ProgramType, string> = {
   WEBINAR: "type-webinar",
   KELAS: "type-kelas",
@@ -33,8 +37,26 @@ const TYPE_CLASS: Record<ProgramType, string> = {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const { program } = await getProgramBySlug(slug);
-  if (!program) return { title: "Program tidak ditemukan — Jetschool Academy" };
-  return { title: `${program.title} — Jetschool Academy`, description: program.tagline };
+  if (!program) return { title: "Program tidak ditemukan" };
+
+  const title = `${program.title} — Kursus AI Bersertifikat`;
+  return {
+    title,
+    description: program.tagline,
+    alternates: { canonical: `/program/${program.slug}` },
+    openGraph: {
+      type: "website",
+      title,
+      description: program.tagline,
+      images: program.imageUrl ? [{ url: program.imageUrl }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: program.tagline,
+      images: program.imageUrl ? [program.imageUrl] : undefined,
+    },
+  };
 }
 
 export default async function ProgramPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -115,8 +137,58 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
     },
   ];
 
+  const courseJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: program.title,
+    description: program.description,
+    provider: {
+      "@type": "Organization",
+      name: "Jetschool Academy",
+      sameAs: SITE_URL,
+    },
+    offers: {
+      "@type": "Offer",
+      price: program.price,
+      priceCurrency: "IDR",
+      category: isFree ? "Free" : "Paid",
+      availability: "https://schema.org/InStock",
+      url: `${SITE_URL}/program/${program.slug}`,
+    },
+    hasCourseInstance: {
+      "@type": "CourseInstance",
+      courseMode: "Online",
+      startDate: program.scheduleAt.toISOString(),
+      instructor: { "@type": "Person", name: program.mentorName },
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Beranda", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Program", item: `${SITE_URL}/program` },
+      { "@type": "ListItem", position: 3, name: program.title, item: `${SITE_URL}/program/${program.slug}` },
+    ],
+  };
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqItems.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+
       {/* Navigasi minimal: logo + satu tombol. */}
       <Navbar minimal ctaHref="#daftar" ctaLabel={isFree ? "Daftar Gratis" : "Daftar"} />
 
@@ -386,6 +458,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 price={program.price}
                 priceLabel={priceLabel}
                 memberProfile={memberProfile}
+                batches={program.batches?.map((b) => ({ id: b.id, scheduleAt: b.scheduleAt.toISOString(), seatsLeft: b.seatsLeft }))}
               />
             </div>
           </div>

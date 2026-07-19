@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, createAdminSession, destroyAdminSession } from "@/lib/admin-auth";
-import { hashPassword } from "@/lib/crypto";
+import { hashPassword, generateApiKey } from "@/lib/crypto";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sendWa, msgAccess, msgPaid, normalizeWa } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
@@ -756,4 +756,74 @@ export async function deleteUser(formData: FormData) {
   await prisma.user.delete({ where: { id } }).catch((err) => console.error("[deleteUser] Gagal:", err));
   revalidatePath("/webadmin/user");
   redirect("/webadmin/user?deleted=1");
+}
+
+// ─── Batch Program (jadwal berulang / angkatan) ──────────────────
+
+export async function createBatch(formData: FormData) {
+  await requireAdmin();
+  const programId = String(formData.get("programId") ?? "").trim();
+  const scheduleAtRaw = String(formData.get("scheduleAt") ?? "").trim();
+  const seatsLeftRaw = optStr(formData, "seatsLeft");
+
+  if (!programId) redirect("/webadmin/program");
+  if (!scheduleAtRaw) redirect(`/webadmin/program/${programId}/batch?e=lengkapi`);
+
+  const scheduleAt = new Date(scheduleAtRaw);
+  if (isNaN(scheduleAt.getTime())) redirect(`/webadmin/program/${programId}/batch?e=tanggal`);
+
+  await prisma.programBatch.create({
+    data: {
+      programId,
+      scheduleAt,
+      seatsLeft: seatsLeftRaw ? parseInt(seatsLeftRaw, 10) : null,
+    },
+  });
+
+  revalidatePath(`/webadmin/program/${programId}/batch`);
+  redirect(`/webadmin/program/${programId}/batch?ok=1`);
+}
+
+export async function toggleBatch(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+  const batch = await prisma.programBatch.findUnique({ where: { id } });
+  if (batch) await prisma.programBatch.update({ where: { id }, data: { isActive: !batch.isActive } });
+  revalidatePath(`/webadmin/program/${programId}/batch`);
+}
+
+export async function deleteBatch(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+  // Registration.batchId pakai onDelete: SetNull — histori pendaftaran tetap ada, cuma tautan batch-nya dilepas.
+  await prisma.programBatch.delete({ where: { id } }).catch((err) => console.error("[deleteBatch] Gagal:", err));
+  revalidatePath(`/webadmin/program/${programId}/batch`);
+  redirect(`/webadmin/program/${programId}/batch?deleted=1`);
+}
+
+// ─── Integrasi API (Hermes agent, dll.) ──────────────────────────
+
+/** Ambil key aktif, atau buat satu jika belum ada — supaya halaman selalu punya key untuk ditampilkan. */
+export async function ensureApiKey(): Promise<string> {
+  await requireAdmin();
+  const existing = await prisma.apiKey.findFirst({ where: { isActive: true }, orderBy: { createdAt: "desc" } });
+  if (existing) return existing.key;
+
+  const created = await prisma.apiKey.create({
+    data: { key: generateApiKey(), label: "Hermes Agent Marketing" },
+  });
+  return created.key;
+}
+
+/** Nonaktifkan key lama, buat key baru — key lama langsung berhenti berfungsi. */
+export async function regenerateApiKey() {
+  await requireAdmin();
+  await prisma.apiKey.updateMany({ where: { isActive: true }, data: { isActive: false } });
+  await prisma.apiKey.create({
+    data: { key: generateApiKey(), label: "Hermes Agent Marketing" },
+  });
+  revalidatePath("/webadmin/integrasi");
+  redirect("/webadmin/integrasi?ok=1");
 }

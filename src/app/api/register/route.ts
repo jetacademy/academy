@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: limit.error }, { status: limit.status });
   }
 
-  let body: { name?: string; whatsapp?: string; email?: string; programSlug?: string; institution?: string };
+  let body: { name?: string; whatsapp?: string; email?: string; programSlug?: string; institution?: string; batchId?: string };
   try {
     body = await req.json();
   } catch {
@@ -36,6 +36,7 @@ export async function POST(req: Request) {
   const email = (body.email ?? "").trim().toLowerCase();
   const programSlug = (body.programSlug ?? "").trim();
   const institution = (body.institution ?? "").trim().slice(0, 100).replace(/<[^>]*>/g, "");
+  const batchIdInput = (body.batchId ?? "").trim();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
   if (name.length < 3) return NextResponse.json({ error: "Nama minimal 3 huruf." }, { status: 400 });
@@ -46,6 +47,14 @@ export async function POST(req: Request) {
     const program = await prisma.program.findUnique({ where: { slug: programSlug } });
     if (!program || !program.isActive) {
       return NextResponse.json({ error: "Program tidak ditemukan. (Sudah jalankan `npm run db:seed`?)" }, { status: 404 });
+    }
+
+    // batchId opsional — kalau dikirim, pastikan benar-benar milik program ini (bukan program lain)
+    let batchId: string | null = null;
+    if (batchIdInput) {
+      const batch = await prisma.programBatch.findFirst({ where: { id: batchIdInput, programId: program.id, isActive: true } });
+      if (!batch) return NextResponse.json({ error: "Jadwal batch tidak valid. Silakan pilih ulang." }, { status: 400 });
+      batchId = batch.id;
     }
 
     // Validasi apakah nomor WA atau Email sudah digunakan & lunas / terdaftar di program ini
@@ -95,8 +104,8 @@ export async function POST(req: Request) {
     // idempoten: daftar dua kali dengan nomor sama = tetap sukses
     const reg = await prisma.registration.upsert({
       where: { whatsapp_programId: { whatsapp, programId: program.id } },
-      create: { name, whatsapp, email, institution, programId: program.id, userId: user.id },
-      update: { name, email, institution, userId: user.id },
+      create: { name, whatsapp, email, institution, programId: program.id, userId: user.id, batchId },
+      update: { name, email, institution, userId: user.id, ...(batchId ? { batchId } : {}) },
       include: { payment: true },
     });
 

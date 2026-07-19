@@ -5,8 +5,10 @@ import ProgramListClient from "@/components/ProgramListClient";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Semua Program Pelatihan — Jetschool Academy",
-  description: "Daftar lengkap program pelatihan, webinar, workshop, dan bootcamp di Jetschool Academy.",
+  title: "Kursus AI Bersertifikat — Semua Program Pelatihan",
+  description:
+    "Jelajahi semua kursus AI, webinar gratis, kelas online, workshop, dan bootcamp AI bersertifikat di Jetschool Academy.",
+  alternates: { canonical: "/program" },
 };
 
 export default async function ProgramPage() {
