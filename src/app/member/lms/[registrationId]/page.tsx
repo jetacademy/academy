@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import { completeLesson } from "@/app/member/actions";
 import LessonQuiz, { type LessonQuizQuestion } from "@/components/LessonQuiz";
 import ClaimCertButton from "@/components/ClaimCertButton";
+import MemberPayCertButton from "@/components/MemberPayCertButton";
 
 export const dynamic = "force-dynamic";
 
@@ -225,7 +226,9 @@ export default async function LmsPage({
                     <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem", lineHeight: 1.6, margin: "1rem 0 2rem" }}>
                       Selesaikan pembayaran paket sertifikat untuk menerbitkan e-sertifikat resmi Anda.
                     </p>
-                    <Link href={`/sertifikat?slug=${program.slug}&email=${reg.email}`} className="btn btn-purple btn-lg">Klaim Sertifikat</Link>
+                    <div style={{ maxWidth: "24rem", margin: "0 auto" }}>
+                      <MemberPayCertButton registrationId={registrationId} certPrice={program.certPrice} className="btn btn-purple btn-lg btn-block" />
+                    </div>
                   </>
                 ) : (
                   <>

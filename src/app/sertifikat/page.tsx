@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WaFloat from "@/components/WaFloat";
 import CheckoutForm from "@/components/CheckoutForm";
 import { getPrograms } from "@/lib/programs";
+import { getMemberSession } from "@/lib/member-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +15,11 @@ export const metadata: Metadata = {
 };
 
 export default async function SertifikatPage() {
+  const sessionVal = await getMemberSession();
+  if (sessionVal) {
+    redirect("/member");
+  }
+
   const { programs } = await getPrograms();
   // halaman ini untuk klaim sertifikat webinar gratis (tripwire).
   // program berbayar otomatis mendapat akses dashboard belajar setelah bayar.

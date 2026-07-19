@@ -18,7 +18,11 @@ export default function Navbar({ minimal = false, ctaHref = "/#program", ctaLabe
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    setIsLoggedIn(document.cookie.includes("jsa_member="));
+    const hasCookie = document.cookie.includes("jsa_member=");
+    const timer = setTimeout(() => {
+      setIsLoggedIn(hasCookie);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   return (

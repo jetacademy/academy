@@ -7,6 +7,7 @@ import { memberLogout } from "./actions";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ClaimCertButton from "@/components/ClaimCertButton";
+import MemberPayCertButton from "@/components/MemberPayCertButton";
 import { rupiah, formatJadwal } from "@/lib/format";
 import { Registration, Program, Payment, Certificate } from "@prisma/client";
 
@@ -199,9 +200,7 @@ export default async function MemberDashboardPage() {
                             </a>
                           )}
                           {new Date() >= new Date(prog.scheduleAt) ? (
-                            <Link href={`/sertifikat?slug=${prog.slug}&email=${reg.email}`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
-                              Klaim Sertifikat ({rupiah(prog.certPrice)})
-                            </Link>
+                            <MemberPayCertButton registrationId={reg.id} certPrice={prog.certPrice} />
                           ) : (
                             <button className="btn btn-block" disabled style={{ background: "var(--border)", color: "var(--ink-faint)", cursor: "not-allowed", textAlign: "center" }}>
                               Klaim Sertifikat (Belum Dimulai)

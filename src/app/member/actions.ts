@@ -8,6 +8,7 @@ import { issueCertificate, checkCertEligibility } from "@/lib/certificates";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sendOtp, verifyOtp } from "@/lib/otp";
 import { sendEmail, getWelcomeMemberEmailHtml } from "@/lib/email";
+import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 
 async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; error?: string }> {
   // 1. Cari User record terlebih dahulu — user yang baru daftar akun
@@ -387,4 +388,80 @@ export async function registerUser(formData: FormData) {
   }).catch((err) => console.error("[registerUser] Gagal kirim email welcome:", err));
 
   return { ok: true, userId: user.id };
+}
+
+/**
+ * Server Action untuk memulai pembayaran sertifikat (1-Click Checkout).
+ * Mengembalikan redirectUrl ke halaman pembayaran Xendit.
+ */
+export async function initiateCertificateCheckout(registrationId: string) {
+  const reg = await getOwnedRegistration(registrationId);
+  if (!reg) return { error: "Sesi tidak valid. Silakan login ulang." };
+
+  const program = reg.program;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+
+  // Jika sudah terbit sertifikat, arahkan ke download
+  const cert = await prisma.certificate.findUnique({
+    where: { registrationId },
+  });
+  if (cert) {
+    return { redirectUrl: `${baseUrl}/sertifikat/${cert.number}` };
+  }
+
+  // Jika sudah PAID / GRATIS total, klaim langsung
+  if (reg.status === "PAID" || reg.status === "PASSED" || (program.price === 0 && program.certPrice === 0)) {
+    return { redirectUrl: `${baseUrl}/member/lms/${registrationId}` };
+  }
+
+  // Jika ada invoice pending, gunakan kembali
+  const payment = await prisma.payment.findUnique({
+    where: { registrationId },
+  });
+  if (payment?.status === "PENDING" && payment.invoiceUrl) {
+    return { redirectUrl: payment.invoiceUrl };
+  }
+
+  // MODE DEV tanpa Xendit: langsung tandai lunas
+  if (!isXenditConfigured()) {
+    if (process.env.NODE_ENV === "production" && process.env.XENDIT_DEV_BYPASS !== "true") {
+      return { error: "Pembayaran belum dikonfigurasi. Hubungi admin." };
+    }
+    await prisma.$transaction([
+      prisma.payment.upsert({
+        where: { registrationId: reg.id },
+        create: { registrationId: reg.id, amount: program.certPrice, status: "PAID", paidAt: new Date() },
+        update: { amount: program.certPrice, status: "PAID", paidAt: new Date() },
+      }),
+      prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
+    ]);
+    return { redirectUrl: `${baseUrl}/member` };
+  }
+
+  // Buat invoice baru
+  const invoice = await createInvoice({
+    externalId: `ACADEMY-${reg.id}`,
+    amount: program.certPrice,
+    payerEmail: reg.email,
+    description: `Paket Sertifikat — ${program.title} (${reg.name})`,
+    successRedirectUrl: `${baseUrl}/member`,
+  });
+
+  await prisma.payment.upsert({
+    where: { registrationId: reg.id },
+    create: {
+      registrationId: reg.id,
+      amount: program.certPrice,
+      xenditInvoiceId: invoice.id,
+      invoiceUrl: invoice.invoice_url,
+    },
+    update: {
+      amount: program.certPrice,
+      xenditInvoiceId: invoice.id,
+      invoiceUrl: invoice.invoice_url,
+      status: "PENDING",
+    },
+  });
+
+  return { redirectUrl: invoice.invoice_url };
 }
