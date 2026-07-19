@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { memberLogin, memberLoginWithGoogle, memberSendOtp, memberVerifyOtp } from "../actions";
 import Navbar from "@/components/Navbar";
@@ -19,6 +19,9 @@ export default function MemberLoginPage() {
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpChannel, setOtpChannel] = useState<"whatsapp" | "email" | "none" | null>(null);
+  const [countdown, setCountdown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleGoogleSelect(email: string, _name: string, credential?: string) {
@@ -61,8 +64,39 @@ export default function MemberLoginPage() {
     }
   }
 
+  useEffect(() => {
+    if (step !== "otp" || countdown <= 0) return;
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [step, countdown]);
+
+  async function handleResendEmailOtp() {
+    setError(null);
+    setInfoMessage(null);
+    setResendLoading(true);
+    try {
+      const res = await memberSendOtp(identifier.trim(), true);
+      if (res?.error) {
+        setError(res.error);
+      } else {
+        setInfoMessage("Kode OTP berhasil dikirim ulang ke Email Anda.");
+        setCountdown(60);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Gagal mengirim ulang OTP. Silakan coba lagi.");
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
   async function handleSendOtp() {
     setError(null);
+    setInfoMessage(null);
     if (!identifier.trim()) {
       setError("Masukkan nomor WhatsApp atau Email Anda.");
       return;
@@ -76,6 +110,7 @@ export default function MemberLoginPage() {
       setOtpSent(true);
       setOtpChannel(("channel" in res ? res.channel : null) ?? null);
       setStep("otp");
+      setCountdown(60);
     }
   }
 
@@ -210,6 +245,23 @@ export default function MemberLoginPage() {
                   Kode verifikasi telah dikirim ke <strong>{identifier}</strong>{" "}
                   {otpChannel === "whatsapp" ? "via WhatsApp" : otpChannel === "email" ? "via Email" : "via WhatsApp atau Email"}
                 </p>
+
+                {infoMessage && (
+                  <div className="form-success" style={{
+                    marginBottom: "1rem",
+                    padding: "0.6rem 0.8rem",
+                    background: "rgba(39, 174, 96, 0.05)",
+                    border: "1px solid rgba(39, 174, 96, 0.2)",
+                    borderRadius: "6px",
+                    color: "#27ae60",
+                    fontSize: "0.8rem",
+                    textAlign: "center",
+                    fontWeight: 600
+                  }}>
+                    {infoMessage}
+                  </div>
+                )}
+
                 <div className="field">
                   <label htmlFor="fOtp">Kode OTP (6 digit)</label>
                   <input
@@ -234,11 +286,31 @@ export default function MemberLoginPage() {
                 >
                   {isBusy ? "Memverifikasi..." : "Masuk"}
                 </button>
+
+                <div style={{ textAlign: "center", fontSize: "0.82rem", marginTop: "1rem", borderTop: "1px solid var(--line)", paddingTop: "1rem" }}>
+                  <p style={{ color: "var(--ink-soft)", marginBottom: "0.5rem" }}>Belum menerima kode verifikasi?</p>
+                  {countdown > 0 ? (
+                    <span style={{ color: "var(--ink-faint)", fontWeight: 600 }}>
+                      Kirim OTP via Email tersedia dalam {countdown} detik
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={resendLoading}
+                      onClick={handleResendEmailOtp}
+                      className="btn btn-line btn-sm"
+                      style={{ padding: "0.4rem 1rem", fontSize: "0.78rem" }}
+                    >
+                      {resendLoading ? "Mengirim..." : "Kirim OTP via Email"}
+                    </button>
+                  )}
+                </div>
+
                 <button
                   type="button"
                   className="btn btn-line btn-sm"
-                  style={{ width: "100%", marginTop: "0.5rem" }}
-                  onClick={() => { setStep("pilih-metode"); setOtpCode(""); setOtpSent(false); }}
+                  style={{ width: "100%", marginTop: "1rem" }}
+                  onClick={() => { setStep("pilih-metode"); setOtpCode(""); setOtpSent(false); setInfoMessage(null); }}
                   disabled={isBusy}
                 >
                   Ganti metode login

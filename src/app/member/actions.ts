@@ -67,7 +67,7 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
 /**
  * Kirim kode OTP ke WhatsApp/Email member untuk login.
  */
-export async function memberSendOtp(identifier: string) {
+export async function memberSendOtp(identifier: string, forceEmail: boolean = false) {
   const hdrs = await headers();
   const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-otp";
   const cleanVal = identifier.trim();
@@ -79,7 +79,7 @@ export async function memberSendOtp(identifier: string) {
   const limitId = checkRateLimit(`member-otp-id:${cleanVal}`, 3, 60_000);
   if (!limitId.ok) return { error: "Terlalu banyak permintaan OTP untuk akun ini. Coba lagi nanti." };
 
-  return sendOtp(cleanVal);
+  return sendOtp(cleanVal, forceEmail);
 }
 
 /**
