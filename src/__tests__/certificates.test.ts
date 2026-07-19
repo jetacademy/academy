@@ -8,7 +8,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { issueCertificate, checkCertEligibility } from '@/lib/certificates';
 
 // ─── Hoisted mocks (vi.mock factories are hoisted; use vi.hoisted) ─
@@ -90,6 +90,7 @@ const { mockPrisma, mockPrismaTx, makeCertificate, makeRegistration } = vi.hoist
         count: vi.fn(),
       },
       program: { findUnique: vi.fn(), findFirst: vi.fn(), findMany: vi.fn() },
+      programBatch: { count: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
       certificate: { findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn(), count: vi.fn() },
       payment: { findUnique: vi.fn(), findFirst: vi.fn(), upsert: vi.fn(), create: vi.fn(), update: vi.fn() },
       lesson: { count: vi.fn(), findMany: vi.fn(), findFirst: vi.fn() },
@@ -133,6 +134,8 @@ beforeEach(() => {
   resetMocks();
   process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000';
   mockPrisma.$transaction.mockImplementation((fn: any) => fn(mockPrismaTx));
+  mockPrisma.certificate.count.mockResolvedValue(0);
+  mockPrisma.programBatch.count.mockResolvedValue(0);
 });
 
 afterEach(() => {
@@ -167,7 +170,7 @@ describe('issueCertificate', () => {
     );
     expect(mockPrisma.registration.findUnique).toHaveBeenCalledWith({
       where: { id: 'nonexistent' },
-      include: { certificate: true, program: true },
+      include: { certificate: true, program: true, batch: true },
     });
   });
 
@@ -197,15 +200,15 @@ describe('issueCertificate', () => {
 
     const result = await issueCertificate('reg-1');
 
-    // Number should match format JSA-YYYY-XXXXXXXX (8 hex chars)
-    expect(result.number).toMatch(/^JSA-2026-[0-9a-f]{8}$/);
-    expect(result.url).toMatch(/^http:\/\/localhost:3000\/sertifikat\/JSA-2026-[0-9a-f]{8}$/);
+    // Number should match format JS-XXX-YYYY-BXXX-XXXXX
+    expect(result.number).toMatch(/^JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}$/);
+    expect(result.url).toMatch(/^http:\/\/localhost:3000\/sertifikat\/JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}$/);
 
-    // Should create certificate with the random number directly (no TMP- prefix)
+    // Should create certificate with the random number directly
     expect(mockPrismaTx.certificate.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         registrationId: 'reg-1',
-        number: expect.stringMatching(/^JSA-2026-[0-9a-f]{8}$/),
+        number: expect.stringMatching(/^JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}$/),
       }),
     });
     // Should NOT do a second update (number set at create time)
@@ -230,7 +233,7 @@ describe('issueCertificate', () => {
     vi.mocked(sendWa).mockRejectedValueOnce(new Error('WA down'));
 
     const result = await issueCertificate('reg-1');
-    expect(result.number).toMatch(/^JSA-2026-[0-9a-f]{8}$/);
+    expect(result.number).toMatch(/^JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}$/);
     expect(sendWa).toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith(
       expect.stringContaining('Gagal kirim WA'),
@@ -249,7 +252,7 @@ describe('issueCertificate', () => {
     mockPrismaTx.registration.update.mockResolvedValue({ ...reg, status: 'PASSED' });
 
     const result = await issueCertificate('reg-1');
-    expect(result.url).toMatch(/^https:\/\/academy\.jetschool\.id\/sertifikat\/JSA-2026-[0-9a-f]{8}$/);
+    expect(result.url).toMatch(/^https:\/\/academy\.jetschool\.id\/sertifikat\/JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}$/);
   });
 });
 

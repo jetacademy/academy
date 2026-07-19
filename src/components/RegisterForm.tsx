@@ -203,6 +203,8 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                   Satu langkah lagi untuk mendaftar menggunakan profil Anda:
                 </p>
 
+                {error && <div className="form-error" style={{ marginBottom: "1rem" }}>{error}</div>}
+
                 <div style={{
                   background: "var(--chip)",
                   borderRadius: "10px",

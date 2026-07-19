@@ -4,10 +4,13 @@
 // tersedia, alur utama (daftar/bayar) tetap berjalan.
 // ============================================================
 
-/** 08123... / +62812... / 62812... → 62812... */
 export function normalizeWa(raw: string): string {
   let n = raw.replace(/[^0-9]/g, "");
-  if (n.startsWith("0")) n = "62" + n.slice(1);
+  if (n.startsWith("0")) {
+    n = "62" + n.slice(1);
+  } else if (n.startsWith("8")) {
+    n = "62" + n;
+  }
   return n;
 }
 
