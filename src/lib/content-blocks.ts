@@ -11,11 +11,19 @@ export type ContentBlock =
   | { id: string; type: "video"; url: string; caption?: string }
   | { id: string; type: "list"; title?: string; items: string[] }
   | { id: string; type: "stack"; title?: string; items: { label: string; value: number }[] }
-  | { id: string; type: "quote"; text: string; author?: string };
+  | { id: string; type: "quote"; text: string; author?: string }
+  | {
+      id: string;
+      type: "split";
+      leftTitle: string;
+      leftItems: { label: string; value: number }[];
+      rightTitle: string;
+      rightItems: string[];
+    };
 
 export type BlockType = ContentBlock["type"];
 
-export const BLOCK_TYPES: BlockType[] = ["heading", "text", "image", "video", "list", "stack", "quote"];
+export const BLOCK_TYPES: BlockType[] = ["heading", "text", "image", "video", "list", "stack", "split", "quote"];
 
 export const BLOCK_TYPE_META: Record<BlockType, { label: string; icon: string; hint: string }> = {
   heading: { label: "Judul Bagian", icon: "🔠", hint: "Judul besar pemisah antar-bagian" },
@@ -24,6 +32,7 @@ export const BLOCK_TYPE_META: Record<BlockType, { label: string; icon: string; h
   video: { label: "Video", icon: "🎬", hint: "YouTube, Vimeo, atau Bunny Stream" },
   list: { label: "Daftar Poin", icon: "📋", hint: "Poin singkat, mis. materi yang dipelajari" },
   stack: { label: "Value Stack", icon: "💰", hint: "Rincian nilai/benefit dengan label & harga" },
+  split: { label: "2 Kolom (Terima/Pelajari)", icon: "📐", hint: "Value stack & daftar poin berdampingan — persis layout bawaan" },
   quote: { label: "Kutipan / Jaminan", icon: "💬", hint: "Kutipan menonjol, mis. profil mentor atau garansi" },
 };
 
@@ -48,6 +57,8 @@ export function createEmptyBlock(type: BlockType): ContentBlock {
       return { id, type, title: "", items: [] };
     case "quote":
       return { id, type, text: "", author: "" };
+    case "split":
+      return { id, type, leftTitle: "Yang Anda Terima", leftItems: [], rightTitle: "Yang Anda Pelajari", rightItems: [] };
   }
 }
 
@@ -66,6 +77,8 @@ export function isBlockEmpty(block: ContentBlock): boolean {
       return block.items.length === 0;
     case "quote":
       return !block.text.trim();
+    case "split":
+      return block.leftItems.length === 0 && block.rightItems.length === 0;
   }
 }
 
@@ -91,11 +104,15 @@ export function buildLegacyBlocks(program: {
   if (program.description.trim()) {
     blocks.push({ id: createBlockId(), type: "text", html: `<p>${escapeForHtml(program.description.trim())}</p>` });
   }
-  if (program.materi.length) {
-    blocks.push({ id: createBlockId(), type: "list", title: "Yang Anda Pelajari", items: program.materi });
-  }
-  if (program.deliverables.length) {
-    blocks.push({ id: createBlockId(), type: "stack", title: "Yang Anda Terima", items: program.deliverables });
+  if (program.materi.length || program.deliverables.length) {
+    blocks.push({
+      id: createBlockId(),
+      type: "split",
+      leftTitle: "Yang Anda Terima",
+      leftItems: program.deliverables,
+      rightTitle: "Yang Anda Pelajari",
+      rightItems: program.materi,
+    });
   }
   if (program.mentorBio.trim()) {
     blocks.push({ id: createBlockId(), type: "quote", text: program.mentorBio.trim(), author: program.mentorName });
@@ -120,17 +137,17 @@ export function buildDefaultTemplate(): ContentBlock[] {
       type: "text",
       html: "<p>Tulis penjelasan singkat mengapa program ini penting dan masalah apa yang diselesaikan untuk peserta. Ganti teks ini dengan copy Anda sendiri.</p>",
     },
-    { id: createBlockId(), type: "heading", text: "Yang Anda Pelajari" },
-    { id: createBlockId(), type: "list", items: ["Poin materi pertama", "Poin materi kedua", "Poin materi ketiga"] },
-    { id: createBlockId(), type: "heading", text: "Yang Anda Terima" },
     {
       id: createBlockId(),
-      type: "stack",
-      items: [
+      type: "split",
+      leftTitle: "Yang Anda Terima",
+      leftItems: [
         { label: "Rekaman sesi selamanya", value: 150000 },
         { label: "Akses grup komunitas", value: 0 },
         { label: "Template siap pakai", value: 100000 },
       ],
+      rightTitle: "Yang Anda Pelajari",
+      rightItems: ["Poin materi pertama", "Poin materi kedua", "Poin materi ketiga"],
     },
     { id: createBlockId(), type: "image", url: "", caption: "Ganti dengan gambar/screenshot produk Anda" },
     { id: createBlockId(), type: "quote", text: "Tulis testimoni peserta atau jaminan resmi di sini.", author: "Nama Peserta / Jaminan Resmi" },

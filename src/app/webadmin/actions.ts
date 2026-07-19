@@ -130,7 +130,7 @@ export async function saveProgram(formData: FormData) {
   redirect("/webadmin/program?ok=1");
 }
 
-const CONTENT_BLOCK_TYPES = ["heading", "text", "image", "video", "list", "stack", "quote"];
+const CONTENT_BLOCK_TYPES = ["heading", "text", "image", "video", "list", "stack", "split", "quote"];
 
 /** Validasi & sanitasi blok mentah dari editor sebelum disimpan — blok yang tidak valid/kosong dibuang. */
 export async function sanitizeContentBlocks(input: unknown): Promise<Prisma.InputJsonValue> {
@@ -172,6 +172,21 @@ export async function sanitizeContentBlocks(input: unknown): Promise<Prisma.Inpu
         : [];
       const title = String(b.title ?? "").trim();
       if (items.length) out.push({ id, type, items, ...(title ? { title } : {}) });
+    } else if (type === "split") {
+      const leftItems = Array.isArray(b.leftItems)
+        ? (b.leftItems as unknown[])
+            .map((v) => {
+              const item = v as { label?: unknown; value?: unknown };
+              return { label: String(item.label ?? "").trim(), value: Number(item.value ?? 0) || 0 };
+            })
+            .filter((it) => it.label)
+        : [];
+      const rightItems = Array.isArray(b.rightItems) ? b.rightItems.map((v) => String(v).trim()).filter(Boolean) : [];
+      if (leftItems.length || rightItems.length) {
+        const leftTitle = String(b.leftTitle ?? "").trim() || "Yang Anda Terima";
+        const rightTitle = String(b.rightTitle ?? "").trim() || "Yang Anda Pelajari";
+        out.push({ id, type, leftTitle, leftItems, rightTitle, rightItems });
+      }
     } else if (type === "quote") {
       const text = String(b.text ?? "").trim();
       const author = String(b.author ?? "").trim();

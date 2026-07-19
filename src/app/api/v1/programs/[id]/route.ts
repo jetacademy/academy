@@ -34,6 +34,7 @@ const PROGRAM_TYPES = ["WEBINAR", "KELAS", "WORKSHOP", "BOOTCAMP"] as const;
  *     list     { title?, items: string[] }
  *     stack    { title?, items: {label,value}[] }
  *     quote    { text, author? }
+ *     split    { leftTitle, leftItems: {label,value}[], rightTitle, rightItems: string[] } — 2 kolom berdampingan
  */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizeApiRequest(req, { rateLimitKey: "api-v1-programs-write", max: 20, windowMs: 60_000 });

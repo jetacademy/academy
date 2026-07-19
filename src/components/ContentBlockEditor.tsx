@@ -358,6 +358,22 @@ function BlockFields({ block, onUpdate }: { block: ContentBlock; onUpdate: (patc
         </>
       );
 
+    case "split":
+      return (
+        <div className="ibk-split-fields">
+          <div>
+            <label className="adm-note" style={{ display: "block", marginBottom: ".3rem" }}>Kolom Kiri (value stack)</label>
+            <input value={block.leftTitle} onChange={(e) => onUpdate({ leftTitle: e.target.value })} placeholder="Judul kiri" autoFocus />
+            <StackItemsField items={block.leftItems} onChange={(items) => onUpdate({ leftItems: items })} />
+          </div>
+          <div>
+            <label className="adm-note" style={{ display: "block", marginBottom: ".3rem" }}>Kolom Kanan (daftar poin)</label>
+            <input value={block.rightTitle} onChange={(e) => onUpdate({ rightTitle: e.target.value })} placeholder="Judul kanan" />
+            <ListItemsField items={block.rightItems} onChange={(items) => onUpdate({ rightItems: items })} />
+          </div>
+        </div>
+      );
+
     case "quote":
       return (
         <>

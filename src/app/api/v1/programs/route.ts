@@ -95,6 +95,8 @@ export async function GET(req: Request) {
  *   contentBlocks (array) — kontrol presisi, tiap item: { id?, type, ...field }, type salah satu dari:
  *     heading { text } | text { html } | image { url, caption? } | video { url, caption? }
  *     list { title?, items: string[] } | stack { title?, items: {label,value}[] } | quote { text, author? }
+ *     split { leftTitle, leftItems: {label,value}[], rightTitle, rightItems: string[] } — 2 kolom berdampingan
+ *       (value stack kiri + daftar poin kanan, persis layout bawaan "Yang Anda Terima/Pelajari")
  */
 export async function POST(req: Request) {
   const auth = await authorizeApiRequest(req, { rateLimitKey: "api-v1-programs-write", max: 20, windowMs: 60_000 });

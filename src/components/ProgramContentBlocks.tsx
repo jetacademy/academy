@@ -15,6 +15,18 @@ export default function ProgramContentBlocks({ blocks, noReveal }: { blocks: Con
   );
 }
 
+/** "Yang Anda Terima" → <>Yang Anda <span class="acc-p">Terima</span></> — kata terakhir dapat aksen warna, persis judul section bawaan. */
+function AccentTitle({ title, accent }: { title: string; accent: "acc-p" | "acc-o" }) {
+  const words = title.trim().split(/\s+/);
+  const last = words.pop();
+  return (
+    <h2 className="prg-blk-split-title">
+      {words.length > 0 && words.join(" ") + " "}
+      <span className={accent}>{last}</span>
+    </h2>
+  );
+}
+
 /**
  * Render satu blok — diekspor supaya editor admin bisa memakai render PERSIS sama di kanvas inline.
  * `noReveal` mematikan animasi scroll-reveal (dipakai di editor admin — blok di-edit/re-render
@@ -24,6 +36,7 @@ export function ContentBlockView({ block, noReveal }: { block: ContentBlock; noR
   const cardClass = noReveal ? "prg-blk-card" : "prg-blk-card reveal";
   const mediaClass = noReveal ? "prg-blk-card prg-blk-media" : "prg-blk-card prg-blk-media reveal";
   const quoteClass = noReveal ? "prg-blk-quote" : "prg-blk-quote reveal";
+  const bentoClass = noReveal ? "bento" : "bento reveal";
 
   switch (block.type) {
     case "heading":
@@ -78,6 +91,31 @@ export function ContentBlockView({ block, noReveal }: { block: ContentBlock; noR
                 {item.value > 0 ? <span className="val">{rupiah(item.value)}</span> : <span className="val incl">✓</span>}
               </div>
             ))}
+          </div>
+        </div>
+      ) : null;
+
+    case "split":
+      return block.leftItems.length || block.rightItems.length ? (
+        <div className="hero-card">
+          <div className={bentoClass}>
+            <AccentTitle title={block.leftTitle} accent="acc-p" />
+            <div className="stack">
+              {block.leftItems.map((item, i) => (
+                <div className="stack-row" key={i}>
+                  <span>{item.label}</span>
+                  {item.value > 0 ? <span className="val">{rupiah(item.value)}</span> : <span className="val incl">✓</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={bentoClass}>
+            <AccentTitle title={block.rightTitle} accent="acc-o" />
+            <ul className="check-list">
+              {block.rightItems.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
           </div>
         </div>
       ) : null;

@@ -482,6 +482,8 @@
   padding: clamp(1.2rem, 3vw, 1.6rem);
 }
 .ibk-edit-panel input, .ibk-edit-panel textarea { width: 100%; }
+.ibk-split-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; }
+@media (max-width: 640px) { .ibk-split-fields { grid-template-columns: 1fr; } }
 
 .cbe-field-warn { display: block; margin-top: .35rem; font-size: .76rem; color: var(--orange); font-weight: 700; }
 

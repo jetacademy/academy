@@ -1124,6 +1124,7 @@
 }
 .prg-blk-quote p { position: relative; font-size: 1.15rem; font-weight: 700; line-height: 1.55; letter-spacing: -0.01em; }
 .prg-blk-quote cite { position: relative; display: block; margin-top: 0.9rem; font-size: 0.82rem; font-weight: 700; opacity: 0.75; font-style: normal; }
+.prg-blk-split-title { margin-bottom: 1.2rem; }
 
 /* ---------- FAQ ---------- */
 .faq { display: grid; gap: .6rem; max-width: 44rem; margin-inline: auto; }
