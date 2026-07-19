@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { deleteArticle } from "../../actions";
+import ConfirmButton from "@/components/ConfirmButton";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,9 @@ export default async function AdminArtikelList({
                     )}
                     <form action={deleteArticle}>
                       <input type="hidden" name="id" value={a.id} />
-                      <button type="submit" className="btn btn-sm btn-danger">Hapus</button>
+                      <ConfirmButton className="btn btn-sm btn-danger" message={`Apakah Anda yakin ingin menghapus artikel "${a.title}"?`}>
+                        Hapus
+                      </ConfirmButton>
                     </form>
                   </div>
                 </td>

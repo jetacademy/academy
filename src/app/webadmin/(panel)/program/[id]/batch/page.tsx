@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createBatch, toggleBatch, deleteBatch } from "@/app/webadmin/actions";
 import { formatJadwal } from "@/lib/format";
+import ConfirmButton from "@/components/ConfirmButton";
 
 export default async function AdminBatch({
   params,
@@ -94,9 +95,9 @@ export default async function AdminBatch({
                       <form action={deleteBatch}>
                         <input type="hidden" name="id" value={b.id} />
                         <input type="hidden" name="programId" value={program.id} />
-                        <button type="submit" className="btn btn-sm btn-danger" disabled={b._count.registrations > 0} title={b._count.registrations > 0 ? "Tidak bisa dihapus — sudah ada pendaftar. Nonaktifkan saja." : undefined}>
+                        <ConfirmButton className="btn btn-sm btn-danger" message="Apakah Anda yakin ingin menghapus batch jadwal ini?" disabled={b._count.registrations > 0} title={b._count.registrations > 0 ? "Tidak bisa dihapus — sudah ada pendaftar. Nonaktifkan saja." : undefined}>
                           Hapus
-                        </button>
+                        </ConfirmButton>
                       </form>
                     </div>
                   </td>

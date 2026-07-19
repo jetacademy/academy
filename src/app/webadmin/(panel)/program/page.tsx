@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { rupiah, formatHari, formatJam } from "@/lib/format";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 import { toggleProgram, deleteProgram } from "../../actions";
+import ConfirmButton from "@/components/ConfirmButton";
 
 export default async function AdminProgramList() {
   const programs = await prisma.program.findMany({
@@ -44,7 +45,9 @@ export default async function AdminProgramList() {
                     </form>
                     <form action={deleteProgram}>
                       <input type="hidden" name="id" value={p.id} />
-                      <button type="submit" className="btn btn-sm btn-danger">Hapus</button>
+                      <ConfirmButton className="btn btn-sm btn-danger" message={`Apakah Anda yakin ingin menghapus program "${p.title}"? Jika program ini sudah memiliki pendaftar, statusnya hanya akan diubah menjadi Nonaktif.`}>
+                        Hapus
+                      </ConfirmButton>
                     </form>
                   </div>
                 </td>

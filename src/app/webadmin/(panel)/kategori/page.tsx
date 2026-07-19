@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { saveCategory, deleteCategory } from "../../actions";
+import ConfirmButton from "@/components/ConfirmButton";
 
 export const dynamic = "force-dynamic";
 
@@ -78,9 +79,9 @@ export default async function AdminCategoryList({
                       </Link>
                       <form action={deleteCategory}>
                         <input type="hidden" name="id" value={c.id} />
-                        <button type="submit" className="btn btn-sm btn-danger">
+                        <ConfirmButton className="btn btn-sm btn-danger" message={`Apakah Anda yakin ingin menghapus kategori "${c.name}"? Program di dalamnya tidak akan terhapus.`}>
                           Hapus
-                        </button>
+                        </ConfirmButton>
                       </form>
                     </div>
                   </td>

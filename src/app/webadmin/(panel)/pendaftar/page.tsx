@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { rupiah } from "@/lib/format";
 import { markPaid, deleteRegistration } from "../../actions";
+import ConfirmButton from "@/components/ConfirmButton";
 
 const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
   REGISTERED: { cls: "dim", label: "Terdaftar" },
@@ -99,7 +100,9 @@ export default async function AdminPendaftar({ searchParams }: {
                       )}
                       <form action={deleteRegistration}>
                         <input type="hidden" name="id" value={r.id} />
-                        <button type="submit" className="btn btn-sm btn-danger">Hapus</button>
+                        <ConfirmButton className="btn btn-sm btn-danger" message={`Apakah Anda yakin ingin menghapus pendaftaran atas nama "${r.name}"? Semua histori pembayaran dan sertifikat terkait akan ikut terhapus.`}>
+                          Hapus
+                        </ConfirmButton>
                       </form>
                     </div>
                   </td>
