@@ -495,13 +495,44 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
 
       <footer className="footer">
         <div className="container">
-          <div className="footer-card">
-            <div className="brand">
-              <Image src="/iconjetschool academy.png" alt="Jetschool Academy" width={44} height={44} style={{ objectFit: "contain" }} />
-              Jetschool Academy
+          <div className="footer-card-premium">
+            {/* Column 1: Brand Info */}
+            <div className="footer-brand-sec">
+              <div className="brand">
+                <Image
+                  src="/iconjetschool academy.png"
+                  alt="Jetschool Academy"
+                  width={40}
+                  height={40}
+                  style={{ objectFit: "contain" }}
+                />
+                <span className="brand-title">Jetschool Academy</span>
+              </div>
+              <p className="footer-company-name">PT Jetschool Academy Indonesia</p>
+              <p className="footer-ahu">AHU-0056382.AH.01.01.TAHUN 2020</p>
             </div>
-            <Link href="/">Kembali ke Beranda</Link>
-            <span style={{ fontSize: ".78rem" }}>© {new Date().getFullYear()} Jetschool Academy</span>
+
+            {/* Column 2: Navigation Links */}
+            <div className="footer-nav-group">
+              <h4 className="footer-nav-title">Aksi</h4>
+              <nav className="footer-nav-links">
+                <Link href="/">Kembali ke Beranda</Link>
+              </nav>
+            </div>
+
+            {/* Column 3: Legal Links */}
+            <div className="footer-nav-group">
+              <h4 className="footer-nav-title">Hukum & Kebijakan</h4>
+              <nav className="footer-nav-links">
+                <Link href="/terms">Syarat & Ketentuan</Link>
+                <Link href="/privacy-policy">Kebijakan Privasi</Link>
+              </nav>
+            </div>
+          </div>
+
+          {/* Bottom Copyright */}
+          <div className="footer-bottom">
+            <span>© {new Date().getFullYear()} Jetschool Academy. Semua hak dilindungi.</span>
           </div>
         </div>
       </footer>

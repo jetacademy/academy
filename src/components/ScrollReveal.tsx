@@ -10,7 +10,7 @@ import { useEffect } from "react";
  */
 export default function ScrollReveal() {
   useEffect(() => {
-    const raf = requestAnimationFrame(() => {
+    const timer = setTimeout(() => {
       const io = new IntersectionObserver(
         (entries) => {
           entries.forEach((e) => {
@@ -44,9 +44,9 @@ export default function ScrollReveal() {
         io.disconnect();
         mo.disconnect();
       };
-    });
+    }, 100);
 
-    return () => cancelAnimationFrame(raf);
+    return () => clearTimeout(timer);
   }, []);
 
   return null;
