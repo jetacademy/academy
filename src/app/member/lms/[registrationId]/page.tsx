@@ -47,10 +47,21 @@ export default async function LmsPage({
 
   const program = reg.program;
 
-  // Automated LMS Access Restriction based on batch schedule
+  // Ambil certClaimOpen via raw SQL (bypass Prisma client cache)
+  let certClaimOpen = false;
+  try {
+    const { Prisma } = await import("@prisma/client");
+    type RawRow = { certClaimOpen: number };
+    const rows = await prisma.$queryRaw<RawRow[]>(
+      Prisma.sql`SELECT certClaimOpen FROM \`Program\` WHERE id = ${program.id} LIMIT 1`
+    );
+    if (rows[0]) certClaimOpen = rows[0].certClaimOpen === 1;
+  } catch { /* silent fallback */ }
+
+  // Akses LMS terbuka jika admin sudah buka (certClaimOpen), bukan webinar, atau jadwal sudah mulai
   const sessionAt = reg.batch?.scheduleAt ?? program.scheduleAt;
   const now = new Date();
-  const isLmsOpen = program.type !== "WEBINAR" || now >= sessionAt;
+  const isLmsOpen = certClaimOpen || program.type !== "WEBINAR" || now >= sessionAt;
 
   if (!isLmsOpen) {
     const formattedJadwal = new Intl.DateTimeFormat("id-ID", {
@@ -107,7 +118,11 @@ export default async function LmsPage({
     );
   }
 
-  // Proteksi pembayaran jika berbayar — user non-bayar hanya bisa lihat preview
+  // Gerbang pembayaran:
+  // - Program berbayar: REGISTERED = preview mode
+  // - Webinar gratis + certPrice: harus bayar certPrice dulu untuk akses LMS penuh
+  const hasCertPayment = reg.status === "PAID" || reg.status === "PASSED";
+  const hasPendingCertPayment = !hasCertPayment && program.price === 0 && program.certPrice > 0;
   const isPreviewMode = reg.status === "REGISTERED" && program.price > 0;
 
   // Kurikulum berjenjang: kelompok → modul → materi (+ modul tanpa kelompok di akhir).
@@ -173,11 +188,17 @@ export default async function LmsPage({
   // Kelayakan sertifikat sesuai kriteria program (hasil tes / penyelesaian materi)
   const freeUntil = new Date(sessionAt.getTime() + 5 * 24 * 60 * 60 * 1000); // H+5
   const isWithinFreePeriod = now <= freeUntil;
-  const isFreeClaim = program.price === 0 && isWithinFreePeriod;
+  // isFreeClaim: webinar gratis + dalam masa tenggang + certClaimOpen + belum bayar
+  const isFreeClaim = program.price === 0 && program.certPrice === 0 && certClaimOpen;
 
-  const hasPaid = (reg.status === "PAID" || reg.status === "PASSED") || (program.price === 0 && program.certPrice === 0) || isFreeClaim;
+  const isAiForTeachers = program.slug === "ai-for-teachers";
+  const webinarEndAt = new Date(sessionAt.getTime() + 2 * 60 * 60 * 1000);
+  const hideCertUpsell = isAiForTeachers && now < webinarEndAt;
+
+  // hasPaid: lunas certPrice (untuk webinar gratis) atau lunas program price
+  const hasPaid = hasCertPayment || (program.price === 0 && program.certPrice === 0 && certClaimOpen);
   const eligibility = reg.certificate ? { eligible: true as const } : await checkCertEligibility(reg.id, program);
-  const canClaim = !reg.certificate && hasPaid && eligibility.eligible;
+  const canClaim = !reg.certificate && hasPaid && eligibility.eligible && !hideCertUpsell;
 
   // Tentukan materi aktif
   let currentLesson = allLessons.find((l) => l.id === lessonId);
@@ -207,6 +228,36 @@ export default async function LmsPage({
   const quizPassingScore = currentLesson.passingScore ?? program.passingScore;
 
   let modNumber = 0; // penomoran modul global lintas kelompok
+
+  // Early return: harus bayar certPrice dulu sebelum akses LMS
+  if (hasPendingCertPayment) {
+    return (
+      <>
+        <Navbar minimal ctaHref="/member" ctaLabel="Dashboard Saya" />
+        <section className="section" style={{ minHeight: "85vh", display: "grid", placeItems: "center", background: "var(--bg-warm)" }}>
+          <div className="bento" style={{
+            textAlign: "center", maxWidth: "36rem", padding: "3.5rem 2rem",
+            background: "var(--white)", border: "1px solid var(--border)",
+            borderRadius: "var(--r-md)", boxShadow: "var(--shadow-md)"
+          }}>
+            <span style={{ fontSize: "3.5rem" }}>🎓</span>
+            <span className="type-tag type-webinar" style={{ display: "inline-block", margin: "1.5rem 0 0.8rem" }}>Sertifikat &amp; Materi</span>
+            <h2 style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--ink)" }}>Selesaikan Pembayaran Dulu</h2>
+            <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem", lineHeight: 1.65, marginTop: "1rem" }}>
+              Halo <strong>{reg.name}</strong>, untuk mengakses video rekaman, modul PDF, post-test, dan e-Sertifikat
+              program <strong>{program.title}</strong>, silakan selesaikan pembayaran paket sertifikat terlebih dahulu.
+            </p>
+            <div style={{ margin: "2rem auto", maxWidth: "22rem", display: "grid", gap: ".8rem" }}>
+              <MemberPayCertButton registrationId={registrationId} certPrice={program.certPrice} className="btn btn-purple btn-lg btn-block" />
+              <Link href="/member" className="btn btn-line btn-block" style={{ textAlign: "center" }}>Kembali ke Dashboard</Link>
+            </div>
+          </div>
+        </section>
+        <Footer />
+        <WaFloat />
+      </>
+    );
+  }
 
   return (
     <>
@@ -279,7 +330,7 @@ export default async function LmsPage({
                     </p>
                     <ClaimCertButton registrationId={registrationId} />
                   </>
-                ) : !hasPaid ? (
+                ) : !hasPaid && !hideCertUpsell ? (
                   <>
                     <div className="adm-alert warn" style={{ marginBottom: "1.5rem", textAlign: "left", padding: "1rem", borderRadius: "var(--r-sm)", border: "1px solid rgba(230, 126, 34, 0.2)", background: "rgba(230, 126, 34, 0.08)", color: "#d35400" }}>
                       <strong>Batas Klaim Gratis Berakhir:</strong> Masa tenggang klaim sertifikat gratis (H+5) telah berakhir pada {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(freeUntil)}. Anda kini dialihkan ke paket sertifikat berbayar.
@@ -298,7 +349,7 @@ export default async function LmsPage({
                         ? eligibility.reason
                         : "Masih ada syarat kelulusan yang belum terpenuhi. Periksa kembali materi & tes Anda."}
                     </p>
-                    {program.price === 0 && isWithinFreePeriod && (
+                    {program.price === 0 && isWithinFreePeriod && !hideCertUpsell && (
                       <p style={{ fontSize: "0.85rem", color: "var(--purple)", fontWeight: 700, marginTop: "-1rem", marginBottom: "2rem" }}>
                         ⚡ Selesaikan seluruh materi/tes sekarang untuk mengklaim sertifikat GRATIS (Masa tenggang H+5).
                       </p>

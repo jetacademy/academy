@@ -1624,3 +1624,387 @@
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), 0 0 15px rgba(247, 148, 29, 0.15) !important;
   transform: translateY(-5px) !important;
 }
+
+/* ============================================================
+   MOBILE RESPONSIVENESS FIXES — Program Registration Page
+   Mengatasi: blob overflow, anchor scroll, WA float overlap,
+   reg-card terpotong, dan padding hero di layar kecil.
+   ============================================================ */
+
+/* 1. Sembunyikan blob dekoratif body (globals-core) di mobile */
+@media (max-width: 640px) {
+  body::before,
+  body::after {
+    display: none;
+  }
+}
+
+/* 2. Batasi blob dekoratif dalam .prg-hero-wrap agar tidak overflow tepi layar */
+@media (max-width: 768px) {
+  .prg-hero-wrap::before {
+    width: 260px;
+    height: 260px;
+    top: -100px;
+    right: -80px;
+  }
+  .prg-hero-wrap {
+    padding: clamp(1.4rem, 5vw, 2.4rem);
+  }
+}
+@media (max-width: 480px) {
+  .prg-hero-wrap::before {
+    width: 160px;
+    height: 160px;
+    top: -50px;
+    right: -40px;
+  }
+}
+
+/* 3. Scroll offset anchor #daftar — agar tidak tertutup sticky navbar */
+#daftar {
+  scroll-margin-top: 80px;
+}
+
+/* 4. WA Float — aman dari sticky CTA bar di layar sangat kecil */
+@media (max-width: 480px) {
+  .wa-float {
+    right: 12px;
+    bottom: 96px;
+    width: 50px;
+    height: 50px;
+  }
+  .wa-float svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* 5. reg-card — full-width di mobile agar tidak terpotong */
+@media (max-width: 540px) {
+  .reg-card {
+    max-width: 100%;
+    padding: 1.4rem;
+    border-radius: 16px;
+  }
+}
+
+/* 6. bento-purple ::before star dekoratif — kecilkan di mobile */
+@media (max-width: 640px) {
+  .bento-purple::before {
+    font-size: 7rem;
+    right: -0.5rem;
+    top: -1.5rem;
+    opacity: 0.05;
+  }
+}
+
+/* 7. Hero text terlalu besar di layar sangat sempit */
+@media (max-width: 400px) {
+  .prg-hero-h1 {
+    font-size: 1.45rem;
+  }
+  .prg-hero-desc {
+    font-size: 0.88rem;
+  }
+}
+
+/* 8. Container breathing room di layar sangat kecil */
+@media (max-width: 420px) {
+  .container {
+    width: min(1120px, 92%);
+  }
+}
+
+/* ============================================================
+   BONUS COUNTDOWN — Premium Member Dashboard Widget
+   BonusCountdown.tsx styles
+   ============================================================ */
+
+/* ── Keyframes ── */
+@keyframes cdc-pulse-ring {
+  0%, 100% { transform: scale(1); opacity: .15; }
+  50%       { transform: scale(1.08); opacity: .25; }
+}
+@keyframes cdc-lock-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+@keyframes cdc-flip-in {
+  0%   { transform: rotateX(-90deg); opacity: 0; }
+  100% { transform: rotateX(0deg);   opacity: 1; }
+}
+@keyframes cdc-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(.8); }
+}
+@keyframes cdc-gift-bounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  30%       { transform: translateY(-6px) rotate(-5deg); }
+  60%       { transform: translateY(-3px) rotate(3deg); }
+}
+
+/* ── Wrapper (countdown state — dark gradient) ── */
+.cdc-wrap {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #1e1b4b 0%, #2d2777 55%, #4c1d95 100%);
+  border-radius: 20px;
+  padding: 1.6rem 1.4rem 1.4rem;
+  text-align: center;
+  color: #fff;
+  box-shadow:
+    0 4px 24px rgba(109, 40, 217, 0.35),
+    inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+/* Decorative rings */
+.cdc-bg-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 1.5px solid rgba(167, 139, 250, 0.18);
+  animation: cdc-pulse-ring 4s ease-in-out infinite;
+}
+.cdc-bg-ring-1 {
+  width: 180px; height: 180px;
+  top: -60px; right: -50px;
+  animation-delay: 0s;
+}
+.cdc-bg-ring-2 {
+  width: 120px; height: 120px;
+  bottom: -30px; left: -30px;
+  animation-delay: -2s;
+}
+
+/* Lock icon */
+.cdc-lock-icon {
+  font-size: 2rem;
+  display: inline-block;
+  margin-bottom: .5rem;
+  animation: cdc-lock-float 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 14px rgba(167, 139, 250, .9));
+}
+
+.cdc-heading {
+  font-weight: 800;
+  font-size: .95rem;
+  line-height: 1.35;
+  margin: 0 0 .35rem;
+  letter-spacing: -.01em;
+}
+
+.cdc-subtext {
+  font-size: .7rem;
+  opacity: .65;
+  margin: 0 0 1.3rem;
+  line-height: 1.6;
+}
+
+/* ── Timer row ── */
+.cdc-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  margin-bottom: 1rem;
+}
+
+/* ── Box per unit waktu ── */
+.cdc-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .3rem;
+}
+
+.cdc-digit-wrap {
+  display: flex;
+  gap: 3px;
+  background: rgba(255,255,255,.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 12px;
+  padding: .65rem .75rem;
+  min-width: 4rem;
+  justify-content: center;
+}
+
+.cdc-digit {
+  font-size: 2rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  background: linear-gradient(180deg, #fff 0%, #c4b5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-feature-settings: "tnum";
+  transition: transform .15s;
+}
+
+/* Flip animation trigger */
+.cdc-digit.cdc-flip {
+  animation: cdc-flip-in .3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.cdc-label {
+  font-size: .58rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  opacity: .55;
+  text-transform: uppercase;
+}
+
+.cdc-sep {
+  font-size: 1.6rem;
+  font-weight: 900;
+  opacity: .35;
+  margin-bottom: 1.3rem;
+  line-height: 1;
+}
+
+.cdc-footer-hint {
+  font-size: .7rem;
+  opacity: .5;
+  margin: 0;
+}
+
+/* SSR placeholder */
+.cdc-placeholder {
+  height: 13rem;
+  border-radius: 20px;
+  background: rgba(0,0,0,.04);
+}
+
+/* ── Waiting state (warm amber) ── */
+.cdc-waiting {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 60%, #fde68a 100%);
+  border: 1.5px solid #f59e0b;
+  border-radius: 20px;
+  padding: 1.6rem 1.4rem;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, .18);
+}
+
+.cdc-waiting-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% -10%, rgba(251,191,36,.35) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.cdc-waiting-icon {
+  font-size: 2.4rem;
+  margin-bottom: .5rem;
+  display: block;
+  animation: cdc-gift-bounce 2.5s ease-in-out infinite;
+}
+
+.cdc-waiting-title {
+  font-weight: 800;
+  font-size: .95rem;
+  color: #78350f;
+  margin: 0 0 .45rem;
+}
+
+.cdc-waiting-desc {
+  font-size: .78rem;
+  color: #92400e;
+  line-height: 1.65;
+  margin: 0 0 1rem;
+}
+
+.cdc-pulse-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+}
+
+.cdc-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  display: inline-block;
+  animation: cdc-dot-pulse 1.4s ease-in-out infinite;
+}
+
+.cdc-pulse-text {
+  font-size: .72rem;
+  font-weight: 700;
+  color: #92400e;
+}
+
+/* ── Bonus Unlocked Panel ── */
+.bonus-unlocked-card {
+  background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1.5px solid #22c55e;
+  border-radius: 20px;
+  padding: 1.4rem;
+  display: grid;
+  gap: .7rem;
+  box-shadow: 0 4px 20px rgba(34, 197, 94, .12);
+}
+
+.bonus-unlocked-header {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding-bottom: .7rem;
+  border-bottom: 1px solid rgba(34, 197, 94, .2);
+}
+
+.bonus-unlocked-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.bonus-unlocked-title {
+  font-weight: 800;
+  font-size: .9rem;
+  color: #14532d;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.bonus-unlocked-sub {
+  font-size: .72rem;
+  color: #166534;
+  margin: .1rem 0 0;
+}
+
+.bonus-unlocked-items {
+  display: grid;
+  gap: .35rem;
+}
+
+.bonus-item {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .78rem;
+  color: #166534;
+  font-weight: 600;
+  padding: .4rem .6rem;
+  background: rgba(34, 197, 94, .08);
+  border-radius: 8px;
+}
+
+/* Terkunci — sebelum certPrice dibayar */
+.bonus-item.bonus-item-locked {
+  color: var(--ink-faint);
+  background: rgba(0, 0, 0, .04);
+  opacity: .65;
+}
+
+
+/* ── Mobile ── */
+@media (max-width: 400px) {
+  .cdc-digit { font-size: 1.5rem; }
+  .cdc-digit-wrap { padding: .5rem .6rem; min-width: 3.2rem; }
+  .cdc-sep { font-size: 1.2rem; }
+}

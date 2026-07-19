@@ -24,10 +24,10 @@ export async function POST(req: Request) {
   }
 
   const whatsappRaw = (body.whatsapp ?? "").trim();
-  if (!/^08[0-9]{8,13}$/.test(whatsappRaw)) {
+  const whatsapp = normalizeWa(whatsappRaw);
+  if (!/^628[0-9]{8,13}$/.test(whatsapp)) {
     return NextResponse.json({ error: "Nomor WhatsApp tidak valid (contoh: 081234567890)." }, { status: 400 });
   }
-  const whatsapp = normalizeWa(whatsappRaw);
   const programSlug = (body.programSlug ?? "").trim();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 

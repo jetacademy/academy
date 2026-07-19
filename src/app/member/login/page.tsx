@@ -30,7 +30,7 @@ export default function MemberLoginPage() {
     setStep("loading");
 
     try {
-      let res: { ok?: boolean; error?: string } | undefined;
+      let res: { ok?: boolean; error?: string; isAdmin?: boolean } | undefined;
 
       if (credential) {
         res = await memberLoginWithGoogle(credential);
@@ -42,7 +42,11 @@ export default function MemberLoginPage() {
         setError(res.error);
         setStep("pilih-metode");
       } else if (res?.ok) {
-        router.push("/member");
+        if (res.isAdmin) {
+          router.push("/webadmin");
+        } else {
+          router.push("/member");
+        }
       } else {
         setError("Terjadi kesalahan tak terduga. Silakan coba lagi.");
         setStep("pilih-metode");
@@ -125,7 +129,11 @@ export default function MemberLoginPage() {
       setError(res.error);
       setStep("otp");
     } else if (res?.ok) {
-      router.push("/member");
+      if (res.isAdmin) {
+        router.push("/webadmin");
+      } else {
+        router.push("/member");
+      }
     }
   }
 

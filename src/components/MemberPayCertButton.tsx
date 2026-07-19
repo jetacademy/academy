@@ -62,7 +62,7 @@ export default function MemberPayCertButton({
               style={{
                 width: "1.1rem",
                 height: "1.1rem",
-                animation: "spin 1s linear infinite",
+                animation: "certSpin 1s linear infinite",
               }}
             >
               <circle
@@ -97,8 +97,8 @@ export default function MemberPayCertButton({
           ⚠️ {error}
         </span>
       )}
-      <style jsx global>{`
-        @keyframes spin {
+      <style>{`
+        @keyframes certSpin {
           from {
             transform: rotate(0deg);
           }

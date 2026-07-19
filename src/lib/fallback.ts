@@ -97,8 +97,8 @@ export const FALLBACK_PROGRAMS: ProgramData[] = [
     certPrice: 49000,
     certPriceOld: 149000,
     seatsLeft: 100,
-    categoryId: "cat-1",
-    category: { id: "cat-1", name: "Bisnis & Pemasaran", slug: "bisnis-pemasaran", isFeatured: true },
+    categoryId: "cat-4",
+    category: { id: "cat-4", name: "UMKM & Pemasaran", slug: "umkm-pemasaran", isFeatured: true },
     isFeatured: true,
   },
   {
@@ -134,8 +134,8 @@ export const FALLBACK_PROGRAMS: ProgramData[] = [
     certPrice: 0,
     certPriceOld: null,
     seatsLeft: null,
-    categoryId: "cat-2",
-    category: { id: "cat-2", name: "Teknologi & AI", slug: "teknologi-ai", isFeatured: true },
+    categoryId: "cat-5",
+    category: { id: "cat-5", name: "Produktivitas & Dunia Kerja", slug: "produktivitas-dunia-kerja", isFeatured: true },
     isFeatured: true,
   },
   {
@@ -171,8 +171,8 @@ export const FALLBACK_PROGRAMS: ProgramData[] = [
     certPrice: 0,
     certPriceOld: null,
     seatsLeft: 25,
-    categoryId: "cat-3",
-    category: { id: "cat-3", name: "Produktivitas & Desain", slug: "produktivitas-desain", isFeatured: false },
-    isFeatured: false,
+    categoryId: "cat-5",
+    category: { id: "cat-5", name: "Produktivitas & Dunia Kerja", slug: "produktivitas-dunia-kerja", isFeatured: true },
+    isFeatured: true,
   },
 ];

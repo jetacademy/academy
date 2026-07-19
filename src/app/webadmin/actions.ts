@@ -112,11 +112,16 @@ export async function saveProgram(formData: FormData) {
     redirect(id ? `/webadmin/program/${id}?e=tanggaltidakvalid` : "/webadmin/program/new?e=tanggaltidakvalid");
   }
 
+  // certClaimOpen dihandle via raw SQL agar tidak bergantung pada versi Prisma client
+  const certClaimOpen = formData.get("certClaimOpen") === "on";
+
   try {
     if (id) {
       await prisma.program.update({ where: { id }, data });
+      await prisma.$executeRaw`UPDATE \`Program\` SET \`certClaimOpen\` = ${certClaimOpen} WHERE \`id\` = ${id}`;
     } else {
-      await prisma.program.create({ data });
+      const created = await prisma.program.create({ data });
+      await prisma.$executeRaw`UPDATE \`Program\` SET \`certClaimOpen\` = ${certClaimOpen} WHERE \`id\` = ${created.id}`;
     }
   } catch (err) {
     if (isUniqueError(err)) {
@@ -240,6 +245,16 @@ export async function toggleProgram(formData: FormData) {
   if (cur) await prisma.program.update({ where: { id }, data: { isActive: !cur.isActive } });
   revalidatePath("/webadmin/program");
   revalidatePath("/");
+}
+
+/** Buka / tutup klaim sertifikat secara manual — dari daftar program atau form edit */
+export async function toggleCertClaim(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  // Gunakan raw SQL agar tidak bergantung pada versi Prisma client yang ter-cache
+  await prisma.$executeRaw`UPDATE \`Program\` SET \`certClaimOpen\` = NOT \`certClaimOpen\` WHERE \`id\` = ${id}`;
+  revalidatePath("/webadmin/program");
+  revalidatePath("/member");
 }
 
 export async function deleteProgram(formData: FormData) {

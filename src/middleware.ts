@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
     !pathname.startsWith("/webadmin/login")
   ) {
     if (!request.cookies.has("jsa_admin") && !request.cookies.has("jsa_member")) {
-      return NextResponse.redirect(new URL("/webadmin/login", request.url));
+      return NextResponse.redirect(new URL("/member/login", request.url));
     }
   }
 

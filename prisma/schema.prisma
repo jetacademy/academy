@@ -81,6 +81,7 @@ model Program {
   certKind           CertKind           @default(ACHIEVEMENT) // jenis sertifikat yang terbit
   maxTestAttempts    Int                @default(0) // 0 = tak terbatas; >0 = batas percobaan per kuis
   isActive           Boolean            @default(true)
+  certClaimOpen      Boolean            @default(false) // admin buka/tutup klaim sertifikat secara manual
   isFeatured         Boolean            @default(false)
   certBgUrl          String?            @db.Text
   certConfig         Json?

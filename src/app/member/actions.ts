@@ -11,12 +11,12 @@ import { normalizeWa, normalizeIdentifier } from "@/lib/wa";
 import { sendEmail, getWelcomeMemberEmailHtml } from "@/lib/email";
 import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 
-async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; error?: string }> {
+async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; error?: string; isAdmin?: boolean }> {
   // 1. Cari User record terlebih dahulu — user yang baru daftar akun
   //    belum tentu sudah ikut program, dan itu valid.
   const user = await prisma.user.findFirst({
     where: { OR: [{ email: cleanVal }, { whatsapp: cleanVal }] },
-    select: { id: true, name: true, email: true, whatsapp: true },
+    select: { id: true, name: true, email: true, whatsapp: true, role: true },
   });
 
   // 2. Cari registrasi program yang cocok (untuk backfill)
@@ -35,6 +35,8 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
   const whatsapp = user?.whatsapp ?? registrations[0]?.whatsapp ?? "";
   const name = user?.name ?? registrations[0]?.name ?? "";
 
+  const isAdminEmail = email === "jetschool.id@gmail.com" || email === "admin@jetschool.id";
+
   // 3. Jika login via registrasi (belum punya User) — buat User & backfill
   if (!userId && registrations.length > 0) {
     let newUser = await prisma.user.findFirst({
@@ -44,7 +46,7 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
 
     if (!newUser) {
       newUser = await prisma.user.create({
-        data: { name, email, whatsapp, role: "STUDENT" },
+        data: { name, email, whatsapp, role: isAdminEmail ? "ADMIN" : "STUDENT" },
         select: { id: true },
       });
     }
@@ -59,10 +61,20 @@ async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; erro
       },
       data: { userId },
     });
+  } else if (user && isAdminEmail && user.role !== "ADMIN") {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { role: "ADMIN" }
+    });
   }
 
   await createMemberSession(cleanVal);
-  return { ok: true };
+  const updatedUser = await prisma.user.findFirst({
+    where: { OR: [{ email }, { whatsapp }] },
+    select: { role: true },
+  });
+  const isAdminRole = updatedUser?.role === "ADMIN" || updatedUser?.role === "TEACHER" || isAdminEmail;
+  return { ok: true, isAdmin: isAdminRole };
 }
 
 /**
@@ -91,7 +103,7 @@ export async function memberSendOtp(identifier: string, forceEmail: boolean = fa
 /**
  * Verifikasi OTP dan login.
  */
-export async function memberVerifyOtp(identifier: string, code: string): Promise<{ ok?: boolean; error?: string }> {
+export async function memberVerifyOtp(identifier: string, code: string): Promise<{ ok?: boolean; error?: string; isAdmin?: boolean }> {
   try {
     const hdrs = await headers();
     const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-verify";
@@ -116,7 +128,7 @@ export async function memberVerifyOtp(identifier: string, code: string): Promise
  * Login fallback tanpa Google (mode dev / Google belum dikonfigurasi).
  * Di produksi dengan Google aktif, jalur ini ditolak — wajib lewat token terverifikasi.
  */
-export async function memberLogin(identifier: string): Promise<{ ok?: boolean; error?: string }> {
+export async function memberLogin(identifier: string): Promise<{ ok?: boolean; error?: string; isAdmin?: boolean }> {
   try {
     const hdrs = await headers();
     const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-login";
@@ -194,6 +206,8 @@ export async function memberLoginWithGoogle(credential: string) {
       where: { OR: [{ email }, { whatsapp: email }] }
     });
 
+    const isAdminEmail = email === "jetschool.id@gmail.com" || email === "admin@jetschool.id";
+
     if (!user) {
       // Cari apakah ada registrasi dengan email ini (misal pendaftaran offline)
       const existingReg = await prisma.registration.findFirst({
@@ -204,7 +218,7 @@ export async function memberLoginWithGoogle(credential: string) {
           name: existingReg?.name ?? name,
           email,
           whatsapp: existingReg?.whatsapp ?? "",
-          role: "STUDENT"
+          role: isAdminEmail ? "ADMIN" : "STUDENT"
         }
       });
       
@@ -213,10 +227,16 @@ export async function memberLoginWithGoogle(credential: string) {
         where: { email, userId: null },
         data: { userId: user.id }
       });
+    } else if (isAdminEmail && user.role !== "ADMIN") {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { role: "ADMIN" }
+      });
     }
 
     await createMemberSession(email);
-    return { ok: true };
+    const isAdminRole = user.role === "ADMIN" || user.role === "TEACHER" || isAdminEmail;
+    return { ok: true, isAdmin: isAdminRole };
   } catch (err) {
     console.error("[memberLoginWithGoogle] Unexpected error:", err);
     return { error: "Gagal menghubungi server Google. Periksa koneksi dan coba lagi." };
@@ -395,9 +415,9 @@ export async function registerUser(formData: FormData): Promise<{ ok?: boolean; 
 
     if (name.length < 3) return { error: "Nama minimal 3 huruf." };
     if (!/^[a-zA-Z0-9\s'.,&-]+$/.test(name)) return { error: "Nama mengandung karakter tidak valid." };
-    if (!/^08[0-9]{8,13}$/.test(whatsappRaw)) return { error: "Nomor WhatsApp tidak valid (08xxx)." };
-    if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Email tidak valid." };
     const whatsapp = normalizeWa(whatsappRaw);
+    if (!/^628[0-9]{8,13}$/.test(whatsapp)) return { error: "Nomor WhatsApp tidak valid (contoh: 08xxx atau 62xxx)." };
+    if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Email tidak valid." };
 
     const hdrs = await headers();
     const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "register";
@@ -461,6 +481,19 @@ export async function initiateCertificateCheckout(registrationId: string) {
 
   const program = reg.program;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+
+  // Gerbang waktu: sertifikat (dan checkout-nya) hanya bisa diakses setelah acara selesai
+  // Untuk WEBINAR, "selesai" = scheduleAt + 3 jam (durasi konservatif)
+  if (program.type === "WEBINAR") {
+    const eventEndTime = new Date(program.scheduleAt.getTime() + 3 * 60 * 60 * 1000);
+    if (new Date() < eventEndTime) {
+      const formattedEnd = new Intl.DateTimeFormat("id-ID", {
+        day: "numeric", month: "long", year: "numeric",
+        hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta"
+      }).format(eventEndTime);
+      return { error: `Klaim sertifikat baru tersedia setelah acara selesai (${formattedEnd} WIB).` };
+    }
+  }
 
   // Jika sudah terbit sertifikat, arahkan ke download
   const cert = await prisma.certificate.findUnique({

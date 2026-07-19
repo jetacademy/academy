@@ -9,8 +9,8 @@ import Footer from "@/components/Footer";
 import WaFloat from "@/components/WaFloat";
 import ClaimCertButton from "@/components/ClaimCertButton";
 import MemberPayCertButton from "@/components/MemberPayCertButton";
+import BonusCountdown from "@/components/BonusCountdown";
 import { rupiah, formatJadwal } from "@/lib/format";
-import { checkCertEligibility } from "@/lib/certificates";
 import { Registration, Program, Payment, Certificate } from "@prisma/client";
 
 interface LocalLmsModule {
@@ -20,10 +20,13 @@ interface LocalLmsModule {
   order: number;
 }
 
+type ProgramWithCertClaim = Program & {
+  certClaimOpen?: boolean;
+  modules?: LocalLmsModule[];
+};
+
 type RegistrationWithDetails = Registration & {
-  program: Program & {
-    modules?: LocalLmsModule[];
-  };
+  program: ProgramWithCertClaim;
   payment: Payment | null;
   certificate: Certificate | null;
 };
@@ -36,61 +39,50 @@ export default async function MemberDashboardPage() {
     redirect("/member/login");
   }
 
-  // Ambil data pendaftaran milik user ini (berdasarkan email atau whatsapp)
-  const queryOptions = {
+  const registrations = await prisma.registration.findMany({
     where: {
-      OR: [
-        { email: sessionVal },
-        { whatsapp: sessionVal },
-      ],
+      OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
     },
     include: {
-      program: {
-        include: {
-          modules: {
-            take: 1
-          }
-        }
-      },
+      program: { include: { modules: { take: 1 } } },
       payment: true,
       certificate: true,
     },
-    orderBy: {
-      createdAt: "desc" as const,
-    },
-  };
+    orderBy: { createdAt: "desc" },
+  }) as unknown as RegistrationWithDetails[];
 
-  const registrations = await prisma.registration.findMany(queryOptions) as unknown as RegistrationWithDetails[];
-
-  // Pra-hitung kelayakan klaim sertifikat utk registrasi yang akan menampilkan
-  // tombol klaim langsung (lunas, tanpa kurikulum LMS) — biar keterangannya
-  // (mis. gerbang waktu 1x24 jam WEBINAR) tampil proaktif, bukan cuma setelah diklik.
-  const certEligibility = new Map<string, { eligible: boolean; reason?: string }>();
-  await Promise.all(
-    registrations
-      .filter((r) =>
-        r.status === "PAID" &&
-        !r.certificate &&
-        r.program.type !== "KELAS" && r.program.type !== "BOOTCAMP" &&
-        !(r.program.modules && r.program.modules.length > 0) &&
-        !r.program.lmsLink
-      )
-      .map(async (r) => {
-        certEligibility.set(r.id, await checkCertEligibility(r.id, r.program));
-      })
-  );
+  // Ambil certClaimOpen via raw SQL (field baru, mungkin belum ada di Prisma client cache)
+  const programIds = [...new Set(registrations.map((r) => r.program.id))];
+  const certClaimMap = new Map<string, boolean>();
+  if (programIds.length > 0) {
+    try {
+      type RawRow = { id: string; certClaimOpen: number };
+      // Prisma.join aman untuk IN clause
+      const { Prisma: PrismaLib } = await import("@prisma/client");
+      const rows = await prisma.$queryRaw<RawRow[]>(
+        PrismaLib.sql`SELECT id, certClaimOpen FROM \`Program\` WHERE id IN (${PrismaLib.join(programIds)})`
+      );
+      for (const row of rows) {
+        certClaimMap.set(row.id, row.certClaimOpen === 1);
+      }
+    } catch {
+      // Gagal silent — fallback ke false (terkunci) untuk keamanan
+    }
+  }
 
   const memberName = registrations[0]?.name ?? "Member";
-  // Banner admin hanya muncul jika benar-benar punya sesi admin (login password di /webadmin)
   const isSuperadmin = await isAdmin();
 
   return (
     <>
       <Navbar minimal ctaHref="/program" ctaLabel="Cari Pelatihan Baru" />
 
-      <section className="section" style={{ minHeight: "85vh", background: "var(--bg-panel)", paddingTop: "2.5rem" }}>
+      <section
+        className="section"
+        style={{ minHeight: "85vh", background: "var(--bg-panel)", paddingTop: "2.5rem" }}
+      >
         <div className="container">
-          {/* Superadmin Quick Access Banner */}
+          {/* ── Superadmin Banner ── */}
           {isSuperadmin && (
             <div className="member-admin-banner reveal in">
               <div>
@@ -105,11 +97,13 @@ export default async function MemberDashboardPage() {
             </div>
           )}
 
-          {/* Header Dashboard */}
+          {/* ── Header Dashboard ── */}
           <div className="member-header-card reveal in">
             <div>
               <span className="kicker" style={{ marginBottom: "0.2rem" }}>Selamat Datang</span>
-              <h1 style={{ fontSize: "1.8rem", margin: 0 }}>Halo, <span className="acc-p">{memberName}</span> 👋</h1>
+              <h1 style={{ fontSize: "1.8rem", margin: 0 }}>
+                Halo, <span className="acc-p">{memberName}</span> 👋
+              </h1>
               {registrations[0]?.institution && (
                 <div style={{ fontSize: "0.85rem", color: "var(--purple)", marginTop: "0.2rem", fontWeight: 600 }}>
                   🏫 {registrations[0].institution}
@@ -126,7 +120,9 @@ export default async function MemberDashboardPage() {
             </div>
           </div>
 
-          <h2 style={{ fontSize: "1.3rem", marginBottom: "1.2rem", fontWeight: 800 }}>Program Pelatihan Saya</h2>
+          <h2 style={{ fontSize: "1.3rem", marginBottom: "1.2rem", fontWeight: 800 }}>
+            Program Pelatihan Saya
+          </h2>
 
           {registrations.length === 0 ? (
             <div className="reveal in" style={{
@@ -136,7 +132,7 @@ export default async function MemberDashboardPage() {
               borderRadius: "var(--r-md)",
               boxShadow: "var(--shadow)",
               maxWidth: "36rem",
-              margin: "0 auto"
+              margin: "0 auto",
             }}>
               <span style={{ fontSize: "3rem" }}>🎓</span>
               <h3 style={{ marginTop: "1rem", marginBottom: "0.5rem" }}>Belum Ada Program</h3>
@@ -152,12 +148,39 @@ export default async function MemberDashboardPage() {
                 const pay = reg.payment;
                 const cert = reg.certificate;
 
-                // Tentukan warna badge status
+                const now = new Date();
+                const eventTime = new Date(prog.scheduleAt);
+                // Acara "selesai" = scheduleAt + 3 jam (durasi konservatif webinar 2 jam)
+                const eventEndTime = new Date(eventTime.getTime() + 3 * 60 * 60 * 1000);
+                const eventHasStarted = now >= eventTime;
+                const eventHasEnded = now >= eventEndTime;
+
+                const hasInternalLms = !!(prog.modules && prog.modules.length > 0);
+                const hasExternalLms = !!prog.lmsLink;
+
+                // Gerbang admin: apakah klaim sertifikat sudah dibuka?
+                // Baca dari certClaimMap (raw SQL) — tidak dari prog untuk hindari Prisma cache issue
+                const claimIsOpen = certClaimMap.get(prog.id) ?? false;
+
+                // Lunas certPrice? (webinar gratis: cek status reg atau certPrice=0)
+                const certPaid =
+                  reg.status === "PAID" ||
+                  reg.status === "PASSED" ||
+                  prog.certPrice === 0;
+                // Invoice certPrice pending (sudah ada tagihan, belum dibayar)
+                const pendingCertPay =
+                  pay && pay.status === "PENDING" && prog.price === 0
+                    ? pay
+                    : null;
+
+                // Badge status
                 let statusBadge = <span className="badge">Terdaftar</span>;
                 if (reg.status === "PAID") {
                   statusBadge = <span className="badge g">Lunas</span>;
                 } else if (reg.status === "PASSED") {
-                  statusBadge = <span className="badge g">Lulus & Sertifikat Terbit</span>;
+                  statusBadge = <span className="badge g">Lulus &amp; Sertifikat Terbit</span>;
+                } else if (pay && pay.status === "PENDING" && prog.price === 0) {
+                  statusBadge = <span className="badge y">Pembayaran Sertifikat Pending</span>;
                 } else if (pay && pay.status === "PENDING") {
                   statusBadge = <span className="badge y">Menunggu Pembayaran</span>;
                 } else if (reg.status === "EXPIRED") {
@@ -168,21 +191,35 @@ export default async function MemberDashboardPage() {
 
                 return (
                   <div key={reg.id} className="member-program-card reveal in">
-                    {/* Sisi Kiri: Detail Program & Status */}
+                    {/* ── Kiri: Info Program ── */}
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "0.8rem", flexWrap: "wrap" }}>
-                        <span className={`type-tag ${
-                          prog.type === "WEBINAR" ? "type-webinar" :
-                          prog.type === "KELAS" ? "type-kelas" :
-                          prog.type === "WORKSHOP" ? "type-workshop" : "type-bootcamp"
-                        }`} style={{ letterSpacing: "0.05em", padding: "0.3em 0.8em" }}>
+                        <span
+                          className={`type-tag ${
+                            prog.type === "WEBINAR" ? "type-webinar"
+                            : prog.type === "KELAS" ? "type-kelas"
+                            : prog.type === "WORKSHOP" ? "type-workshop"
+                            : "type-bootcamp"
+                          }`}
+                          style={{ letterSpacing: "0.05em", padding: "0.3em 0.8em" }}
+                        >
                           {prog.type}
                         </span>
                         {statusBadge}
+                        {eventHasStarted && !eventHasEnded && (
+                          <span className="badge" style={{ background: "#e74c3c", color: "#fff" }}>🔴 Sedang Live</span>
+                        )}
+                        {claimIsOpen && reg.status === "REGISTERED" && prog.price === 0 && (
+                          <span className="badge g">🔓 Bonus Terbuka</span>
+                        )}
                       </div>
 
-                      <h3 style={{ fontSize: "1.25rem", margin: "0 0 0.5rem 0", fontWeight: 800 }}>{prog.title}</h3>
-                      <p style={{ color: "var(--ink-soft)", fontSize: "0.85rem", margin: "0 0 1rem 0" }}>{prog.tagline}</p>
+                      <h3 style={{ fontSize: "1.25rem", margin: "0 0 0.5rem 0", fontWeight: 800 }}>
+                        {prog.title}
+                      </h3>
+                      <p style={{ color: "var(--ink-soft)", fontSize: "0.85rem", margin: "0 0 1rem 0" }}>
+                        {prog.tagline}
+                      </p>
 
                       <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", fontSize: "0.82rem", color: "var(--ink-soft)" }}>
                         <div>📅 <strong>Jadwal:</strong> {formatJadwal(prog.scheduleAt)}</div>
@@ -191,12 +228,19 @@ export default async function MemberDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Sisi Kanan: Tombol Aksi Kontekstual */}
+                    {/* ── Kanan: Aksi ── */}
                     <div className="member-card-actions">
-                      {/* Kasus 1: Belum lunas pada program berbayar */}
+
+                      {/* ══ KASUS 1: REGISTERED + PROGRAM BERBAYAR ══ */}
                       {reg.status === "REGISTERED" && prog.price > 0 && pay && (
                         <>
-                          <a href={pay.invoiceUrl ?? "/sertifikat"} target="_blank" rel="noopener noreferrer" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                          <a
+                            href={pay.invoiceUrl ?? "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-purple btn-block"
+                            style={{ textAlign: "center" }}
+                          >
                             Bayar Sekarang ({rupiah(pay.amount)})
                           </a>
                           <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", textAlign: "center", display: "block" }}>
@@ -205,71 +249,148 @@ export default async function MemberDashboardPage() {
                         </>
                       )}
 
-                      {/* Kasus 2: Webinar gratis tetapi belum klaim sertifikat (sertifikat berbayar) */}
+                      {/* ══ KASUS 2: REGISTERED + WEBINAR GRATIS ══ */}
                       {reg.status === "REGISTERED" && prog.price === 0 && (
                         <>
-                          {/* Tombol ke post-test atau grup webinar gratis */}
+                          {/* WA Grup — selalu tersedia */}
                           {prog.waGroupLink && (
                             <a href={prog.waGroupLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
                               Gabung Grup WA Pelatihan
                             </a>
                           )}
-                          {prog.zoomLink && (
+
+                          {/* Zoom — muncul saat live */}
+                          {prog.zoomLink && eventHasStarted && !eventHasEnded && (
                             <a href={prog.zoomLink} target="_blank" rel="noopener noreferrer" className="btn btn-ink btn-block" style={{ textAlign: "center" }}>
-                              Masuk Link Zoom Live
+                              🔴 Masuk Zoom Live
                             </a>
                           )}
-                          {new Date() >= new Date(prog.scheduleAt) ? (
-                            <MemberPayCertButton registrationId={reg.id} certPrice={prog.certPrice} />
+
+                          {/* ── Gerbang certClaimOpen ── */}
+                          {claimIsOpen ? (
+                            <div className="bonus-unlocked-card">
+                              <div className="bonus-unlocked-header">
+                                <span className="bonus-unlocked-icon">🎉</span>
+                                <div>
+                                  <p className="bonus-unlocked-title">Bonus Peserta Tersedia!</p>
+                                  <p className="bonus-unlocked-sub">
+                                    {certPaid
+                                      ? "Akses eksklusif Anda sudah terbuka penuh"
+                                      : "Selesaikan pembayaran untuk akses materi & sertifikat"}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Daftar benefit — dikunci jika belum bayar */}
+                              <div className="bonus-unlocked-items">
+                                {hasInternalLms && (
+                                  <div className={`bonus-item${!certPaid ? " bonus-item-locked" : ""}`}>
+                                    {certPaid ? "📚" : "🔒"} Video Rekaman + Modul PDF + Post-Test
+                                  </div>
+                                )}
+                                {hasExternalLms && !hasInternalLms && (
+                                  <div className={`bonus-item${!certPaid ? " bonus-item-locked" : ""}`}>
+                                    {certPaid ? "📚" : "🔒"} Video Rekaman &amp; Materi Eksklusif
+                                  </div>
+                                )}
+                                <div className={`bonus-item${!certPaid ? " bonus-item-locked" : ""}`}>
+                                  {certPaid ? "🎓" : "🔒"} e-Sertifikat (terbit setelah lulus post-test)
+                                </div>
+                              </div>
+
+                              {/* Tombol aksi: gerbang certPrice */}
+                              {certPaid ? (
+                                /* Lunas → akses LMS */
+                                <>
+                                  {hasInternalLms ? (
+                                    <Link href={`/member/lms/${reg.id}`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                                      📚 Akses Materi &amp; Post-Test
+                                    </Link>
+                                  ) : hasExternalLms ? (
+                                    <a href={prog.lmsLink!} target="_blank" rel="noopener noreferrer" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                                      📚 Akses Rekaman &amp; Materi
+                                    </a>
+                                  ) : (
+                                    <ClaimCertButton registrationId={reg.id} />
+                                  )}
+                                </>
+                              ) : pendingCertPay ? (
+                                /* Invoice sudah ada, belum lunas */
+                                <a
+                                  href={pendingCertPay.invoiceUrl ?? "#"}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn-yellow btn-block"
+                                  style={{ textAlign: "center", color: "#78350f", fontWeight: 700 }}
+                                >
+                                  Selesaikan Pembayaran Sertifikat ({rupiah(pendingCertPay.amount)})
+                                </a>
+                              ) : prog.certPrice > 0 ? (
+                                /* Belum punya invoice */
+                                <MemberPayCertButton registrationId={reg.id} certPrice={prog.certPrice} />
+                              ) : (
+                                <ClaimCertButton registrationId={reg.id} />
+                              )}
+                            </div>
                           ) : (
-                            <button className="btn btn-block" disabled style={{ background: "var(--border)", color: "var(--ink-faint)", cursor: "not-allowed", textAlign: "center" }}>
-                              Klaim Sertifikat (Belum Dimulai)
-                            </button>
+                            /* Bonus TERKUNCI — countdown atau waiting */
+                            <BonusCountdown
+                              eventEndIso={eventEndTime.toISOString()}
+                              eventEnded={eventHasEnded}
+                            />
                           )}
                         </>
                       )}
 
-                      {/* Kasus 3: Sudah lunas (PAID) — belajar & klaim via LMS */}
+                      {/* ══ KASUS 3: SUDAH LUNAS (PAID) ══ */}
                       {reg.status === "PAID" && (
                         <>
                           {prog.zoomLink && (
                             <a href={prog.zoomLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
-                              Masuk Link Zoom Live
+                              Masuk Zoom Live
                             </a>
                           )}
-                          {prog.type === "KELAS" || prog.type === "BOOTCAMP" || (prog.modules && prog.modules.length > 0) ? (
+                          {hasInternalLms ? (
                             <Link href={`/member/lms/${reg.id}`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
-                              Lanjut Belajar & Tes
+                              📚 Lanjut Belajar &amp; Tes
                             </Link>
-                          ) : prog.lmsLink ? (
-                            <a href={prog.lmsLink} target="_blank" rel="noopener noreferrer" className="btn btn-ink btn-block" style={{ textAlign: "center" }}>
-                              Akses Materi LMS
+                          ) : hasExternalLms ? (
+                            <a href={prog.lmsLink!} target="_blank" rel="noopener noreferrer" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                              📚 Akses Rekaman &amp; Materi
                             </a>
-                          ) : certEligibility.get(reg.id)?.eligible === false ? (
-                            // program tanpa kurikulum (mis. webinar) — belum lewat gerbang waktu klaim
-                            <div style={{ textAlign: "center" }}>
-                              <button className="btn btn-block" disabled style={{ background: "var(--border)", color: "var(--ink-faint)", cursor: "not-allowed", textAlign: "center" }}>
-                                Klaim Sertifikat (Belum Tersedia)
-                              </button>
-                              <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", display: "block", marginTop: "0.4rem" }}>
-                                {certEligibility.get(reg.id)?.reason}
-                              </span>
-                            </div>
                           ) : (
-                            // program tanpa kurikulum (mis. webinar) → sertifikat bisa langsung diklaim
                             <ClaimCertButton registrationId={reg.id} />
                           )}
                         </>
                       )}
 
-                      {/* Kasus 5: EXPIRED — pembayaran kedaluwarsa, bisa bayar ulang */}
+                      {/* ══ KASUS 4: LULUS (PASSED) ══ */}
+                      {reg.status === "PASSED" && cert && (
+                        <>
+                          <Link href={`/sertifikat/${cert.number}`} target="_blank" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                            🏆 Unduh e-Sertifikat
+                          </Link>
+                          {hasInternalLms && (
+                            <Link href={`/member/lms/${reg.id}`} className="btn btn-line btn-block" style={{ textAlign: "center" }}>
+                              Akses LMS Interaktif
+                            </Link>
+                          )}
+                          {hasExternalLms && !hasInternalLms && (
+                            <a href={prog.lmsLink!} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
+                              Akses Rekaman LMS
+                            </a>
+                          )}
+                        </>
+                      )}
+
+                      {/* ══ KASUS 5: EXPIRED ══ */}
                       {reg.status === "EXPIRED" && (
-                        <Link href={`/program`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                        <Link href="/program" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
                           Bayar Ulang
                         </Link>
                       )}
 
-                      {/* Kasus 6: FAILED — pembayaran gagal, hubungi admin */}
+                      {/* ══ KASUS 6: FAILED ══ */}
                       {reg.status === "FAILED" && (
                         <a
                           href={process.env.NEXT_PUBLIC_WA_ADMIN ? `https://wa.me/${process.env.NEXT_PUBLIC_WA_ADMIN}` : "#"}
@@ -280,24 +401,6 @@ export default async function MemberDashboardPage() {
                         >
                           Hubungi Admin
                         </a>
-                      )}
-
-                      {/* Kasus 4: Sudah lulus post-test (PASSED), tampilkan sertifikat */}
-                      {reg.status === "PASSED" && cert && (
-                        <>
-                          <Link href={`/sertifikat/${cert.number}`} target="_blank" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
-                            Unduh e-Sertifikat
-                          </Link>
-                          {prog.type === "KELAS" || prog.type === "BOOTCAMP" || (prog.modules && prog.modules.length > 0) ? (
-                            <Link href={`/member/lms/${reg.id}`} className="btn btn-line btn-block" style={{ textAlign: "center" }}>
-                              Akses LMS Interaktif
-                            </Link>
-                          ) : prog.lmsLink ? (
-                            <a href={prog.lmsLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
-                              Akses Rekaman LMS
-                            </a>
-                          ) : null}
-                        </>
                       )}
                     </div>
                   </div>

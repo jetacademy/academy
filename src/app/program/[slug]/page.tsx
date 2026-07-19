@@ -114,30 +114,50 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const isFree = program.price === 0;
   const hasBlocks = !!(program.contentBlocks && program.contentBlocks.length > 0);
   const isTeacherProgram = program.slug === "modul-ajar-ai-untuk-guru";
+  const isAiForTeachers = program.slug === "ai-for-teachers";
   const jadwal = formatJadwal(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
 
 
-  const faqItems = [
-    {
-      q: isFree ? "Apakah program ini benar-benar gratis?" : "Apakah ada biaya tambahan?",
-      a: isFree
-        ? `Ya, sesi webinar ini 100% gratis tanpa biaya pendaftaran.`
-        : `Tidak ada. ${rupiah(program.price)} sudah mencakup seluruh materi, akses, dan e-sertifikat.`,
-    },
-    {
-      q: "Apakah cocok untuk pemula?",
-      a: "Ya. Program ini dirancang untuk peserta tanpa latar belakang khusus, dengan penyampaian yang mudah diikuti.",
-    },
-    {
-      q: "Bagaimana jika berhalangan hadir pada sesi live?",
-      a: "Rekaman sesi tersedia dan dapat diakses kapan saja. Anda tetap dapat menyelesaikan evaluasi dan memperoleh sertifikat.",
-    },
-    {
-      q: "Kapan sertifikat diterbitkan?",
-      a: "Secara otomatis setelah Anda dinyatakan lulus evaluasi — dengan garansi penerbitan maksimal 1×24 jam.",
-    },
-  ];
+  const faqItems = isAiForTeachers
+    ? [
+        {
+          q: "Apakah program ini benar-benar gratis?",
+          a: "Ya, sesi webinar ini 100% gratis tanpa biaya pendaftaran. Anda bisa mengikuti seluruh sesi live dan mengakses materi LMS tanpa dipungut biaya.",
+        },
+        {
+          q: "Apakah cocok untuk pemula yang tidak paham AI?",
+          a: "Sangat cocok. Program ini dirancang khusus untuk guru tanpa latar belakang IT atau AI. Semua demo dipandu langkah demi langkah.",
+        },
+        {
+          q: "Bagaimana jika berhalangan hadir pada sesi live?",
+          a: "Rekaman sesi tersedia dan dapat diakses kapan saja melalui LMS. Anda tetap bisa mengikuti seluruh materi.",
+        },
+        {
+          q: "Apa saja yang perlu disiapkan?",
+          a: "Cukup HP atau laptop dengan koneksi internet. Tidak perlu install software khusus — semua tools berbasis web.",
+        },
+      ]
+    : [
+        {
+          q: isFree ? "Apakah program ini benar-benar gratis?" : "Apakah ada biaya tambahan?",
+          a: isFree
+            ? "Ya, sesi webinar ini 100% gratis tanpa biaya pendaftaran."
+            : "Tidak ada. ${rupiah(program.price)} sudah mencakup seluruh materi, akses, dan e-sertifikat.",
+        },
+        {
+          q: "Apakah cocok untuk pemula?",
+          a: "Ya. Program ini dirancang untuk peserta tanpa latar belakang khusus, dengan penyampaian yang mudah diikuti.",
+        },
+        {
+          q: "Bagaimana jika berhalangan hadir pada sesi live?",
+          a: "Rekaman sesi tersedia dan dapat diakses kapan saja. Anda tetap dapat menyelesaikan evaluasi dan memperoleh sertifikat.",
+        },
+        {
+          q: "Kapan sertifikat diterbitkan?",
+          a: "Secara otomatis setelah Anda dinyatakan lulus evaluasi — dengan garansi penerbitan maksimal 1×24 jam.",
+        },
+      ];
 
   const courseJsonLd = {
     "@context": "https://schema.org",
@@ -252,7 +272,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 </div>
                 <div className="cta-meta-item">
                   <Icon name="award" size={14} />
-                  <span>Komunitas + Rekaman + Sertifikat 32 JP</span>
+                  <span>{isAiForTeachers ? "Live Zoom 2 jam · 6 Demo Langsung" : "Komunitas + Rekaman + Sertifikat 32 JP"}</span>
                 </div>
                 {program.seatsLeft != null && (
                   <div className="cta-meta-item" style={{ color: "var(--orange)" }}>
@@ -398,6 +418,46 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         </>
       )}
 
+      {/* ===== AI FOR TEACHERS: PERSEMBAHAN 6 DEMO + FREE LMS ===== */}
+      {isAiForTeachers && (
+        <>
+          {/* Section 1: 6 Demo — Apa yang Akan Anda Kuasai */}
+          <section className="section" style={{ paddingBottom: "3.5rem" }}>
+            <div className="container">
+              <div className="section-head center">
+                <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>6 Demo Langsung</span>
+                <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Dalam 2 Jam, Kuasai 6 Metode AI untuk Mengajar</h2>
+                <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+                  Sesi live Zoom interaktif — lihat langsung, praktikkan sendiri, hasil instan.
+                </p>
+              </div>
+
+              <div className="hero-card" style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.2rem" }}>
+                {[
+                  { icon: "📝", title: "Modul Ajar RPP", desc: "Buat Modul Ajar Kurikulum Merdeka lengkap dengan 1 prompt sederhana. Hasil dalam 2 menit.", time: "20 menit" },
+                  { icon: "🧠", title: "Soal HOTS", desc: "Hasilkan soal HOTS dengan stimulus studi kasus, kunci jawaban, dan indikator soal.", time: "15 menit" },
+                  { icon: "🎬", title: "Video Pembelajaran", desc: "Dari script → gambar → video bergerak → siap tayang. Alur AI terstruktur.", time: "20 menit" },
+                  { icon: "🎙️", title: "Audio Podcast", desc: "Ubah teks modul menjadi audio/podcast natural untuk siswa auditori.", time: "10 menit" },
+                  { icon: "📊", title: "Presentasi AI", desc: "Generate slide dengan desain otomatis. Struktur lengkap: pembuka, isi, evaluasi.", time: "15 menit" },
+                  { icon: "🎨", title: "Infografis", desc: "Visualisasikan materi abstrak jadi infografis, concept map, dan mind map.", time: "10 menit" },
+                ].map((demo, i) => (
+                  <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "0.8rem" }}>
+                      <span style={{ fontSize: "2rem" }}>{demo.icon}</span>
+                      <div>
+                        <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0 }}>{demo.title}</h3>
+                        <span style={{ fontSize: "0.75rem", color: "var(--purple)", fontWeight: 700 }}>⏱ {demo.time}</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: "0.88rem", color: "var(--ink-soft)", lineHeight: 1.5, margin: 0 }}>{demo.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
       {/* ===== VALUE STACK + MATERI ===== */}
       <section className="section">
         <div className="container">
@@ -451,8 +511,39 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       </>
       )}
 
-      {/* ===== TESTIMONI ===== */}
-      <Testimonials limit={3} />
+      {/* ===== ALASAN IKUT (khusus guru) ===== */}
+      {isAiForTeachers ? (
+        <section className="section" id="kenapa-pilih">
+          <div className="container">
+            <div className="bento reveal">
+              <div className="section-head">
+                <h2>Kenapa Ikut <span className="acc-o">Program Ini</span>?</h2>
+                <p className="lead" style={{ color: "var(--ink-soft)" }}>
+                  Dirancang khusus untuk guru — tanpa jargon teknis, langsung praktik.
+                </p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem", marginTop: "1.5rem" }}>
+                {[
+                  { icon: "⚡", title: "Praktik Langsung, Bukan Teori", desc: "Setiap sesi demo langsung — lihat, tiru, praktikkan sendiri. Pulang-pulang sudah bisa bikin modul ajar." },
+                  { icon: "🎓", title: "Dirancang untuk Guru", desc: "Materi disesuaikan dengan kebutuhan guru Indonesia. Dari modul ajar, soal HOTS, hingga media pembelajaran." },
+                  { icon: "🤖", title: "Gratis Akses AI Tools", desc: "Dapatkan akses ke platform AI yang sudah dioptimalkan untuk kebutuhan pembelajaran Kurikulum Merdeka." },
+                  { icon: "💬", title: "Bimbingan Komunitas", desc: "Bergabung dengan grup WhatsApp alumni. Tanya jawab, sharing, dan dukungan dari sesama guru." },
+                  { icon: "📱", title: "Bisa dari HP", desc: "Tidak perlu laptop canggih. Cukup HP dan koneksi internet — semua demo bisa diikuti dari ponsel." },
+                  { icon: "🔁", title: "Rekaman Bisa Ditonton Ulang", desc: "Tidak sempat ikut live? Rekaman webinar tersedia. Belajar kapan saja, di mana saja." },
+                ].map((r, i) => (
+                  <div key={i} style={{ background: "var(--chip)", borderRadius: "16px", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                    <span style={{ fontSize: "2rem" }}>{r.icon}</span>
+                    <b style={{ fontSize: "1rem", marginTop: "0.3rem" }}>{r.title}</b>
+                    <p style={{ fontSize: "0.88rem", lineHeight: 1.6, color: "var(--ink-soft)", margin: 0 }}>{r.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <Testimonials limit={3} />
+      )}
 
       {/* ===== FORM DAFTAR ===== */}
       <section className="section" id="daftar">

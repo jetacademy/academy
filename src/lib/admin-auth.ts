@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/crypto";
+import { getMemberSession } from "@/lib/member-auth";
 
 const COOKIE = "jsa_admin";
 
@@ -22,72 +23,88 @@ export type AdminSession = {
 export async function getAdminSession(): Promise<AdminSession | null> {
   try {
     const jar = await cookies();
-    const raw = jar.get(COOKIE)?.value;
-    if (!raw) {
-      // Coba periksa apakah ada session member (misal dari Google OAuth)
-      const memberRaw = jar.get("jsa_member")?.value;
-      if (memberRaw) {
-        const [email, signature] = memberRaw.split(":");
-        if (email && signature) {
-          // Verifikasi signature member
-          const memberSecret = process.env.MEMBER_SESSION_SECRET || (process.env.NODE_ENV !== "production" ? "default-member-session-secret-key" : "");
-          const expectedSig = createHmac("sha256", memberSecret).update(email).digest("hex");
-          if (expectedSig === signature) {
-            // Cari user di database untuk memverifikasi role-nya
+    
+    // 1. Coba periksa apakah ada session admin langsung yang valid (jsa_admin)
+    const rawAdmin = jar.get(COOKIE)?.value;
+    if (rawAdmin) {
+      try {
+        const [sessionVal, signature] = rawAdmin.split("::");
+        if (sessionVal && signature && sign(sessionVal) === signature) {
+          const [userId, role] = sessionVal.split(":");
+          if (userId && role) {
+            if (userId === "env-admin") {
+              return {
+                userId: "env-admin",
+                role: "ADMIN",
+                name: "Root Admin",
+                email: "admin@jetschool.id",
+              };
+            }
+
+            // Cari di database untuk memastikan user masih aktif dan valid
             const user = await prisma.user.findUnique({
-              where: { email },
+              where: { id: userId },
               select: { id: true, name: true, email: true, role: true },
             });
-            if (user && (user.role === "ADMIN" || user.role === "TEACHER")) {
-              // Admin/teacher yang login lewat sesi member (Google) — sengaja
-              // TIDAK menulis cookie jsa_admin di sini: getAdminSession() bisa
-              // dipanggil dari render Server Component (bukan hanya Server
-              // Action/Route Handler), dan Next.js melarang set-cookie di luar
-              // konteks itu. Middleware sudah menerima jsa_member sebagai cukup
-              // untuk lolos ke halaman panel; verifikasi role tetap terjadi di
-              // sini pada setiap request lewat lookup DB di atas.
-              return {
-                userId: user.id,
-                role: user.role as "ADMIN" | "TEACHER",
-                name: user.name,
-                email: user.email,
-              };
+
+            if (user) {
+              const isAdminEmail = user.email === "jetschool.id@gmail.com" || user.email === "admin@jetschool.id";
+              if (user.role === "ADMIN" || user.role === "TEACHER" || isAdminEmail) {
+                if (isAdminEmail && user.role !== "ADMIN") {
+                  prisma.user.update({
+                    where: { id: user.id },
+                    data: { role: "ADMIN" }
+                  }).catch(err => console.error("Gagal sinkronisasi role admin:", err));
+                }
+                return {
+                  userId: user.id,
+                  role: (isAdminEmail ? "ADMIN" : user.role) as "ADMIN" | "TEACHER",
+                  name: user.name,
+                  email: user.email,
+                };
+              }
             }
           }
         }
+      } catch (err) {
+        console.error("Gagal verifikasi cookie jsa_admin (corrupt):", err);
       }
-      return null;
-    }
-    const [sessionVal, signature] = raw.split("::");
-    if (!sessionVal || !signature) return null;
-    if (sign(sessionVal) !== signature) return null;
-
-    const [userId, role] = sessionVal.split(":");
-    if (!userId || !role) return null;
-
-    if (userId === "env-admin") {
-      return {
-        userId: "env-admin",
-        role: "ADMIN",
-        name: "Root Admin",
-        email: "admin@jetschool.id",
-      };
     }
 
-    // Cari di database untuk memastikan user masih aktif dan valid
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, name: true, email: true, role: true },
-    });
+    // 2. Coba periksa apakah ada session member yang valid (jsa_member)
+    const memberVal = await getMemberSession();
+    if (memberVal) {
+      // Cari user di database untuk memverifikasi role-nya
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: memberVal },
+            { whatsapp: memberVal }
+          ]
+        },
+        select: { id: true, name: true, email: true, whatsapp: true, role: true },
+      });
 
-    if (!user || (user.role !== "ADMIN" && user.role !== "TEACHER")) return null;
+      if (user) {
+        const isAdminEmail = user.email === "jetschool.id@gmail.com" || user.email === "admin@jetschool.id";
+        if (user.role === "ADMIN" || user.role === "TEACHER" || isAdminEmail) {
+          if (isAdminEmail && user.role !== "ADMIN") {
+            prisma.user.update({
+              where: { id: user.id },
+              data: { role: "ADMIN" }
+            }).catch(err => console.error("Gagal sinkronisasi role admin:", err));
+          }
+          return {
+            userId: user.id,
+            role: (isAdminEmail ? "ADMIN" : user.role) as "ADMIN" | "TEACHER",
+            name: user.name,
+            email: user.email,
+          };
+        }
+      }
+    }
 
-    return {
-      userId: user.id,
-      role: user.role as "ADMIN" | "TEACHER",
-      name: user.name,
-      email: user.email,
-    };
+    return null;
   } catch {
     // Abaikan jika dipanggil di luar konteks request (misal unit test)
     return null;
@@ -107,14 +124,14 @@ export async function isTeacher(): Promise<boolean> {
 export async function requireAdmin(): Promise<void> {
   const session = await getAdminSession();
   if (!session || session.role !== "ADMIN") {
-    redirect("/webadmin/login");
+    redirect("/member/login");
   }
 }
 
 export async function requireTeacherOrAdmin(): Promise<void> {
   const session = await getAdminSession();
   if (!session) {
-    redirect("/webadmin/login");
+    redirect("/member/login");
   }
 }
 

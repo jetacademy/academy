@@ -22,7 +22,7 @@ const programs = [
   // ── 1. WEBINAR GRATIS (pintu masuk funnel iklan) ─────────────────
   {
     slug: "digital-marketing-pemula",
-    categorySlug: "bisnis-pemasaran",
+    categorySlug: "umkm-pemasaran",
     type: "WEBINAR",
     title: "Digital Marketing untuk Pemula",
     tagline: "Dapatkan Pelanggan Pertama Anda dari Instagram dalam 30 Hari.",
@@ -65,7 +65,7 @@ const programs = [
   // ── 2. KELAS ONLINE / LMS BERBAYAR ───────────────────────────────
   {
     slug: "kelas-ai-untuk-kerja",
-    categorySlug: "teknologi-ai",
+    categorySlug: "produktivitas-dunia-kerja",
     type: "KELAS",
     title: "Kelas Online: AI untuk Dunia Kerja",
     tagline: "Selesaikan Pekerjaan Kantor 2× Lebih Cepat dengan Bantuan AI — Bersertifikat.",
@@ -108,7 +108,7 @@ const programs = [
   // ── 3. WORKSHOP BERBAYAR ─────────────────────────────────────────
   {
     slug: "workshop-excel-praktik",
-    categorySlug: "produktivitas-desain",
+    categorySlug: "produktivitas-dunia-kerja",
     type: "WORKSHOP",
     title: "Workshop Excel: Laporan Otomatis dalam 1 Hari",
     tagline: "Satu Hari Praktik, Laporan Bulanan Anda Menjadi Otomatis.",
@@ -151,9 +151,11 @@ const programs = [
 
 async function main() {
   const seedCategories = [
-    { name: "Teknologi & AI", slug: "teknologi-ai", isFeatured: true },
-    { name: "Bisnis & Pemasaran", slug: "bisnis-pemasaran", isFeatured: true },
-    { name: "Produktivitas & Desain", slug: "produktivitas-desain", isFeatured: false },
+    { name: "AI & Teknologi Pendidikan", slug: "ai-teknologi-pendidikan", isFeatured: true },
+    { name: "Kurikulum & Media Pembelajaran", slug: "kurikulum-media-pembelajaran", isFeatured: true },
+    { name: "AI & Bisnis Digital", slug: "ai-bisnis-digital", isFeatured: true },
+    { name: "UMKM & Pemasaran", slug: "umkm-pemasaran", isFeatured: true },
+    { name: "Produktivitas & Dunia Kerja", slug: "produktivitas-dunia-kerja", isFeatured: true },
   ];
 
   const categoryMap = {};

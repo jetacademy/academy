@@ -339,7 +339,6 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                     name="whatsapp"
                     type="tel"
                     placeholder="Contoh: 081234567890"
-                    pattern="^08[0-9]{8,13}$"
                     required
                     value={whatsappVal}
                     onChange={(e) => setWhatsappVal(e.target.value)}
@@ -412,7 +411,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
               marginTop: "1.5rem",
               lineHeight: 1.4
             }}>
-              Pendaftaran aman & instan via Google. Data sertifikat Anda akan otomatis disinkronkan setelah masuk.
+              Pendaftaran aman & instan via Google. Data profil Anda akan otomatis tersimpan.
             </p>
           </div>
         )}

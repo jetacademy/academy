@@ -10,6 +10,7 @@ type ProgramRow = {
   price: number; priceOld: number | null; certPrice: number; certPriceOld: number | null;
   seatsLeft: number | null; passingScore: number; isActive: boolean;
   isFeatured?: boolean;
+  certClaimOpen?: boolean;
   categoryId?: string | null;
 };
 
@@ -83,7 +84,7 @@ export default function ProgramForm({
             <option value="BOOTCAMP">Bootcamp — berbayar</option>
           </select>
         </div>
-        <div className="field" style={{ display: "flex", alignItems: "center", gap: "1.5rem", gridColumn: "1 / -1", marginTop: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem", gridColumn: "1 / -1", marginTop: "0.5rem", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: ".6rem" }}>
             <input type="checkbox" name="isActive" defaultChecked={program?.isActive ?? true} style={{ width: "auto" }} id="fAktif" />
             <label htmlFor="fAktif" style={{ margin: 0, fontWeight: 700, cursor: "pointer" }}>Tampilkan di website (aktif)</label>
@@ -92,7 +93,24 @@ export default function ProgramForm({
             <input type="checkbox" name="isFeatured" defaultChecked={program?.isFeatured ?? false} style={{ width: "auto" }} id="fUnggulan" />
             <label htmlFor="fUnggulan" style={{ margin: 0, fontWeight: 700, cursor: "pointer" }}>Jadikan Program Unggulan</label>
           </div>
+          <div style={{ display: "flex", alignItems: "center", gap: ".6rem" }}>
+            <input type="checkbox" name="certClaimOpen" defaultChecked={program?.certClaimOpen ?? false} style={{ width: "auto" }} id="fCertClaim" />
+            <label htmlFor="fCertClaim" style={{ margin: 0, fontWeight: 700, cursor: "pointer", color: "var(--green)" }}>
+              🎓 Buka Klaim Sertifikat
+            </label>
+          </div>
         </div>
+        {/* Hint jika certClaimOpen aktif */}
+        {program?.certClaimOpen && (
+          <div style={{ gridColumn: "1 / -1", padding: ".7rem 1rem", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, fontSize: ".82rem", color: "#166534" }}>
+            ✅ <strong>Klaim Sertifikat TERBUKA.</strong> Peserta yang sudah terdaftar dapat melihat tombol klaim sertifikat di dashboard mereka.
+          </div>
+        )}
+        {!(program?.certClaimOpen) && program?.id && (
+          <div style={{ gridColumn: "1 / -1", padding: ".7rem 1rem", background: "#fefce8", border: "1px solid #fde68a", borderRadius: 8, fontSize: ".82rem", color: "#92400e" }}>
+            🔒 <strong>Klaim Sertifikat TERKUNCI.</strong> Centang checkbox di atas lalu simpan untuk membuka akses klaim sertifikat bagi peserta.
+          </div>
+        )}
       </Section>
 
       <Section title="2. Jadwal & Kuota" desc="Kapan program dimulai dan berapa kursi tersedia.">

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import ProgramForm from "@/components/ProgramForm";
 
 export default async function AdminProgramEdit({
@@ -18,13 +19,25 @@ export default async function AdminProgramEdit({
     orderBy: { name: "asc" },
   });
 
+  // Ambil certClaimOpen via raw SQL agar tidak bergantung pada cache Prisma client
+  let certClaimOpen = false;
+  try {
+    type RawRow = { certClaimOpen: number };
+    const rows = await prisma.$queryRaw<RawRow[]>(
+      Prisma.sql`SELECT certClaimOpen FROM \`Program\` WHERE id = ${id} LIMIT 1`
+    );
+    if (rows[0]) certClaimOpen = rows[0].certClaimOpen === 1;
+  } catch {
+    // silent fallback
+  }
+
   return (
     <>
       {e === "slug" && (
         <div className="adm-alert err">Slug tersebut sudah dipakai program lain. Gunakan slug yang berbeda.</div>
       )}
       {e === "lengkapi" && <div className="adm-alert err">Judul dan slug wajib diisi.</div>}
-      <ProgramForm program={program} categories={categories} />
+      <ProgramForm program={{ ...program, certClaimOpen }} categories={categories} />
     </>
   );
 }
