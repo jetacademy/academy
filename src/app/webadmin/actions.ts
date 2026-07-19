@@ -524,6 +524,17 @@ export async function markPaid(formData: FormData) {
   revalidatePath("/webadmin");
 }
 
+/** Tandai/batalkan kehadiran sesi live — syarat klaim sertifikat utk program WEBINAR. */
+export async function toggleAttendance(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const reg = await prisma.registration.findUnique({ where: { id }, select: { attended: true } });
+  if (!reg) return;
+  await prisma.registration.update({ where: { id }, data: { attended: !reg.attended } });
+  revalidatePath("/webadmin/pendaftar");
+  revalidatePath("/webadmin");
+}
+
 export async function deleteRegistration(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));

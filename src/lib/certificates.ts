@@ -68,12 +68,22 @@ export async function hasPassedAllQuizzes(registrationId: string, programId: str
 
 /**
  * Cek kelayakan sertifikat sesuai kriteria program.
- * Program tanpa materi sama sekali (mis. webinar murni) → langsung layak setelah bayar.
+ * Program tanpa materi sama sekali (mis. webinar murni) → layak setelah bayar
+ * DAN kehadiran ditandai admin (WEBINAR wajib presensi — cegah klaim tanpa ikut sesi).
+ * Program dengan materi/kuis tetap harus lulus itu juga di atas syarat kehadiran.
  */
 export async function checkCertEligibility(
   registrationId: string,
-  program: { id: string; completionCriteria: "ALL_LESSONS" | "ALL_QUIZZES" }
+  program: { id: string; type: string; completionCriteria: "ALL_LESSONS" | "ALL_QUIZZES" },
+  attended: boolean
 ): Promise<{ eligible: boolean; reason?: string }> {
+  if (program.type === "WEBINAR" && !attended) {
+    return {
+      eligible: false,
+      reason: "Kehadiran Anda pada sesi webinar ini belum dikonfirmasi panitia. Sertifikat dapat diklaim setelah presensi diverifikasi (maks. 1×24 jam setelah sesi berakhir).",
+    };
+  }
+
   const totalLessons = await prisma.lesson.count({ where: { module: { programId: program.id } } });
   if (totalLessons === 0) return { eligible: true };
 

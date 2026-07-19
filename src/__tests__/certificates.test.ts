@@ -263,8 +263,9 @@ describe('checkCertEligibility', () => {
 
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
+      type: 'KELAS',
       completionCriteria: 'ALL_LESSONS',
-    });
+    }, true);
 
     expect(result).toEqual({ eligible: true });
     expect(mockPrisma.lesson.count).toHaveBeenCalledWith({
@@ -278,8 +279,9 @@ describe('checkCertEligibility', () => {
 
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
+      type: 'KELAS',
       completionCriteria: 'ALL_LESSONS',
-    });
+    }, true);
 
     expect(result).toEqual({ eligible: true });
   });
@@ -290,8 +292,9 @@ describe('checkCertEligibility', () => {
 
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
+      type: 'KELAS',
       completionCriteria: 'ALL_LESSONS',
-    });
+    }, true);
 
     expect(result).toMatchObject({ eligible: false });
     expect(result.reason).toContain('Selesaikan semua materi');
@@ -306,8 +309,9 @@ describe('checkCertEligibility', () => {
 
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
+      type: 'KELAS',
       completionCriteria: 'ALL_QUIZZES',
-    });
+    }, true);
 
     expect(result).toEqual({ eligible: true });
   });
@@ -320,8 +324,9 @@ describe('checkCertEligibility', () => {
 
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
+      type: 'KELAS',
       completionCriteria: 'ALL_QUIZZES',
-    });
+    }, true);
 
     expect(result).toMatchObject({ eligible: false });
     expect(result.reason).toContain('Lulusi semua tes');
@@ -341,8 +346,9 @@ describe('checkCertEligibility', () => {
 
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
+      type: 'KELAS',
       completionCriteria: 'ALL_QUIZZES',
-    });
+    }, true);
 
     expect(result).toEqual({ eligible: true });
   });
@@ -358,11 +364,63 @@ describe('checkCertEligibility', () => {
 
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
+      type: 'KELAS',
       completionCriteria: 'ALL_QUIZZES',
-    });
+    }, true);
 
     expect(result).toMatchObject({ eligible: false });
     expect(result.reason).toContain('Selesaikan semua materi');
     expect(result.reason).toContain('4/10');
+  });
+
+  it('blocks WEBINAR certificate claim when attendance not marked, even with empty curriculum', async () => {
+    const result = await checkCertEligibility('reg-1', {
+      id: 'prog-1',
+      type: 'WEBINAR',
+      completionCriteria: 'ALL_LESSONS',
+    }, false);
+
+    expect(result).toMatchObject({ eligible: false });
+    expect(result.reason).toContain('Kehadiran');
+    // Tidak perlu sampai query lesson.count sama sekali — gerbang presensi diperiksa lebih dulu
+    expect(mockPrisma.lesson.count).not.toHaveBeenCalled();
+  });
+
+  it('allows WEBINAR certificate claim once attendance is marked (empty curriculum)', async () => {
+    mockPrisma.lesson.count.mockResolvedValue(0);
+
+    const result = await checkCertEligibility('reg-1', {
+      id: 'prog-1',
+      type: 'WEBINAR',
+      completionCriteria: 'ALL_LESSONS',
+    }, true);
+
+    expect(result).toEqual({ eligible: true });
+  });
+
+  it('still requires lesson completion for WEBINAR even after attendance is marked', async () => {
+    mockPrisma.lesson.count.mockResolvedValue(3);
+    mockPrisma.completion.count.mockResolvedValue(1);
+
+    const result = await checkCertEligibility('reg-1', {
+      id: 'prog-1',
+      type: 'WEBINAR',
+      completionCriteria: 'ALL_LESSONS',
+    }, true);
+
+    expect(result).toMatchObject({ eligible: false });
+    expect(result.reason).toContain('Selesaikan semua materi');
+  });
+
+  it('does not require attendance for non-WEBINAR program types', async () => {
+    mockPrisma.lesson.count.mockResolvedValue(0);
+
+    const result = await checkCertEligibility('reg-1', {
+      id: 'prog-1',
+      type: 'BOOTCAMP',
+      completionCriteria: 'ALL_LESSONS',
+    }, false);
+
+    expect(result).toEqual({ eligible: true });
   });
 });
