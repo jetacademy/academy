@@ -130,7 +130,6 @@ model Registration {
   batch       ProgramBatch?      @relation(fields: [batchId], references: [id], onDelete: SetNull)
   batchId     String? // batch/angkatan yang dipilih peserta (null = program tanpa batch, pakai Program.scheduleAt)
   status      RegistrationStatus @default(REGISTERED)
-  attended    Boolean            @default(false) // presensi sesi live, ditandai admin — wajib utk klaim sertifikat WEBINAR
   payment     Payment?
   attempts    TestAttempt[]
   certificate Certificate?

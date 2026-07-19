@@ -258,14 +258,17 @@ describe('checkCertEligibility', () => {
     resetMocks();
   });
 
+  const LONG_AGO = new Date('2020-01-01T00:00:00.000Z');
+
   it('returns eligible if program has no lessons (empty curriculum)', async () => {
     mockPrisma.lesson.count.mockResolvedValue(0);
 
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
       type: 'KELAS',
+      scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_LESSONS',
-    }, true);
+    });
 
     expect(result).toEqual({ eligible: true });
     expect(mockPrisma.lesson.count).toHaveBeenCalledWith({
@@ -280,8 +283,9 @@ describe('checkCertEligibility', () => {
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
       type: 'KELAS',
+      scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_LESSONS',
-    }, true);
+    });
 
     expect(result).toEqual({ eligible: true });
   });
@@ -293,8 +297,9 @@ describe('checkCertEligibility', () => {
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
       type: 'KELAS',
+      scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_LESSONS',
-    }, true);
+    });
 
     expect(result).toMatchObject({ eligible: false });
     expect(result.reason).toContain('Selesaikan semua materi');
@@ -310,8 +315,9 @@ describe('checkCertEligibility', () => {
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
       type: 'KELAS',
+      scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_QUIZZES',
-    }, true);
+    });
 
     expect(result).toEqual({ eligible: true });
   });
@@ -325,8 +331,9 @@ describe('checkCertEligibility', () => {
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
       type: 'KELAS',
+      scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_QUIZZES',
-    }, true);
+    });
 
     expect(result).toMatchObject({ eligible: false });
     expect(result.reason).toContain('Lulusi semua tes');
@@ -347,8 +354,9 @@ describe('checkCertEligibility', () => {
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
       type: 'KELAS',
+      scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_QUIZZES',
-    }, true);
+    });
 
     expect(result).toEqual({ eligible: true });
   });
@@ -365,62 +373,95 @@ describe('checkCertEligibility', () => {
     const result = await checkCertEligibility('reg-1', {
       id: 'prog-1',
       type: 'KELAS',
+      scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_QUIZZES',
-    }, true);
+    });
 
     expect(result).toMatchObject({ eligible: false });
     expect(result.reason).toContain('Selesaikan semua materi');
     expect(result.reason).toContain('4/10');
   });
 
-  it('blocks WEBINAR certificate claim when attendance not marked, even with empty curriculum', async () => {
-    const result = await checkCertEligibility('reg-1', {
-      id: 'prog-1',
-      type: 'WEBINAR',
-      completionCriteria: 'ALL_LESSONS',
-    }, false);
+  describe('WEBINAR time gate (klaim baru terbuka 1×24 jam setelah sesi)', () => {
+    it('blocks claim before 24 hours have passed since program scheduleAt', async () => {
+      mockPrisma.registration.findUnique.mockResolvedValue({ batch: null });
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-    expect(result).toMatchObject({ eligible: false });
-    expect(result.reason).toContain('Kehadiran');
-    // Tidak perlu sampai query lesson.count sama sekali — gerbang presensi diperiksa lebih dulu
-    expect(mockPrisma.lesson.count).not.toHaveBeenCalled();
-  });
+      const result = await checkCertEligibility('reg-1', {
+        id: 'prog-1',
+        type: 'WEBINAR',
+        scheduleAt: oneHourAgo,
+        completionCriteria: 'ALL_LESSONS',
+      });
 
-  it('allows WEBINAR certificate claim once attendance is marked (empty curriculum)', async () => {
-    mockPrisma.lesson.count.mockResolvedValue(0);
+      expect(result.eligible).toBe(false);
+      expect(result.reason).toContain('1×24 jam');
+      expect(result.availableAt).toBeInstanceOf(Date);
+      // Gerbang waktu diperiksa lebih dulu — tak perlu sampai query kurikulum
+      expect(mockPrisma.lesson.count).not.toHaveBeenCalled();
+    });
 
-    const result = await checkCertEligibility('reg-1', {
-      id: 'prog-1',
-      type: 'WEBINAR',
-      completionCriteria: 'ALL_LESSONS',
-    }, true);
+    it('allows claim once 24 hours have passed since program scheduleAt (empty curriculum)', async () => {
+      mockPrisma.registration.findUnique.mockResolvedValue({ batch: null });
+      mockPrisma.lesson.count.mockResolvedValue(0);
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
 
-    expect(result).toEqual({ eligible: true });
-  });
+      const result = await checkCertEligibility('reg-1', {
+        id: 'prog-1',
+        type: 'WEBINAR',
+        scheduleAt: twoDaysAgo,
+        completionCriteria: 'ALL_LESSONS',
+      });
 
-  it('still requires lesson completion for WEBINAR even after attendance is marked', async () => {
-    mockPrisma.lesson.count.mockResolvedValue(3);
-    mockPrisma.completion.count.mockResolvedValue(1);
+      expect(result).toEqual({ eligible: true });
+    });
 
-    const result = await checkCertEligibility('reg-1', {
-      id: 'prog-1',
-      type: 'WEBINAR',
-      completionCriteria: 'ALL_LESSONS',
-    }, true);
+    it('uses the batch schedule instead of the program schedule when registration belongs to a batch', async () => {
+      // Program.scheduleAt sudah lama lewat, tapi batch peserta baru mulai 1 jam lalu — tetap diblokir
+      mockPrisma.registration.findUnique.mockResolvedValue({
+        batch: { scheduleAt: new Date(Date.now() - 60 * 60 * 1000) },
+      });
 
-    expect(result).toMatchObject({ eligible: false });
-    expect(result.reason).toContain('Selesaikan semua materi');
-  });
+      const result = await checkCertEligibility('reg-1', {
+        id: 'prog-1',
+        type: 'WEBINAR',
+        scheduleAt: LONG_AGO,
+        completionCriteria: 'ALL_LESSONS',
+      });
 
-  it('does not require attendance for non-WEBINAR program types', async () => {
-    mockPrisma.lesson.count.mockResolvedValue(0);
+      expect(result.eligible).toBe(false);
+    });
 
-    const result = await checkCertEligibility('reg-1', {
-      id: 'prog-1',
-      type: 'BOOTCAMP',
-      completionCriteria: 'ALL_LESSONS',
-    }, false);
+    it('still requires lesson completion for WEBINAR once the time gate has passed', async () => {
+      mockPrisma.registration.findUnique.mockResolvedValue({ batch: null });
+      mockPrisma.lesson.count.mockResolvedValue(3);
+      mockPrisma.completion.count.mockResolvedValue(1);
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
 
-    expect(result).toEqual({ eligible: true });
+      const result = await checkCertEligibility('reg-1', {
+        id: 'prog-1',
+        type: 'WEBINAR',
+        scheduleAt: twoDaysAgo,
+        completionCriteria: 'ALL_LESSONS',
+      });
+
+      expect(result).toMatchObject({ eligible: false });
+      expect(result.reason).toContain('Selesaikan semua materi');
+    });
+
+    it('does not apply the time gate to non-WEBINAR program types', async () => {
+      mockPrisma.lesson.count.mockResolvedValue(0);
+      const inTheFuture = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      const result = await checkCertEligibility('reg-1', {
+        id: 'prog-1',
+        type: 'BOOTCAMP',
+        scheduleAt: inTheFuture, // non-WEBINAR tak pernah dicek terhadap scheduleAt
+        completionCriteria: 'ALL_LESSONS',
+      });
+
+      expect(result).toEqual({ eligible: true });
+      expect(mockPrisma.registration.findUnique).not.toHaveBeenCalled();
+    });
   });
 });

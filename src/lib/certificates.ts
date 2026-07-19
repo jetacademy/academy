@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { sendWa, msgCertificate } from "@/lib/wa";
 import { sendEmail, getCertEmailHtml } from "@/lib/email";
 import { randomBytes } from "crypto";
+import { formatJadwal } from "@/lib/format";
+
+const CERT_CLAIM_DELAY_MS = 24 * 60 * 60 * 1000; // 1×24 jam setelah sesi berakhir
 
 /**
  * Terbitkan sertifikat dengan nomor random (JSA-<tahun>-<8 hex>),
@@ -68,20 +71,29 @@ export async function hasPassedAllQuizzes(registrationId: string, programId: str
 
 /**
  * Cek kelayakan sertifikat sesuai kriteria program.
- * Program tanpa materi sama sekali (mis. webinar murni) → layak setelah bayar
- * DAN kehadiran ditandai admin (WEBINAR wajib presensi — cegah klaim tanpa ikut sesi).
- * Program dengan materi/kuis tetap harus lulus itu juga di atas syarat kehadiran.
+ * Program WEBINAR: klaim baru terbuka 1×24 jam setelah jadwal sesi (batch bila ada,
+ * kalau tidak pakai jadwal program) — cegah klaim sebelum sesi selesai/dimulai.
+ * Program tanpa materi sama sekali → layak setelah lewat jeda itu (kalau bukan webinar,
+ * langsung layak). Program dengan materi/kuis tetap harus lulus itu di atasnya.
  */
 export async function checkCertEligibility(
   registrationId: string,
-  program: { id: string; type: string; completionCriteria: "ALL_LESSONS" | "ALL_QUIZZES" },
-  attended: boolean
-): Promise<{ eligible: boolean; reason?: string }> {
-  if (program.type === "WEBINAR" && !attended) {
-    return {
-      eligible: false,
-      reason: "Kehadiran Anda pada sesi webinar ini belum dikonfirmasi panitia. Sertifikat dapat diklaim setelah presensi diverifikasi (maks. 1×24 jam setelah sesi berakhir).",
-    };
+  program: { id: string; type: string; scheduleAt: Date; completionCriteria: "ALL_LESSONS" | "ALL_QUIZZES" }
+): Promise<{ eligible: boolean; reason?: string; availableAt?: Date }> {
+  if (program.type === "WEBINAR") {
+    const reg = await prisma.registration.findUnique({
+      where: { id: registrationId },
+      select: { batch: { select: { scheduleAt: true } } },
+    });
+    const sessionAt = reg?.batch?.scheduleAt ?? program.scheduleAt;
+    const availableAt = new Date(sessionAt.getTime() + CERT_CLAIM_DELAY_MS);
+    if (new Date() < availableAt) {
+      return {
+        eligible: false,
+        availableAt,
+        reason: `Klaim sertifikat untuk sesi ini baru bisa dilakukan mulai ${formatJadwal(availableAt)} (1×24 jam setelah sesi berakhir).`,
+      };
+    }
   }
 
   const totalLessons = await prisma.lesson.count({ where: { module: { programId: program.id } } });

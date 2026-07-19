@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import ClaimCertButton from "@/components/ClaimCertButton";
 import MemberPayCertButton from "@/components/MemberPayCertButton";
 import { rupiah, formatJadwal } from "@/lib/format";
+import { checkCertEligibility } from "@/lib/certificates";
 import { Registration, Program, Payment, Certificate } from "@prisma/client";
 
 interface LocalLmsModule {
@@ -59,6 +60,24 @@ export default async function MemberDashboardPage() {
   };
 
   const registrations = await prisma.registration.findMany(queryOptions) as unknown as RegistrationWithDetails[];
+
+  // Pra-hitung kelayakan klaim sertifikat utk registrasi yang akan menampilkan
+  // tombol klaim langsung (lunas, tanpa kurikulum LMS) — biar keterangannya
+  // (mis. gerbang waktu 1x24 jam WEBINAR) tampil proaktif, bukan cuma setelah diklik.
+  const certEligibility = new Map<string, { eligible: boolean; reason?: string }>();
+  await Promise.all(
+    registrations
+      .filter((r) =>
+        r.status === "PAID" &&
+        !r.certificate &&
+        r.program.type !== "KELAS" && r.program.type !== "BOOTCAMP" &&
+        !(r.program.modules && r.program.modules.length > 0) &&
+        !r.program.lmsLink
+      )
+      .map(async (r) => {
+        certEligibility.set(r.id, await checkCertEligibility(r.id, r.program));
+      })
+  );
 
   const memberName = registrations[0]?.name ?? "Member";
   // Banner admin hanya muncul jika benar-benar punya sesi admin (login password di /webadmin)
@@ -225,6 +244,16 @@ export default async function MemberDashboardPage() {
                             <a href={prog.lmsLink} target="_blank" rel="noopener noreferrer" className="btn btn-ink btn-block" style={{ textAlign: "center" }}>
                               Akses Materi LMS
                             </a>
+                          ) : certEligibility.get(reg.id)?.eligible === false ? (
+                            // program tanpa kurikulum (mis. webinar) — belum lewat gerbang waktu klaim
+                            <div style={{ textAlign: "center" }}>
+                              <button className="btn btn-block" disabled style={{ background: "var(--border)", color: "var(--ink-faint)", cursor: "not-allowed", textAlign: "center" }}>
+                                Klaim Sertifikat (Belum Tersedia)
+                              </button>
+                              <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", display: "block", marginTop: "0.4rem" }}>
+                                {certEligibility.get(reg.id)?.reason}
+                              </span>
+                            </div>
                           ) : (
                             // program tanpa kurikulum (mis. webinar) → sertifikat bisa langsung diklaim
                             <ClaimCertButton registrationId={reg.id} />

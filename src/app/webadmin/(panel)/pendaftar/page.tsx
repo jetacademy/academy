@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { rupiah } from "@/lib/format";
-import { markPaid, deleteRegistration, toggleAttendance } from "../../actions";
+import { markPaid, deleteRegistration } from "../../actions";
 
 const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
   REGISTERED: { cls: "dim", label: "Terdaftar" },
@@ -64,7 +64,7 @@ export default async function AdminPendaftar({ searchParams }: {
       <div className="tbl-wrap">
         <table className="tbl">
           <thead>
-            <tr><th>Nama</th><th>Kontak</th><th>Program</th><th>Status</th><th>Hadir</th><th>Pembayaran</th><th>Aksi</th></tr>
+            <tr><th>Nama</th><th>Kontak</th><th>Program</th><th>Status</th><th>Pembayaran</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             {regs.map((r) => {
@@ -78,13 +78,6 @@ export default async function AdminPendaftar({ searchParams }: {
                   <td data-label="Kontak">{r.whatsapp}<div className="muted">{r.email}</div></td>
                   <td data-label="Program" className="muted">{r.program.title}</td>
                   <td data-label="Status"><span className={`badge ${b.cls}`}>{b.label}</span></td>
-                  <td data-label="Hadir">
-                    {r.program.type === "WEBINAR" ? (
-                      <span className={`badge ${r.attended ? "g" : "dim"}`}>{r.attended ? "Hadir" : "Belum"}</span>
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </td>
                   <td data-label="Pembayaran">
                     {r.payment
                       ? <>{rupiah(r.payment.amount)}<div className="muted">{r.payment.status}</div></>
@@ -93,14 +86,6 @@ export default async function AdminPendaftar({ searchParams }: {
                   <td data-label="Aksi">
                     <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
                       <Link href={`/webadmin/pendaftar/${r.id}`} className="btn btn-sm">Edit</Link>
-                      {r.program.type === "WEBINAR" && (
-                        <form action={toggleAttendance}>
-                          <input type="hidden" name="id" value={r.id} />
-                          <button type="submit" className="btn btn-sm" title="Wajib ditandai sebelum peserta bisa klaim sertifikat">
-                            {r.attended ? "Batalkan Hadir" : "Tandai Hadir"}
-                          </button>
-                        </form>
-                      )}
                       {["REGISTERED", "EXPIRED", "FAILED"].includes(r.status) && (
                         <form action={markPaid}>
                           <input type="hidden" name="id" value={r.id} />
@@ -121,7 +106,7 @@ export default async function AdminPendaftar({ searchParams }: {
                 </tr>
               );
             })}
-            {regs.length === 0 && <tr><td colSpan={7} className="muted">Tidak ada pendaftar yang cocok.</td></tr>}
+            {regs.length === 0 && <tr><td colSpan={6} className="muted">Tidak ada pendaftar yang cocok.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -164,7 +149,7 @@ export default async function AdminPendaftar({ searchParams }: {
       <p className="adm-note" style={{ marginTop: ".8rem" }}>
         <b>Tandai Lunas</b> dipakai jika peserta membayar di luar Xendit (transfer manual) — status berubah, WA akses terkirim otomatis.
         <br />
-        <b>Tandai Hadir</b> wajib dilakukan setelah sesi webinar selesai — peserta program tipe Webinar tidak bisa klaim sertifikat sebelum kehadirannya ditandai di sini.
+        Klaim sertifikat program Webinar baru aktif otomatis 1×24 jam setelah jadwal sesi berakhir — tidak perlu tindakan manual di sini.
       </p>
     </>
   );

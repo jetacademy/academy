@@ -124,7 +124,7 @@ export default async function LmsPage({
 
   // Kelayakan sertifikat sesuai kriteria program (hasil tes / penyelesaian materi)
   const hasPaid = (reg.status === "PAID" || reg.status === "PASSED") || (program.price === 0 && program.certPrice === 0);
-  const eligibility = reg.certificate ? { eligible: true as const } : await checkCertEligibility(reg.id, program, reg.attended);
+  const eligibility = reg.certificate ? { eligible: true as const } : await checkCertEligibility(reg.id, program);
   const canClaim = !reg.certificate && hasPaid && eligibility.eligible;
 
   // Tentukan materi aktif

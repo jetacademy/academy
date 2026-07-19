@@ -273,7 +273,7 @@ export async function completeLesson(registrationId: string, lessonId: string) {
   });
 
   // Auto-terbit sertifikat jika semua persyaratan sudah terpenuhi
-  const eligibility = await checkCertEligibility(registrationId, reg.program, reg.attended);
+  const eligibility = await checkCertEligibility(registrationId, reg.program);
   if (eligibility.eligible) {
     const cert = await issueCertificate(registrationId);
     revalidatePath(`/member/lms/${registrationId}`);
@@ -348,7 +348,7 @@ export async function submitLessonQuiz(
 
   // Auto-terbit sertifikat jika lulus kuis dan semua persyaratan terpenuhi
   if (passed) {
-    const eligibility = await checkCertEligibility(registrationId, reg.program, reg.attended);
+    const eligibility = await checkCertEligibility(registrationId, reg.program);
     if (eligibility.eligible) {
       const cert = await issueCertificate(registrationId);
       return { ok: true, passed, score, passingScore, certUrl: cert.url };
@@ -370,7 +370,7 @@ export async function claimLessonsCertificate(registrationId: string) {
     return { error: "Selesaikan pembayaran terlebih dahulu." };
   }
 
-  const check = await checkCertEligibility(registrationId, reg.program, reg.attended);
+  const check = await checkCertEligibility(registrationId, reg.program);
   if (!check.eligible) {
     return { error: check.reason ?? "Syarat kelulusan belum terpenuhi." };
   }
