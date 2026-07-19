@@ -207,17 +207,28 @@ function InsertZone({ open, onToggle, onPick }: { open: boolean; onToggle: () =>
   return (
     <div className={open ? "ibk-insert open" : "ibk-insert"}>
       <span className="ibk-insert-line" />
-      <button type="button" className="ibk-insert-btn" onClick={onToggle} title="Tambah blok di sini">+</button>
+      <button type="button" className="ibk-insert-btn" onClick={onToggle} title="Tambah blok di sini" aria-label="Tambah blok di sini">+</button>
       <span className="ibk-insert-line" />
       {open && (
-        <div className="ibk-insert-menu">
-          {BLOCK_TYPES.map((type) => (
-            <button key={type} type="button" className="ibk-insert-menu-btn" onClick={() => onPick(type)} title={BLOCK_TYPE_META[type].hint}>
-              <span>{BLOCK_TYPE_META[type].icon}</span>
-              {BLOCK_TYPE_META[type].label}
-            </button>
-          ))}
-        </div>
+        <>
+          {/* Backdrop transparan — tap di luar menu utk tutup (penting di HP, tidak ada klik-di-luar bawaan) */}
+          <div className="ibk-insert-backdrop" onClick={onToggle} />
+          <div className="ibk-insert-menu">
+            <div className="ibk-insert-menu-head">
+              <span>Pilih jenis blok</span>
+              <button type="button" onClick={onToggle} aria-label="Tutup">✕</button>
+            </div>
+            <div className="ibk-insert-menu-grid">
+              {BLOCK_TYPES.map((type) => (
+                <button key={type} type="button" className="ibk-insert-menu-btn" onClick={() => onPick(type)}>
+                  <span className="ibk-insert-menu-icon">{BLOCK_TYPE_META[type].icon}</span>
+                  <span className="ibk-insert-menu-label">{BLOCK_TYPE_META[type].label}</span>
+                  <span className="ibk-insert-menu-hint">{BLOCK_TYPE_META[type].hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
