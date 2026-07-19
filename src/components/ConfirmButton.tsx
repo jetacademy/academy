@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useFormStatus } from "react-dom";
 
 /** Tombol submit dengan konfirmasi kustom premium — mencegah hapus tak sengaja. */
 export default function ConfirmButton({
@@ -18,9 +19,11 @@ export default function ConfirmButton({
   children: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [wasPending, setWasPending] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  const { pending } = useFormStatus();
 
   const openModal = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -29,15 +32,24 @@ export default function ConfirmButton({
   };
 
   const closeModal = useCallback(() => {
-    if (isSubmitting) return;
+    if (pending) return;
     setIsOpen(false);
-  }, [isSubmitting]);
+  }, [pending]);
 
   const handleConfirm = () => {
     if (!formRef.current) return;
-    setIsSubmitting(true);
     formRef.current.requestSubmit();
   };
+
+  // Tutup otomatis setelah pengiriman selesai (dari true ke false)
+  useEffect(() => {
+    if (pending) {
+      setWasPending(true);
+    } else if (wasPending && !pending) {
+      setWasPending(false);
+      setIsOpen(false);
+    }
+  }, [pending, wasPending]);
 
   // Tutup dengan ESC
   useEffect(() => {
@@ -76,7 +88,7 @@ export default function ConfirmButton({
         className={className}
         title={title}
         onClick={openModal}
-        disabled={disabled}
+        disabled={disabled || pending}
       >
         {children}
       </button>
@@ -103,7 +115,7 @@ export default function ConfirmButton({
                 type="button"
                 className="confirm-btn confirm-btn-cancel"
                 onClick={closeModal}
-                disabled={isSubmitting}
+                disabled={pending}
                 ref={cancelButtonRef}
               >
                 Batal
@@ -112,9 +124,9 @@ export default function ConfirmButton({
                 type="button"
                 className="confirm-btn confirm-btn-danger"
                 onClick={handleConfirm}
-                disabled={isSubmitting}
+                disabled={pending}
               >
-                {isSubmitting ? (
+                {pending ? (
                   <>
                     <span className="confirm-spinner"></span>
                     Menghapus...
