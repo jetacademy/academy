@@ -786,14 +786,15 @@
 .prg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.1rem; }
 @media (max-width: 780px) { .prg-grid { grid-template-columns: 1fr; } }
 .prg-card {
-  background: var(--chip);
+  background: var(--white);
   border-radius: var(--r-md);
   padding: 1.4rem;
   display: flex; flex-direction: column; gap: .7rem;
   transition: transform .18s ease, box-shadow .18s ease;
   position: relative;
+  box-shadow: var(--shadow-sm);
 }
-.prg-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); background: var(--white); }
+.prg-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
 .prg-top { display: flex; justify-content: space-between; align-items: center; gap: .8rem; }
 .type-tag {
   font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
