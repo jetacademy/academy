@@ -1072,38 +1072,58 @@
 .guarantee p { color: var(--ink-soft); font-size: .86rem; }
 @media (max-width: 520px) { .guarantee { flex-direction: column; align-items: flex-start; } }
 
-/* ---------- Editor Halaman Program: blok konten ---------- */
-.prg-blocks { display: grid; gap: 2.2rem; }
-.prg-blk-heading { font-size: clamp(1.5rem, 3.4vw, 2.1rem); letter-spacing: -.02em; }
-.prg-blk-text { color: var(--ink-soft); font-size: 1rem; line-height: 1.7; }
-.prg-blk-image { border-radius: var(--r-lg); overflow: hidden; }
-.prg-blk-image img { width: 100%; height: auto; display: block; }
-.prg-blk-image figcaption,
-.prg-blk-video figcaption {
-  margin-top: .6rem; font-size: .82rem; color: var(--ink-faint); font-weight: 600; text-align: center;
+/* ---------- Editor Halaman Program: blok konten ----------
+   Prinsip: setiap blok "berat" (teks/gambar/video/daftar/stack) dibungkus kartu
+   .bento yang sama persis dengan sisa halaman (.bento, .stack, .check-list) —
+   supaya halaman hasil editor blok tidak pernah terasa "polos" dibanding
+   layout bawaan. Heading berdiri sendiri sbg pemisah section, seperti .section-head. */
+.prg-blocks { display: grid; gap: 1.8rem; }
+
+.prg-blk-heading {
+  font-size: clamp(1.6rem, 3.6vw, 2.3rem);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0.6rem 0 -0.4rem;
 }
-.prg-blk-video .lms-video-frame { margin-bottom: 0; }
-.prg-blk-list h3, .prg-blk-stack h3 { margin-bottom: 1rem; font-size: 1.2rem; }
-.prg-blk-stack-list { display: grid; gap: .55rem; list-style: none; padding: 0; margin: 0; }
-.prg-blk-stack-list li {
-  display: flex; align-items: center; gap: .8rem;
-  background: var(--chip);
-  border-radius: var(--r-sm);
-  padding: .8rem 1.1rem;
-  font-weight: 600; font-size: .92rem;
+.prg-blk-heading:first-child { margin-top: 0; }
+
+.prg-blk-card {
+  background: var(--white);
+  border-radius: var(--r-lg);
+  padding: clamp(1.4rem, 3.5vw, 2.4rem);
+  box-shadow: var(--shadow);
 }
-.prg-blk-stack-list li svg { flex: 0 0 auto; color: var(--purple); }
-.prg-blk-stack-list li span { flex: 1; }
-.prg-blk-stack-list li b { color: var(--purple); white-space: nowrap; }
+.prg-blk-card-title { font-size: 1.2rem; margin-bottom: 1rem; }
+
+.prg-blk-text { color: var(--ink-soft); font-size: 1rem; line-height: 1.75; }
+.prg-blk-text > *:last-child { margin-bottom: 0 !important; }
+
+.prg-blk-media { padding: 0; overflow: hidden; }
+.prg-blk-media img { width: 100%; height: auto; display: block; }
+.prg-blk-media .lms-video-frame { margin-bottom: 0; border-radius: 0; box-shadow: none; }
+.prg-blk-media figcaption {
+  padding: 1rem clamp(1.4rem, 3.5vw, 2.4rem);
+  font-size: 0.84rem; color: var(--ink-faint); font-weight: 600; text-align: center;
+}
+
 .prg-blk-quote {
+  position: relative;
   margin: 0;
-  padding: 1.5rem 1.8rem;
-  border-left: 4px solid var(--purple);
-  background: var(--purple-soft);
-  border-radius: 0 var(--r-md) var(--r-md) 0;
+  padding: clamp(1.6rem, 3.5vw, 2.2rem) clamp(1.6rem, 3.5vw, 2.4rem);
+  background: linear-gradient(150deg, #4D4ABD, var(--purple) 60%, var(--purple-deep));
+  color: #fff;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
-.prg-blk-quote p { font-size: 1.08rem; font-weight: 600; font-style: italic; color: var(--ink); line-height: 1.55; }
-.prg-blk-quote cite { display: block; margin-top: .7rem; font-size: .82rem; font-weight: 700; color: var(--purple-deep); font-style: normal; }
+.prg-blk-quote-mark {
+  position: absolute; top: -0.6rem; left: 1.2rem;
+  font-size: 6rem; line-height: 1; font-weight: 800;
+  color: rgba(255, 255, 255, 0.14);
+  font-family: Georgia, serif;
+}
+.prg-blk-quote p { position: relative; font-size: 1.15rem; font-weight: 700; line-height: 1.55; letter-spacing: -0.01em; }
+.prg-blk-quote cite { position: relative; display: block; margin-top: 0.9rem; font-size: 0.82rem; font-weight: 700; opacity: 0.75; font-style: normal; }
 
 /* ---------- FAQ ---------- */
 .faq { display: grid; gap: .6rem; max-width: 44rem; margin-inline: auto; }
