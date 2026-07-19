@@ -191,7 +191,7 @@ export default function ProgramListClient({
                   <Link key={p.slug} href={`/program/${p.slug}`} className="prg-card">
                     <div className="prg-card-thumb">
                       {p.imageUrl ? (
-                        <Image src={p.imageUrl} alt={p.title} fill sizes="(max-width: 780px) 92vw, 46vw" />
+                        <Image src={p.imageUrl} alt={p.title} fill style={{ objectFit: "contain" }} sizes="(max-width: 780px) 92vw, 46vw" />
                       ) : (
                         <span className="prg-card-thumb-fallback">{p.emoji}</span>
                       )}

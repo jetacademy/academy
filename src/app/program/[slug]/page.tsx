@@ -248,6 +248,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                   width={600}
                   height={400}
                   className="prg-hero-image"
+                  style={{ objectFit: "contain" }}
                   priority
                 />
               </div>
