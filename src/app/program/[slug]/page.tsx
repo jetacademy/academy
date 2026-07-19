@@ -150,6 +150,25 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           a: "Cukup HP atau laptop dengan koneksi internet. Tidak perlu install software khusus — semua tools berbasis web.",
         },
       ]
+    : isZeroHuman
+    ? [
+        {
+          q: "Apakah saya perlu bisa coding?",
+          a: "Tidak sama sekali. Workshop ini menggunakan antarmuka visual — jika bisa menggunakan WhatsApp dan browser, Anda sudah bisa mengikuti.",
+        },
+        {
+          q: "Apa yang akan saya bawa pulang?",
+          a: "6 AI Agent siap pakai yang sudah terhubung ke WhatsApp Anda: Customer Service, Content, Marketing, Sales, Developer, dan Report Agent.",
+        },
+        {
+          q: "Apakah Agent langsung bisa dipakai setelah workshop?",
+          a: "Ya. Setiap sesi praktik langsung membangun dan menghubungkan Agent ke WhatsApp Anda. Pulang workshop, Agent sudah siap bekerja.",
+        },
+        {
+          q: "Apa bedanya sama webinar biasa?",
+          a: "Ini workshop 100% praktik. Bukan ceramah — Anda membangun sendiri Agent Anda selama 3 jam, dipandu langkah demi langkah.",
+        },
+      ]
     : [
         {
           q: isFree ? "Apakah program ini benar-benar gratis?" : "Apakah ada biaya tambahan?",
@@ -301,7 +320,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 </div>
                 <div className="cta-meta-item">
                   <Icon name="award" size={14} />
-                  <span>{isAiForTeachers ? "Live Zoom 2 jam · 6 Demo Langsung" : "Komunitas + Rekaman + Sertifikat 32 JP"}</span>
+                  <span>{isAiForTeachers ? "Live Zoom 2 jam · 6 Demo Langsung" : isZeroHuman ? "Live Zoom 3 jam · 6 AI Agent" : "Komunitas + Rekaman + Sertifikat 32 JP"}</span>
                 </div>
               </div>
               <OfferTimer target={program.scheduleAt.toISOString()} note="Sesi dimulai dalam" />
@@ -475,6 +494,156 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     <p style={{ fontSize: "0.88rem", color: "var(--ink-soft)", lineHeight: 1.5, margin: 0 }}>{demo.desc}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* ===== ZERO HUMAN COMPANY: 6 AI AGENT ===== */}
+      {isZeroHuman && (
+        <>
+          {/* Section 1: 6 AI Agent Cards */}
+          <section className="section" style={{ paddingBottom: "3.5rem" }}>
+            <div className="container">
+              <div className="section-head center">
+                <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>6 AI Agent Siap Pakai</span>
+                <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Dalam 3 Jam, Pulang dengan 6 AI Agent untuk Bisnis Anda</h2>
+                <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+                  Bukan teori — langsung bangun dan hubungkan Agent Anda ke WhatsApp. Siap jalan setelah workshop selesai.
+                </p>
+              </div>
+
+              <div className="hero-card" style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.2rem" }}>
+                {[
+                  { icon: "💬", title: "Customer Service Agent", desc: "Jawab pertanyaan pelanggan di WhatsApp 24 jam. Paham produk Anda, bisa cek status pesanan, jam operasional.", time: "45 menit" },
+                  { icon: "✍️", title: "Content Agent", desc: "Tulis & publikasi artikel blog otomatis ke website. SEO-friendly. Cukup set topik, dia yang nulis.", time: "" },
+                  { icon: "📢", title: "Marketing Agent", desc: "Riset kata kunci, buat caption promosi, jadwalkan konten media sosial. Satu perintah, semua beres.", time: "40 menit" },
+                  { icon: "🤝", title: "Sales Agent", desc: "Follow-up prospek otomatis & terstruktur. Kirim pesan terjadwal, catat status, tutup lebih banyak deal.", time: "" },
+                  { icon: "🔧", title: "Developer Agent", desc: "Perbaiki bug & tambah fitur website tanpa coding. Cukup jelaskan apa yang ingin diubah.", time: "25 menit" },
+                  { icon: "📊", title: "Report Agent", desc: "Kirim laporan bisnis harian via WhatsApp setiap pagi. Tahu persis perkembangan bisnis tanpa buka dashboard.", time: "40 menit" },
+                ].map((agent, i) => (
+                  <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "0.8rem" }}>
+                      <span style={{ fontSize: "2rem" }}>{agent.icon}</span>
+                      <div>
+                        <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0 }}>{agent.title}</h3>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: "0.88rem", color: "var(--ink-soft)", lineHeight: 1.5, margin: 0 }}>{agent.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Section 3: What to Prepare */}
+          <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
+            <div className="container">
+              <div className="bento" style={{ padding: "2rem", border: "1px solid var(--border)" }}>
+                <div className="section-head center" style={{ marginBottom: "1.5rem" }}>
+                  <span className="type-tag type-webinar" style={{ marginBottom: "0.8rem", background: "rgba(230, 126, 34, 0.08)", color: "#e67e22" }}>Persiapan</span>
+                  <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)" }}>Yang Perlu Disiapkan</h2>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", maxWidth: "40rem", marginInline: "auto" }}>
+                  {[
+                    { icon: "💻", title: "Laptop/Komputer", desc: "Bukan HP — Anda perlu browser untuk mengatur dashboard Agent." },
+                    { icon: "📶", title: "Internet Stabil", desc: "Koneksi minimal 5 Mbps untuk mengikuti sesi live Zoom." },
+                    { icon: "📱", title: "WhatsApp Aktif", desc: "Nomor WA untuk menghubungkan Agent — bisa nomor bisnis atau pribadi." },
+                  ].map((item, i) => (
+                    <div key={i} style={{ textAlign: "center", padding: "1rem" }}>
+                      <span style={{ fontSize: "2.5rem", display: "block", marginBottom: "0.5rem" }}>{item.icon}</span>
+                      <h3 style={{ fontSize: "0.95rem", fontWeight: 800, marginBottom: "0.3rem" }}>{item.title}</h3>
+                      <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", lineHeight: 1.4, margin: 0 }}>{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 4: Bayangkan Jika — Before vs After AI Agent */}
+          <section className="section" style={{ background: "var(--chip)", paddingTop: "3rem", paddingBottom: "3rem" }}>
+            <div className="container">
+              <div className="section-head center">
+                <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem", background: "rgba(108, 92, 231, 0.08)", color: "var(--purple)" }}>Bayangkan Jika</span>
+                <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Bisnis Anda Tanpa vs Dengan 6 AI Agent</h2>
+                <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+                  Perubahan kecil — dampak besar. Lihat sendiri perbedaan sebelum dan sesudah.
+                </p>
+              </div>
+              <div style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", maxWidth: "50rem", marginInline: "auto" }}>
+                <div className="bento" style={{ padding: "2rem", border: "1px solid rgba(231, 76, 60, 0.2)", background: "rgba(231, 76, 60, 0.03)", borderRadius: "var(--r-md)" }}>
+                  <span className="type-tag" style={{ background: "rgba(231, 76, 60, 0.1)", color: "#e74c3c", marginBottom: "1rem", display: "inline-block", fontWeight: 800 }}>Tanpa AI Agent</span>
+                  <div style={{ display: "grid", gap: "1rem" }}>
+                    {[
+                      { icon: "😤", text: "Pelanggan WA menumpuk — balas satu per satu, sering telat" },
+                      { icon: "📝", text: "Bikin konten & artikel manual — butuh waktu berjam-jam" },
+                      { icon: "📉", text: "Follow-up prospek keteteran — banyak bocor" },
+                      { icon: "⏰", text: "Rekap laporan bisnis manual — rentan salah" },
+                      { icon: "💸", text: "Bayar 2-3 karyawan untuk tugas repetitif" },
+                    ].map((item, i) => (
+                      <div key={i} style={{ display: "flex", gap: "0.7rem", alignItems: "flex-start" }}>
+                        <span style={{ fontSize: "1.3rem", flexShrink: 0 }}>{item.icon}</span>
+                        <span style={{ fontSize: "0.88rem", color: "var(--ink-soft)", lineHeight: 1.5 }}>{item.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bento" style={{ padding: "2rem", border: "1px solid rgba(46, 204, 113, 0.2)", background: "rgba(46, 204, 113, 0.03)", borderRadius: "var(--r-md)" }}>
+                  <span className="type-tag" style={{ background: "rgba(46, 204, 113, 0.1)", color: "#27ae60", marginBottom: "1rem", display: "inline-block", fontWeight: 800 }}>Dengan AI Agent</span>
+                  <div style={{ display: "grid", gap: "1rem" }}>
+                    {[
+                      { icon: "🤖", text: "CS Agent jawab pelanggan 24 jam — langsung, cepat, konsisten" },
+                      { icon: "✍️", text: "Content Agent tulis & publish artikel — tinggal set topik" },
+                      { icon: "📈", text: "Sales Agent follow-up otomatis — deal meningkat" },
+                      { icon: "📊", text: "Report Agent kirim laporan harian — otomatis ke WA" },
+                      { icon: "💰", text: "Hemat biaya: 6 Agent = Rp 0 karyawan tambahan" },
+                    ].map((item, i) => (
+                      <div key={i} style={{ display: "flex", gap: "0.7rem", alignItems: "flex-start" }}>
+                        <span style={{ fontSize: "1.3rem", flexShrink: 0 }}>{item.icon}</span>
+                        <span style={{ fontSize: "0.88rem", color: "var(--ink-soft)", lineHeight: 1.5 }}>{item.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 5: Gelombang AI Agent Global */}
+          <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
+            <div className="container">
+              <div className="bento" style={{ padding: "2.5rem", border: "1px solid var(--border)", background: "var(--white)", borderRadius: "var(--r-md)" }}>
+                <div className="section-head center" style={{ marginBottom: "2rem" }}>
+                  <span className="type-tag type-kelas" style={{ marginBottom: "0.8rem", background: "rgba(35, 33, 118, 0.08)", color: "var(--purple)" }}>Gelombang Global</span>
+                  <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.2rem)" }}>China Menargetkan 70% Perusahaan Gunakan AI Agent pada 2027</h2>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+                  <div style={{ textAlign: "center", padding: "1.5rem", background: "var(--chip)", borderRadius: "var(--r-md)" }}>
+                    <span style={{ fontSize: "2.5rem", fontWeight: 900, color: "var(--purple)", display: "block" }}>¥890</span>
+                    <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)" }}>MILIYAR</span>
+                    <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", marginTop: "0.5rem" }}>Investasi AI China 2026<br/>(~$125 Miliar — 38% global)</p>
+                  </div>
+                  <div style={{ textAlign: "center", padding: "1.5rem", background: "var(--chip)", borderRadius: "var(--r-md)" }}>
+                    <span style={{ fontSize: "2.5rem", fontWeight: 900, color: "var(--orange)", display: "block" }}>70%</span>
+                    <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)" }}>TARGET 2027</span>
+                    <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", marginTop: "0.5rem" }}>Adopsi AI Agent di sektor<br/>kunci — target negara</p>
+                  </div>
+                  <div style={{ textAlign: "center", padding: "1.5rem", background: "var(--chip)", borderRadius: "var(--r-md)" }}>
+                    <span style={{ fontSize: "2.5rem", fontWeight: 900, color: "#2ecc71", display: "block" }}>250<span style={{ fontSize: "1.2rem" }}> Juta</span></span>
+                    <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)" }}>PENGGUNA AI</span>
+                    <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", marginTop: "0.5rem" }}>Pengguna AI generatif<br/>di China (Feb 2025)</p>
+                  </div>
+                  <div style={{ textAlign: "center", padding: "1.5rem", background: "var(--chip)", borderRadius: "var(--r-md)" }}>
+                    <span style={{ fontSize: "2.5rem", fontWeight: 900, color: "#e67e22", display: "block" }}>90%</span>
+                    <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)" }}>TARGET 2030</span>
+                    <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", marginTop: "0.5rem" }}>Target adopsi AI penuh<br/>di seluruh sektor</p>
+                  </div>
+                </div>
+                <p style={{ fontSize: "0.72rem", color: "var(--ink-faint)", textAlign: "center", marginTop: "1rem", lineHeight: 1.5 }}>
+                  Sumber: State Council China — "AI+" Initiative (Agustus 2025) · Second Talent (2026) · Fortune Business Insights / Roland Berger (2025)
+                </p>
               </div>
             </div>
           </section>

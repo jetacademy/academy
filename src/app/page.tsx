@@ -20,12 +20,12 @@ const TYPE_CLASS: Record<ProgramType, string> = {
 
 const FAQ_ITEMS = [
   {
-    q: "Apakah webinar benar-benar gratis?",
-    a: "Ya. Seluruh sesi webinar dapat diikuti tanpa biaya. Biaya hanya berlaku apabila Anda memilih paket e-sertifikat resmi beserta akses materi.",
+    q: "Apakah program benar-benar gratis?",
+    a: "Ya. Program gratis dapat diikuti tanpa biaya pendaftaran. Untuk program berbayar, seluruh biaya sudah mencakup materi, akses, dan pendampingan.",
   },
   {
-    q: "Bagaimana cara memperoleh sertifikat?",
-    a: "Selesaikan program, kemudian kerjakan evaluasi singkat melalui ponsel Anda. Setelah dinyatakan lulus, e-sertifikat terbit secara otomatis atas nama Anda.",
+    q: "Bagaimana cara mengikuti program?",
+    a: "Daftar melalui halaman program, ikuti sesi sesuai jadwal, dan akses materi pembelajaran melalui dashboard member Anda.",
   },
   {
     q: "Metode pembayaran apa saja yang tersedia?",
@@ -33,7 +33,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Bagaimana jika saya berhalangan hadir pada sesi live?",
-    a: "Setiap sesi terekam dan dapat diakses kembali. Anda tetap dapat menyelesaikan evaluasi dan memperoleh sertifikat.",
+    a: "Setiap sesi terekam dan dapat diakses kembali melalui LMS. Anda tetap bisa mengikuti seluruh materi kapan saja.",
   },
 ];
 
@@ -183,37 +183,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ===== NILAI ===== */}
-      <section className="section">
-        <div className="container">
-          <div className="hero-card">
-            <div className="bento bento-orange reveal">
-              <h2 style={{ marginBottom: "1.2rem" }}>Sertifikat terverifikasi.</h2>
-              <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
-                <div className="pct-bubble">QR</div>
-                <p style={{ fontWeight: 600, maxWidth: "16rem", fontSize: ".95rem" }}>
-                  Dilengkapi QR yang mengarah ke halaman verifikasi resmi.
-                </p>
-              </div>
-              <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", marginTop: "1.2rem" }}>
-                <div className="pct-bubble" style={{ fontSize: ".9rem" }}>1×24 jam</div>
-                <p style={{ fontWeight: 600, maxWidth: "16rem", fontSize: ".95rem" }}>
-                  Terbit otomatis setelah lulus evaluasi. Ada garansi uang kembali.
-                </p>
-              </div>
-            </div>
-            <div className="bento reveal">
-              <h2 style={{ marginBottom: "1.2rem" }}>Yang Anda <span className="acc-o">dapatkan</span></h2>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".8rem" }}>
-                <div className="chip-box"><div className="chip-head"><h3>Sertifikat</h3><span className="dot-btn dot-p"><Icon name="award" size={15} /></span></div><p>Resmi, terverifikasi QR</p></div>
-                <div className="chip-box"><div className="chip-head"><h3>Materi</h3><span className="dot-btn dot-o"><Icon name="book" size={15} /></span></div><p>Akses tanpa batas waktu</p></div>
-                <div className="chip-box"><div className="chip-head"><h3>Komunitas</h3><span className="dot-btn dot-k"><Icon name="users" size={15} /></span></div><p>Grup peserta & mentor</p></div>
-                <div className="chip-box"><div className="chip-head"><h3>Rekaman</h3><span className="dot-btn dot-p"><Icon name="video" size={15} /></span></div><p>Dapat diputar ulang</p></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ===== FAQ ===== */}
       <section className="section" id="faq">
