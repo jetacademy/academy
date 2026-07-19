@@ -1,5 +1,6 @@
 import { saveProgram } from "@/app/webadmin/actions";
 import type { Deliverable } from "@/lib/fallback";
+import ThumbnailUploader from "@/components/ThumbnailUploader";
 
 type ProgramRow = {
   id: string; slug: string; type: string; title: string; tagline: string; description: string;
@@ -140,10 +141,7 @@ export default function ProgramForm({
           <label>Deskripsi Singkat</label>
           <input name="description" defaultValue={program?.description} required />
         </div>
-        <div className="field">
-          <label>Gambar Program (opsional)</label>
-          <input name="imageUrl" defaultValue={program?.imageUrl ?? ""} placeholder="URL gambar, rasio 16:9 (cth: 1200x675)" />
-        </div>
+        <ThumbnailUploader name="imageUrl" defaultValue={program?.imageUrl ?? ""} />
         <div className="field">
           <label>Emoji Kartu (jika tanpa gambar)</label>
           <input name="emoji" defaultValue={program?.emoji ?? "🎓"} />

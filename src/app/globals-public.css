@@ -792,9 +792,19 @@
   display: flex; flex-direction: column; gap: .7rem;
   transition: transform .18s ease, box-shadow .18s ease;
   position: relative;
+  overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
 .prg-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+.prg-card-thumb {
+  margin: -1.4rem -1.4rem 0;
+  aspect-ratio: 16 / 9;
+  background: var(--chip);
+  overflow: hidden;
+  position: relative;
+}
+.prg-card-thumb img { object-fit: cover; transition: transform .25s ease; }
+.prg-card:hover .prg-card-thumb img { transform: scale(1.04); }
 .prg-top { display: flex; justify-content: space-between; align-items: center; gap: .8rem; }
 .type-tag {
   font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;

@@ -206,12 +206,12 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               <p className="prg-hero-lead">{program.tagline}</p>
             </div>
 
-            {/* Kolom kanan — Hero Image Mockup */}
+            {/* Kolom kanan — Gambar Program (upload admin) atau ilustrasi bawaan */}
             <div className="prg-hero-visual">
               <div className="prg-hero-image-panel">
                 <Image
-                  src="/hero2.webp"
-                  alt="Webinar Jetschool Academy"
+                  src={program.imageUrl || "/hero2.webp"}
+                  alt={program.title}
                   width={600}
                   height={400}
                   className="prg-hero-image"

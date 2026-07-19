@@ -117,6 +117,11 @@ export default async function Home() {
             <div className="prg-grid">
               {displayPrograms.map((p) => (
                 <Link key={p.slug} href={`/program/${p.slug}`} className="prg-card">
+                  {p.imageUrl && (
+                    <div className="prg-card-thumb">
+                      <Image src={p.imageUrl} alt={p.title} fill sizes="(max-width: 780px) 92vw, 46vw" />
+                    </div>
+                  )}
                   <div className="prg-top">
                     <span className={`type-tag ${TYPE_CLASS[p.type]}`}>{TYPE_LABEL[p.type]}</span>
                     <span className="dot-btn dot-p" style={{ width: 38, height: 38 }}>

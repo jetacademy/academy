@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WaFloat from "@/components/WaFloat";
@@ -188,6 +189,11 @@ export default function ProgramListClient({
               <div className="prg-grid">
                 {displayedPrograms.map((p) => (
                   <Link key={p.slug} href={`/program/${p.slug}`} className="prg-card" style={{ display: "flex", flexDirection: "column" }}>
+                    {p.imageUrl && (
+                      <div className="prg-card-thumb">
+                        <Image src={p.imageUrl} alt={p.title} fill sizes="(max-width: 780px) 92vw, 46vw" />
+                      </div>
+                    )}
                     <div className="prg-top">
                       <span className={`type-tag ${TYPE_CLASS[p.type]}`}>{TYPE_LABEL[p.type]}</span>
                       <span className="dot-btn dot-p" style={{ width: 38, height: 38 }}>
