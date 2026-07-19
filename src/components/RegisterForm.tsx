@@ -6,12 +6,13 @@ import GoogleAuthModal from "@/components/GoogleAuthModal";
 import { useRouter } from "next/navigation";
 import { memberLogout } from "@/app/member/actions";
 import { formatJadwal } from "@/lib/format";
+import Link from "next/link";
 
 declare global {
   interface Window { fbq?: (...args: unknown[]) => void }
 }
 
-export default function RegisterForm({ programSlug, programTitle, jadwal, price, priceLabel, memberProfile, batches }: {
+export default function RegisterForm({ programSlug, programTitle, jadwal, price, priceLabel, memberProfile, batches, isAlreadyRegistered }: {
   programSlug: string;
   programTitle: string;
   jadwal: string;
@@ -24,6 +25,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     institution: string | null;
   } | null;
   batches?: { id: string; scheduleAt: string; seatsLeft: number | null }[];
+  isAlreadyRegistered?: boolean;
 }) {
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   const [error, setError] = useState("");
@@ -42,6 +44,23 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
 
   const isPaid = price > 0;
   const hasCompletedProfile = !!(whatsappVal.trim() && institutionVal.trim());
+
+  if (isAlreadyRegistered) {
+    return (
+      <div className="reg-card" style={{ textAlign: "center" }}>
+        <span className="dot-btn dot-p" style={{ width: 56, height: 56, margin: "0 auto .9rem" }}>
+          <Icon name="check" size={26} />
+        </span>
+        <h3>Anda sudah terdaftar.</h3>
+        <p className="sub" style={{ margin: ".6rem 0 1.4rem" }}>
+          Anda sudah terdaftar untuk program <b>{programTitle}</b>. Silakan masuk ke Dashboard Member Anda untuk mengakses materi dan detail kelas.
+        </p>
+        <Link href="/member" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", display: "block", textAlign: "center" }}>
+          Buka Dashboard Member
+        </Link>
+      </div>
+    );
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

@@ -67,6 +67,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
 
   const sessionVal = await getMemberSession();
   let memberProfile = null;
+  let isAlreadyRegistered = false;
   if (sessionVal) {
     // 1. Cari data dari tabel User dulu (karena user yang baru daftar belum tentu punya registration)
     const user = await prisma.user.findFirst({
@@ -108,6 +109,16 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         whatsapp: lastReg.whatsapp,
         institution: lastReg.institution,
       };
+    }
+
+    const existingReg = await prisma.registration.findFirst({
+      where: {
+        programId: program.id,
+        OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
+      },
+    });
+    if (existingReg) {
+      isAlreadyRegistered = true;
     }
   }
 
@@ -212,7 +223,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
       {/* Navigasi minimal: logo + satu tombol. */}
-      <Navbar minimal ctaHref="#daftar" ctaLabel={isFree ? "Daftar Gratis" : "Daftar"} />
+      <Navbar minimal ctaHref={isAlreadyRegistered ? "/member" : "#daftar"} ctaLabel={isAlreadyRegistered ? "Buka Dashboard" : (isFree ? "Daftar Gratis" : "Daftar")} />
 
       {/* ===== HERO ===== */}
       <section className="hero">
@@ -257,9 +268,15 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               </div>
             )}
             <div className="prg-cta-col">
-              <a href="#daftar" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", textAlign: "center" }}>
-                {isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`}
-              </a>
+              {isAlreadyRegistered ? (
+                <Link href="/member" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", textAlign: "center" }}>
+                  Buka Kelas di Dashboard
+                </Link>
+              ) : (
+                <a href="#daftar" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", textAlign: "center" }}>
+                  {isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`}
+                </a>
+              )}
               {!isFree && program.priceOld && (
                 <span className="prg-hero-strike" style={{ color: "var(--ink-soft)", textDecoration: "line-through", display: "block", textAlign: "center", marginTop: "0.2rem" }}>
                   {rupiah(program.priceOld)}
@@ -274,12 +291,6 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                   <Icon name="award" size={14} />
                   <span>{isAiForTeachers ? "Live Zoom 2 jam · 6 Demo Langsung" : "Komunitas + Rekaman + Sertifikat 32 JP"}</span>
                 </div>
-                {program.seatsLeft != null && (
-                  <div className="cta-meta-item" style={{ color: "var(--orange)" }}>
-                    <Icon name="users" size={14} />
-                    <span>{program.seatsLeft} Kursi Tersisa</span>
-                  </div>
-                )}
               </div>
               <OfferTimer target={program.scheduleAt.toISOString()} note="Sesi dimulai dalam" />
             </div>
@@ -565,6 +576,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 price={program.price}
                 priceLabel={priceLabel}
                 memberProfile={memberProfile}
+                isAlreadyRegistered={isAlreadyRegistered}
                 batches={program.batches?.map((b) => ({ id: b.id, scheduleAt: b.scheduleAt.toISOString(), seatsLeft: b.seatsLeft }))}
               />
             </div>
@@ -633,7 +645,11 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       {/* Bar CTA lengket di mobile */}
       <div className="sticky-cta">
         <div><b>{priceLabel}</b><small>{formatHari(program.scheduleAt)}, {formatJam(program.scheduleAt)}</small></div>
-        <a href="#daftar" className="btn btn-lime">{isFree ? "Daftar Gratis" : "Daftar"}</a>
+        {isAlreadyRegistered ? (
+          <Link href="/member" className="btn btn-lime">Buka Kelas</Link>
+        ) : (
+          <a href="#daftar" className="btn btn-lime">{isFree ? "Daftar Gratis" : "Daftar"}</a>
+        )}
       </div>
 
       <WaFloat text={`Halo, saya ingin bertanya mengenai program ${program.title}`} />

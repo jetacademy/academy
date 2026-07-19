@@ -61,6 +61,8 @@ async function main() {
       description:
         "Pelatihan 8 Jam Pelajaran (JP) untuk guru SD, SMP, SMA, SMK, dan Madrasah. Kuasai 6 metode praktis memanfaatkan AI untuk menyusun perangkat pembelajaran — dari modul ajar, soal HOTS, video, audio, presentasi, hingga infografis. GRATIS akses penuh LMS, webinar, dan materi.",
       emoji: "🤖",
+      imageUrl:
+        "/uploads/1784375696711-Biru_Putih_dan_Kuning_Modern_Gradasi_3D_Webinar_Kecerdasan_Buatan_Latar_Belakang_Virtual_Zoom.png",
       mentorName: "Tim Jetschool Academy",
       mentorBio:
         "Tim pengembang platform AI untuk guru di Indonesia yang telah membantu ribuan pendidik mengadopsi teknologi AI dalam proses pembelajaran secara praktis dan aman.",
