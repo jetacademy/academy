@@ -39,21 +39,28 @@ export async function sendWa(to: string, text: string): Promise<boolean> {
 
 // ---------- Template pesan (jelas, sopan, profesional) ----------
 
-export function msgWelcome(name: string, programTitle: string, schedule: string, zoomLink?: string | null, waGroupLink?: string | null) {
+export function msgWelcome(
+  name: string,
+  programTitle: string,
+  schedule: string,
+  zoomLink?: string | null,
+  waGroupLink?: string | null,
+  memberUrl?: string
+) {
+  const dashboardUrl = memberUrl || `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/member`;
   return [
     `Halo ${name},`,
     ``,
-    `Pendaftaran Anda untuk *${programTitle}* telah kami terima.`,
+    `Terima kasih. Pendaftaran Anda untuk *${programTitle}* telah berhasil terdaftar.`,
     ``,
-    `Jadwal: ${schedule}`,
-    zoomLink ? `Tautan Zoom: ${zoomLink}` : null,
-    waGroupLink ? `\nSilakan bergabung ke grup peserta untuk informasi, materi, dan pengingat jadwal:\n${waGroupLink}` : null,
+    `Jadwal Pelatihan: ${schedule}`,
     ``,
-    `Sampai bertemu di kelas.`,
+    `Untuk mengakses link Zoom Live, grup WhatsApp peserta, dan materi lengkap, silakan masuk ke dashboard belajar Anda di tautan berikut:`,
+    dashboardUrl,
     ``,
     `Salam,`,
     `Tim Jetschool Academy`,
-  ].filter((l) => l !== null).join("\n");
+  ].join("\n");
 }
 
 export function msgPaid(name: string, programTitle: string, memberUrl: string) {
@@ -83,15 +90,11 @@ export function msgAccess(params: {
   return [
     `Halo ${params.name},`,
     ``,
-    `Pembayaran Anda untuk *${params.programTitle}* telah kami terima. Selamat bergabung.`,
+    `Terima kasih. Pembayaran Anda untuk *${params.programTitle}* telah kami terima dan terkonfirmasi.`,
     ``,
-    `Detail akses Anda:`,
-    params.waGroupLink ? `• Grup peserta: ${params.waGroupLink}` : null,
-    params.lmsLink ? `• Materi pembelajaran: ${params.lmsLink}` : null,
-    params.zoomLink ? `• Tautan Zoom: ${params.zoomLink}` : null,
-    params.schedule ? `• Jadwal: ${params.schedule}` : null,
+    params.schedule ? `Jadwal Pelatihan: ${params.schedule}` : null,
     ``,
-    `Akses materi & tes melalui dashboard belajar Anda — e-sertifikat terbit otomatis begitu syarat kelulusan terpenuhi:`,
+    `Silakan masuk ke dashboard belajar Anda untuk mengakses materi pembelajaran, tautan Zoom Live, dan bergabung ke grup WhatsApp peserta:`,
     params.memberUrl,
     ``,
     `Salam,`,
