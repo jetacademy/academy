@@ -51,6 +51,24 @@ export function createEmptyBlock(type: BlockType): ContentBlock {
   }
 }
 
+/** Blok tanpa konten inti akan dirender `null` oleh ProgramContentBlocks — dipakai editor utk tampilkan placeholder. */
+export function isBlockEmpty(block: ContentBlock): boolean {
+  switch (block.type) {
+    case "heading":
+      return !block.text.trim();
+    case "text":
+      return !block.html.trim();
+    case "image":
+    case "video":
+      return !block.url.trim();
+    case "list":
+    case "stack":
+      return block.items.length === 0;
+    case "quote":
+      return !block.text.trim();
+  }
+}
+
 function escapeForHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -86,6 +104,37 @@ export function buildLegacyBlocks(program: {
     blocks.push({ id: createBlockId(), type: "quote", text: program.guarantee.trim(), author: "Jaminan Resmi" });
   }
   return blocks;
+}
+
+/**
+ * Satu desain template siap-pakai — titik mulai yang sudah rapi (heading → teks →
+ * daftar poin → value stack → gambar → kutipan) yang bisa langsung diedit/dihapus/
+ * dikembangkan admin, bukan mulai dari kanvas kosong. Isinya sengaja placeholder
+ * jelas "ganti teks ini" supaya tidak keliru dianggap konten final.
+ */
+export function buildDefaultTemplate(): ContentBlock[] {
+  return [
+    { id: createBlockId(), type: "heading", text: "Kenapa Ikut Program Ini?" },
+    {
+      id: createBlockId(),
+      type: "text",
+      html: "<p>Tulis penjelasan singkat mengapa program ini penting dan masalah apa yang diselesaikan untuk peserta. Ganti teks ini dengan copy Anda sendiri.</p>",
+    },
+    { id: createBlockId(), type: "heading", text: "Yang Anda Pelajari" },
+    { id: createBlockId(), type: "list", items: ["Poin materi pertama", "Poin materi kedua", "Poin materi ketiga"] },
+    { id: createBlockId(), type: "heading", text: "Yang Anda Terima" },
+    {
+      id: createBlockId(),
+      type: "stack",
+      items: [
+        { label: "Rekaman sesi selamanya", value: 150000 },
+        { label: "Akses grup komunitas", value: 0 },
+        { label: "Template siap pakai", value: 100000 },
+      ],
+    },
+    { id: createBlockId(), type: "image", url: "", caption: "Ganti dengan gambar/screenshot produk Anda" },
+    { id: createBlockId(), type: "quote", text: "Tulis testimoni peserta atau jaminan resmi di sini.", author: "Nama Peserta / Jaminan Resmi" },
+  ];
 }
 
 function escapeHtml(s: string): string {

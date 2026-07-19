@@ -9,11 +9,13 @@ import {
   BLOCK_TYPE_META,
   createEmptyBlock,
   buildLegacyBlocks,
+  buildDefaultTemplate,
   parseMarkdownToBlocks,
+  isBlockEmpty,
 } from "@/lib/content-blocks";
 import { isValidVideoUrl } from "@/lib/video";
 import { saveProgramContentBlocks } from "@/app/webadmin/actions";
-import ProgramContentBlocks from "@/components/ProgramContentBlocks";
+import { ContentBlockView } from "@/components/ProgramContentBlocks";
 import RichTextEditor from "@/components/RichTextEditor";
 import BlockImageField from "@/components/BlockImageField";
 
@@ -39,11 +41,11 @@ export default function ContentBlockEditor({
 }) {
   const [blocks, setBlocks] = useState<ContentBlock[]>(initialBlocks);
   const [dirty, setDirty] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [insertAt, setInsertAt] = useState<number | null>(null);
   const [saving, startSaving] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedOk, setSavedOk] = useState(false);
-  const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [showMarkdownImport, setShowMarkdownImport] = useState(false);
   const [markdownDraft, setMarkdownDraft] = useState("");
 
@@ -53,8 +55,13 @@ export default function ContentBlockEditor({
     setSavedOk(false);
   }
 
-  function addBlock(type: BlockType) {
-    setBlocksDirty([...blocks, createEmptyBlock(type)]);
+  function insertBlock(type: BlockType, index: number) {
+    const block = createEmptyBlock(type);
+    const next = [...blocks];
+    next.splice(index, 0, block);
+    setBlocksDirty(next);
+    setEditingId(block.id);
+    setInsertAt(null);
   }
 
   function updateBlock(id: string, patch: Record<string, unknown>) {
@@ -63,6 +70,7 @@ export default function ContentBlockEditor({
 
   function removeBlock(id: string) {
     setBlocksDirty(blocks.filter((b) => b.id !== id));
+    if (editingId === id) setEditingId(null);
   }
 
   function moveBlock(index: number, dir: -1 | 1) {
@@ -73,19 +81,18 @@ export default function ContentBlockEditor({
     setBlocksDirty(next);
   }
 
-  function reorderByDrag(from: number, to: number) {
-    if (from === to) return;
-    const next = [...blocks];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    setBlocksDirty(next);
-  }
-
   function loadLegacy() {
     if (blocks.length > 0 && !confirm("Ini akan menambahkan blok dari data lama (deskripsi, materi, dll) ke akhir daftar. Lanjutkan?")) {
       return;
     }
     setBlocksDirty([...blocks, ...buildLegacyBlocks(legacyProgram)]);
+  }
+
+  function loadTemplate() {
+    if (blocks.length > 0 && !confirm("Ini akan menambahkan blok template (judul, teks, daftar, value stack, gambar, kutipan) ke akhir daftar. Lanjutkan?")) {
+      return;
+    }
+    setBlocksDirty([...blocks, ...buildDefaultTemplate()]);
   }
 
   function importMarkdown() {
@@ -111,98 +118,77 @@ export default function ContentBlockEditor({
   }
 
   return (
-    <div className="cbe-wrap">
-      <div className={mobileView === "edit" ? "cbe-editor" : "cbe-editor cbe-hide-mobile"}>
-        <div className="cbe-toolbar">
-          <span className="adm-note" style={{ marginBottom: ".5rem", display: "block" }}>Tambah blok baru:</span>
-          <div className="cbe-add-grid">
-            {BLOCK_TYPES.map((type) => (
-              <button key={type} type="button" className="cbe-add-btn" onClick={() => addBlock(type)} title={BLOCK_TYPE_META[type].hint}>
-                <span>{BLOCK_TYPE_META[type].icon}</span>
-                {BLOCK_TYPE_META[type].label}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="btn btn-sm"
-            style={{ marginTop: ".8rem" }}
-            onClick={() => setShowMarkdownImport((v) => !v)}
-          >
-            {showMarkdownImport ? "Batal Import Markdown" : "✍️ Import dari Markdown"}
+    <div className="ibk-page">
+      <div className="ibk-topbar">
+        <button type="button" className="btn btn-sm btn-purple" onClick={loadTemplate}>🎨 Muat Template</button>
+        <button type="button" className="btn btn-sm" onClick={() => setShowMarkdownImport((v) => !v)}>
+          {showMarkdownImport ? "Batal Import Markdown" : "✍️ Import dari Markdown"}
+        </button>
+        {blocks.length > 0 && (
+          <button type="button" className="btn btn-sm" onClick={loadLegacy}>↺ Tambahkan blok dari data lama</button>
+        )}
+      </div>
+
+      {showMarkdownImport && (
+        <div className="ibk-markdown-panel">
+          <textarea
+            value={markdownDraft}
+            onChange={(e) => setMarkdownDraft(e.target.value)}
+            placeholder={"## Kenapa Ikut Program Ini?\n\nParagraf **penjelasan** singkat.\n\n- Poin satu\n- Poin dua\n\n> Kelasnya sangat membantu\n> — Nama Peserta"}
+            rows={7}
+            style={{ fontFamily: "monospace", fontSize: ".82rem" }}
+          />
+          <span className="adm-note">
+            # judul · paragraf teks · ![keterangan](url gambar/video) · - daftar poin · - Label | 150000 value stack · {"> kutipan"}.
+          </span>
+          <button type="button" className="btn btn-sm btn-purple" style={{ marginTop: ".5rem" }} onClick={importMarkdown} disabled={!markdownDraft.trim()}>
+            Tambahkan Blok dari Teks Ini
           </button>
-          {showMarkdownImport && (
-            <div style={{ marginTop: ".7rem" }}>
-              <textarea
-                value={markdownDraft}
-                onChange={(e) => setMarkdownDraft(e.target.value)}
-                placeholder={"## Kenapa Ikut Program Ini?\n\nParagraf **penjelasan** singkat.\n\n- Poin satu\n- Poin dua\n\n> Kelasnya sangat membantu\n> — Nama Peserta"}
-                rows={8}
-                style={{ fontFamily: "monospace", fontSize: ".82rem" }}
-              />
-              <span className="adm-note">
-                Tulis seperti markdown biasa: # judul, paragraf, ![keterangan](url gambar/video), - daftar poin, - Label | 150000 utk value stack, {"> kutipan"}.
-              </span>
-              <button type="button" className="btn btn-sm btn-purple" style={{ marginTop: ".6rem" }} onClick={importMarkdown} disabled={!markdownDraft.trim()}>
-                Tambahkan Blok dari Teks Ini
-              </button>
-            </div>
-          )}
         </div>
+      )}
 
-        <div className="cbe-list">
-          {blocks.length === 0 && (
-            <div className="cbe-empty">
-              Belum ada blok. Halaman publik akan tetap tampil dengan layout lama (deskripsi/materi/mentor bawaan)
-              sampai Anda menambah dan menyimpan blok di sini.
-              <br /><br />
-              <button type="button" className="btn btn-sm btn-purple" onClick={loadLegacy}>
-                ↺ Mulai dari data lama (deskripsi, materi, dll)
+      <div className="ibk-canvas">
+        <InsertZone
+          open={insertAt === 0}
+          onToggle={() => setInsertAt(insertAt === 0 ? null : 0)}
+          onPick={(type) => insertBlock(type, 0)}
+        />
+
+        {blocks.length === 0 && (
+          <div className="ibk-empty">
+            <p>Halaman ini belum punya konten kustom. Klik tombol + di atas untuk mulai menambah blok satu-satu,</p>
+            <div style={{ display: "flex", gap: ".5rem", justifyContent: "center", flexWrap: "wrap" }}>
+              <button type="button" className="btn btn-sm btn-purple" onClick={loadTemplate}>
+                🎨 mulai dari template
+              </button>
+              <button type="button" className="btn btn-sm" onClick={loadLegacy}>
+                ↺ atau dari data lama (deskripsi, materi, dll)
               </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {blocks.map((block, index) => (
-            <BlockEditorCard
-              key={block.id}
+        {blocks.map((block, index) => (
+          <div key={block.id}>
+            <InlineBlockCard
               block={block}
-              index={index}
-              total={blocks.length}
-              dragging={dragIndex === index}
+              editing={editingId === block.id}
+              onEdit={() => setEditingId(block.id)}
+              onDoneEdit={() => setEditingId(null)}
               onUpdate={(patch) => updateBlock(block.id, patch)}
               onRemove={() => removeBlock(block.id)}
-              onMove={(dir) => moveBlock(index, dir)}
-              onDragStart={() => setDragIndex(index)}
-              onDragEnd={() => setDragIndex(null)}
-              onDropOn={() => {
-                if (dragIndex !== null) reorderByDrag(dragIndex, index);
-                setDragIndex(null);
-              }}
+              onMoveUp={() => moveBlock(index, -1)}
+              onMoveDown={() => moveBlock(index, 1)}
+              isFirst={index === 0}
+              isLast={index === blocks.length - 1}
             />
-          ))}
-
-          {blocks.length > 0 && (
-            <button type="button" className="btn btn-sm" onClick={loadLegacy} style={{ width: "fit-content" }}>
-              ↺ Tambahkan juga blok dari data lama
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className={mobileView === "preview" ? "cbe-preview" : "cbe-preview cbe-hide-mobile"}>
-        <div className="cbe-preview-label">Pratinjau Langsung</div>
-        <div className="cbe-preview-frame">
-          {blocks.length > 0 ? (
-            <ProgramContentBlocks blocks={blocks} />
-          ) : (
-            <p className="adm-note">Belum ada blok untuk dipratinjau.</p>
-          )}
-        </div>
-      </div>
-
-      <div className="cbe-mobile-toggle">
-        <button type="button" className={mobileView === "edit" ? "on" : ""} onClick={() => setMobileView("edit")}>✏️ Edit</button>
-        <button type="button" className={mobileView === "preview" ? "on" : ""} onClick={() => setMobileView("preview")}>👁️ Pratinjau</button>
+            <InsertZone
+              open={insertAt === index + 1}
+              onToggle={() => setInsertAt(insertAt === index + 1 ? null : index + 1)}
+              onPick={(type) => insertBlock(type, index + 1)}
+            />
+          </div>
+        ))}
       </div>
 
       <div className="cbe-savebar">
@@ -217,60 +203,87 @@ export default function ContentBlockEditor({
   );
 }
 
-function BlockEditorCard({
+function InsertZone({ open, onToggle, onPick }: { open: boolean; onToggle: () => void; onPick: (type: BlockType) => void }) {
+  return (
+    <div className={open ? "ibk-insert open" : "ibk-insert"}>
+      <span className="ibk-insert-line" />
+      <button type="button" className="ibk-insert-btn" onClick={onToggle} title="Tambah blok di sini">+</button>
+      <span className="ibk-insert-line" />
+      {open && (
+        <div className="ibk-insert-menu">
+          {BLOCK_TYPES.map((type) => (
+            <button key={type} type="button" className="ibk-insert-menu-btn" onClick={() => onPick(type)} title={BLOCK_TYPE_META[type].hint}>
+              <span>{BLOCK_TYPE_META[type].icon}</span>
+              {BLOCK_TYPE_META[type].label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InlineBlockCard({
   block,
-  index,
-  total,
-  dragging,
+  editing,
+  onEdit,
+  onDoneEdit,
   onUpdate,
   onRemove,
-  onMove,
-  onDragStart,
-  onDragEnd,
-  onDropOn,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
 }: {
   block: ContentBlock;
-  index: number;
-  total: number;
-  dragging: boolean;
+  editing: boolean;
+  onEdit: () => void;
+  onDoneEdit: () => void;
   onUpdate: (patch: Record<string, unknown>) => void;
   onRemove: () => void;
-  onMove: (dir: -1 | 1) => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-  onDropOn: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isFirst: boolean;
+  isLast: boolean;
 }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const meta = BLOCK_TYPE_META[block.type];
+  const empty = isBlockEmpty(block);
 
   return (
-    <div
-      className={dragging ? "cbe-card dragging" : "cbe-card"}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => {
-        e.preventDefault();
-        onDropOn();
-      }}
-    >
-      <div className="cbe-card-head">
-        <span className="cbe-drag-handle" draggable onDragStart={onDragStart} onDragEnd={onDragEnd} title="Seret untuk urutkan">⠿</span>
-        <span className="cbe-card-type">{meta.icon} {meta.label}</span>
-        <div className="cbe-card-actions">
-          <button type="button" onClick={() => onMove(-1)} disabled={index === 0} title="Naik">↑</button>
-          <button type="button" onClick={() => onMove(1)} disabled={index === total - 1} title="Turun">↓</button>
-          {!confirmingDelete ? (
-            <button type="button" className="danger" onClick={() => setConfirmingDelete(true)} title="Hapus">✕</button>
-          ) : (
-            <span className="cbe-confirm-del">
-              <button type="button" className="danger" onClick={onRemove}>Ya, hapus</button>
-              <button type="button" onClick={() => setConfirmingDelete(false)}>Batal</button>
-            </span>
-          )}
+    <div className={editing ? "ibk-block editing" : "ibk-block"}>
+      {!editing && (
+        <div className="ibk-toolbar">
+          <span className="ibk-toolbar-label">{meta.icon} {meta.label}</span>
+          <div className="ibk-toolbar-actions">
+            <button type="button" onClick={onMoveUp} disabled={isFirst} title="Naik">↑</button>
+            <button type="button" onClick={onMoveDown} disabled={isLast} title="Turun">↓</button>
+            <button type="button" onClick={onEdit} title="Edit">✏️</button>
+            {!confirmingDelete ? (
+              <button type="button" className="danger" onClick={() => setConfirmingDelete(true)} title="Hapus">✕</button>
+            ) : (
+              <span className="ibk-confirm">
+                <button type="button" className="danger" onClick={onRemove}>Ya, hapus</button>
+                <button type="button" onClick={() => setConfirmingDelete(false)}>Batal</button>
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="cbe-card-body">
-        <BlockFields block={block} onUpdate={onUpdate} />
-      </div>
+      )}
+
+      {editing ? (
+        <div className="ibk-edit-panel">
+          <BlockFields block={block} onUpdate={onUpdate} />
+          <button type="button" className="btn btn-sm btn-purple" style={{ marginTop: ".8rem" }} onClick={onDoneEdit}>
+            Selesai Edit
+          </button>
+        </div>
+      ) : (
+        <div className="ibk-render" onClick={onEdit}>
+          <ContentBlockView block={block} noReveal />
+          {empty && <div className="ibk-empty-hint">Klik untuk isi blok {meta.label.toLowerCase()} ini</div>}
+        </div>
+      )}
     </div>
   );
 }
@@ -279,7 +292,7 @@ function BlockFields({ block, onUpdate }: { block: ContentBlock; onUpdate: (patc
   switch (block.type) {
     case "heading":
       return (
-        <input value={block.text} onChange={(e) => onUpdate({ text: e.target.value })} placeholder="Judul bagian, mis. Yang Anda Pelajari" />
+        <input value={block.text} onChange={(e) => onUpdate({ text: e.target.value })} placeholder="Judul bagian, mis. Yang Anda Pelajari" autoFocus />
       );
 
     case "text":
@@ -305,6 +318,7 @@ function BlockFields({ block, onUpdate }: { block: ContentBlock; onUpdate: (patc
             value={block.url}
             onChange={(e) => onUpdate({ url: e.target.value.trim() })}
             placeholder="Tempel link YouTube, Vimeo, atau embed Bunny Stream"
+            autoFocus
           />
           {block.url && !isValidVideoUrl(block.url) && (
             <span className="cbe-field-warn">Link belum dikenali — gunakan URL YouTube, Vimeo, atau embed Bunny.</span>
@@ -325,6 +339,7 @@ function BlockFields({ block, onUpdate }: { block: ContentBlock; onUpdate: (patc
             value={block.title ?? ""}
             onChange={(e) => onUpdate({ title: e.target.value })}
             placeholder="Judul daftar (opsional)"
+            autoFocus
           />
           <ListItemsField items={block.items} onChange={(items) => onUpdate({ items })} />
         </>
@@ -337,6 +352,7 @@ function BlockFields({ block, onUpdate }: { block: ContentBlock; onUpdate: (patc
             value={block.title ?? ""}
             onChange={(e) => onUpdate({ title: e.target.value })}
             placeholder="Judul value stack (opsional)"
+            autoFocus
           />
           <StackItemsField items={block.items} onChange={(items) => onUpdate({ items })} />
         </>
@@ -350,6 +366,7 @@ function BlockFields({ block, onUpdate }: { block: ContentBlock; onUpdate: (patc
             onChange={(e) => onUpdate({ text: e.target.value })}
             placeholder="Isi kutipan, bio mentor, atau teks jaminan…"
             rows={3}
+            autoFocus
           />
           <input
             value={block.author ?? ""}
