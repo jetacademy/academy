@@ -180,6 +180,35 @@ export default function ApiIntegrationClient({
 
       <div className="form-section">
         <header>
+          <h3>Contoh: Isi Halaman Program (Markdown)</h3>
+          <p>
+            Cara termudah menyusun tampilan halaman program — tulis seperti markdown biasa lewat field{" "}
+            <code>contentMarkdown</code>, sistem otomatis mengubahnya jadi blok judul/teks/gambar/video/daftar/value-stack/kutipan.
+            Kirim di body <code>POST</code> saat buat program, atau <code>PATCH</code> ke program yang sudah ada.
+          </p>
+        </header>
+        <div className="fs-body">
+          <div className="field full">
+            <pre style={preStyle}>
+{`curl -X PATCH "${siteUrl}/api/v1/programs/PROGRAM_ID" \\
+  -H "X-API-Key: ${apiKey}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "contentMarkdown": "## Kenapa Ikut Program Ini?\\n\\nDi kelas ini kamu akan **praktik langsung** bikin AI Agent dari nol, bukan cuma teori.\\n\\n## Yang Anda Pelajari\\n- Riset target audiens\\n- Copywriting iklan\\n- Optimasi budget\\n\\n## Yang Anda Terima\\n- Rekaman selamanya | 150000\\n- Akses grup komunitas | 0\\n\\n![Cuplikan sesi kelas](https://www.youtube.com/watch?v=dQw4w9WgXcQ)\\n\\n> Kelasnya sangat membantu, langsung bisa dipakai kerja.\\n> — Budi, Alumni"
+  }'`}
+            </pre>
+          </div>
+          <p className="adm-note" style={{ marginTop: "-.4rem" }}>
+            Sintaks: <code># / ##</code> judul · paragraf biasa teks (<code>**tebal**</code>/<code>*miring*</code>) ·{" "}
+            <code>![keterangan](url)</code> gambar (otomatis jadi video kalau url YouTube/Vimeo/Bunny) ·{" "}
+            <code>- poin</code> daftar · <code>- Label | 150000</code> value stack · <code>{"> teks"}</code> kutipan
+            (baris terakhir diawali <code>—</code> jadi nama sumber).
+          </p>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <header>
           <h3>Contoh: Tambah Batch</h3>
         </header>
         <div className="fs-body">

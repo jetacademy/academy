@@ -2,6 +2,8 @@
 // maupun server (tidak ada dependensi Node-only) — sanitasi/validasi server-side
 // ada terpisah di webadmin/actions.ts agar dompurify/jsdom tidak ikut ter-bundle ke client.
 
+import { isValidVideoUrl } from "@/lib/video";
+
 export type ContentBlock =
   | { id: string; type: "heading"; text: string }
   | { id: string; type: "text"; html: string }
@@ -83,5 +85,124 @@ export function buildLegacyBlocks(program: {
   if (program.guarantee?.trim()) {
     blocks.push({ id: createBlockId(), type: "quote", text: program.guarantee.trim(), author: "Jaminan Resmi" });
   }
+  return blocks;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** Tebal dan miring (markdown) jadi strong dan em. Sengaja minimal — cukup utk teks marketing wajar. */
+function inlineFormat(s: string): string {
+  return s
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, "$1<em>$2</em>")
+    .replace(/(^|[^_])_([^_]+)_(?!_)/g, "$1<em>$2</em>");
+}
+
+/**
+ * Parser Markdown ringan khusus blok halaman program — dirancang supaya AI agent
+ * (mis. Hermes) bisa menulis halaman lengkap dengan sintaks yang sudah familiar,
+ * tanpa perlu tahu skema JSON blok yang presisi. Dipakai server-side (API `contentMarkdown`)
+ * MAUPUN client-side (tombol "Import dari Markdown" di editor admin) — makanya di file
+ * yang aman untuk keduanya.
+ *
+ * Sintaks yang dikenali (baris demi baris, dipisah baris kosong):
+ *   # / ## / ...   → blok heading
+ *   ![keterangan](url)  → blok gambar, atau blok video kalau url dikenali (YouTube/Vimeo/Bunny)
+ *   > isi kutipan
+ *   > — Nama Sumber        (baris terakhir kutipan diawali — atau - jadi nama sumber)
+ *   - poin satu
+ *   - poin dua             → blok daftar poin
+ *   - Label | 150000
+ *   - Label lain | 0       → blok value stack (item mengandung "|" → label & nilai)
+ *   paragraf biasa         → blok teks (mendukung **tebal** dan *miring*)
+ */
+export function parseMarkdownToBlocks(markdown: string): ContentBlock[] {
+  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const blocks: ContentBlock[] = [];
+  let paragraphBuf: string[] = [];
+  let i = 0;
+
+  function flushParagraph() {
+    if (paragraphBuf.length) {
+      const html = paragraphBuf.map((p) => `<p>${inlineFormat(escapeHtml(p))}</p>`).join("");
+      blocks.push({ id: createBlockId(), type: "text", html });
+      paragraphBuf = [];
+    }
+  }
+
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+
+    if (!trimmed) {
+      flushParagraph();
+      i++;
+      continue;
+    }
+
+    const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      flushParagraph();
+      blocks.push({ id: createBlockId(), type: "heading", text: headingMatch[2].trim() });
+      i++;
+      continue;
+    }
+
+    const imageMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (imageMatch) {
+      flushParagraph();
+      const [, alt, url] = imageMatch;
+      const caption = alt.trim() || undefined;
+      if (isValidVideoUrl(url.trim())) blocks.push({ id: createBlockId(), type: "video", url: url.trim(), caption });
+      else blocks.push({ id: createBlockId(), type: "image", url: url.trim(), caption });
+      i++;
+      continue;
+    }
+
+    if (trimmed.startsWith(">")) {
+      flushParagraph();
+      const quoteLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith(">")) {
+        quoteLines.push(lines[i].trim().replace(/^>\s?/, ""));
+        i++;
+      }
+      let author: string | undefined;
+      const last = quoteLines[quoteLines.length - 1];
+      const authorMatch = last?.match(/^[-—]\s*(.+)$/);
+      if (authorMatch && quoteLines.length > 1) {
+        author = authorMatch[1].trim();
+        quoteLines.pop();
+      }
+      const text = quoteLines.join(" ").trim();
+      if (text) blocks.push({ id: createBlockId(), type: "quote", text, author });
+      continue;
+    }
+
+    if (/^[-*]\s+/.test(trimmed)) {
+      flushParagraph();
+      const itemLines: string[] = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
+        itemLines.push(lines[i].trim().replace(/^[-*]\s+/, ""));
+        i++;
+      }
+      const isStack = itemLines.length > 0 && itemLines.every((l) => l.includes("|"));
+      if (isStack) {
+        const items = itemLines.map((l) => {
+          const [label, val] = l.split("|").map((s) => s.trim());
+          return { label, value: Number(String(val ?? "0").replace(/[^\d.-]/g, "")) || 0 };
+        });
+        blocks.push({ id: createBlockId(), type: "stack", items });
+      } else {
+        blocks.push({ id: createBlockId(), type: "list", items: itemLines });
+      }
+      continue;
+    }
+
+    paragraphBuf.push(trimmed);
+    i++;
+  }
+  flushParagraph();
+
   return blocks;
 }

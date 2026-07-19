@@ -4,6 +4,7 @@ import { authorizeApiRequest } from "@/lib/api-auth";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
 import { sanitizeContentBlocks } from "@/app/webadmin/actions";
+import { parseMarkdownToBlocks } from "@/lib/content-blocks";
 
 const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL?.includes("localhost")
   ? process.env.NEXT_PUBLIC_BASE_URL
@@ -76,8 +77,24 @@ export async function GET(req: Request) {
  * Body JSON wajib: { title, type, tagline, description, mentorName, mentorBio, scheduleAt }
  * Opsional: slug, emoji, imageUrl, materi (string[]), deliverables ({label,value}[]), guarantee,
  * durationLabel, zoomLink, waGroupLink, lmsLink, price, priceOld, certPrice, certPriceOld,
- * seatsLeft, isActive, isFeatured, categoryId, categorySlug, contentBlocks (lihat PATCH /api/v1/programs/:id
- * utk daftar tipe blok — jika diisi, MENGGANTIKAN tampilan deskripsi/materi/mentor bawaan di halaman publik).
+ * seatsLeft, isActive, isFeatured, categoryId, categorySlug.
+ *
+ * Isi halaman program (opsional, jika diisi MENGGANTIKAN tampilan deskripsi/materi/mentor bawaan
+ * di halaman publik) — pilih SALAH SATU cara, contentBlocks diprioritaskan kalau dua-duanya dikirim:
+ *
+ *   contentMarkdown (string) — CARA TERMUDAH, tulis seperti markdown biasa:
+ *     # / ##            → judul bagian
+ *     paragraf biasa    → teks (dukung **tebal** / *miring*)
+ *     ![keterangan](url) → gambar, atau video kalau url YouTube/Vimeo/Bunny
+ *     - poin satu
+ *     - poin dua        → daftar poin
+ *     - Label | 150000  → value stack (baris berisi "|" jadi label & nilai)
+ *     > isi kutipan
+ *     > — Nama Sumber   → kutipan/testimoni/bio mentor
+ *
+ *   contentBlocks (array) — kontrol presisi, tiap item: { id?, type, ...field }, type salah satu dari:
+ *     heading { text } | text { html } | image { url, caption? } | video { url, caption? }
+ *     list { title?, items: string[] } | stack { title?, items: {label,value}[] } | quote { text, author? }
  */
 export async function POST(req: Request) {
   const auth = await authorizeApiRequest(req, { rateLimitKey: "api-v1-programs-write", max: 20, windowMs: 60_000 });
@@ -132,7 +149,12 @@ export async function POST(req: Request) {
     : [];
 
   const guaranteeRaw = body.guarantee ? String(body.guarantee).trim() : "";
-  const contentBlocks = body.contentBlocks !== undefined ? await sanitizeContentBlocks(body.contentBlocks) : [];
+  const contentBlocks =
+    body.contentBlocks !== undefined
+      ? await sanitizeContentBlocks(body.contentBlocks)
+      : typeof body.contentMarkdown === "string" && body.contentMarkdown.trim()
+        ? await sanitizeContentBlocks(parseMarkdownToBlocks(body.contentMarkdown))
+        : [];
 
   try {
     const program = await prisma.program.create({

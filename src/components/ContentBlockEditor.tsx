@@ -9,6 +9,7 @@ import {
   BLOCK_TYPE_META,
   createEmptyBlock,
   buildLegacyBlocks,
+  parseMarkdownToBlocks,
 } from "@/lib/content-blocks";
 import { isValidVideoUrl } from "@/lib/video";
 import { saveProgramContentBlocks } from "@/app/webadmin/actions";
@@ -43,6 +44,8 @@ export default function ContentBlockEditor({
   const [savedOk, setSavedOk] = useState(false);
   const [mobileView, setMobileView] = useState<"edit" | "preview">("edit");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [showMarkdownImport, setShowMarkdownImport] = useState(false);
+  const [markdownDraft, setMarkdownDraft] = useState("");
 
   function setBlocksDirty(next: ContentBlock[]) {
     setBlocks(next);
@@ -85,6 +88,14 @@ export default function ContentBlockEditor({
     setBlocksDirty([...blocks, ...buildLegacyBlocks(legacyProgram)]);
   }
 
+  function importMarkdown() {
+    const parsed = parseMarkdownToBlocks(markdownDraft);
+    if (!parsed.length) return;
+    setBlocksDirty([...blocks, ...parsed]);
+    setMarkdownDraft("");
+    setShowMarkdownImport(false);
+  }
+
   function handleSave() {
     setSaveError(null);
     startSaving(async () => {
@@ -112,6 +123,31 @@ export default function ContentBlockEditor({
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            className="btn btn-sm"
+            style={{ marginTop: ".8rem" }}
+            onClick={() => setShowMarkdownImport((v) => !v)}
+          >
+            {showMarkdownImport ? "Batal Import Markdown" : "✍️ Import dari Markdown"}
+          </button>
+          {showMarkdownImport && (
+            <div style={{ marginTop: ".7rem" }}>
+              <textarea
+                value={markdownDraft}
+                onChange={(e) => setMarkdownDraft(e.target.value)}
+                placeholder={"## Kenapa Ikut Program Ini?\n\nParagraf **penjelasan** singkat.\n\n- Poin satu\n- Poin dua\n\n> Kelasnya sangat membantu\n> — Nama Peserta"}
+                rows={8}
+                style={{ fontFamily: "monospace", fontSize: ".82rem" }}
+              />
+              <span className="adm-note">
+                Tulis seperti markdown biasa: # judul, paragraf, ![keterangan](url gambar/video), - daftar poin, - Label | 150000 utk value stack, {"> kutipan"}.
+              </span>
+              <button type="button" className="btn btn-sm btn-purple" style={{ marginTop: ".6rem" }} onClick={importMarkdown} disabled={!markdownDraft.trim()}>
+                Tambahkan Blok dari Teks Ini
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="cbe-list">
