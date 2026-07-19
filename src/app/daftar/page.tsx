@@ -227,14 +227,16 @@ export default function DaftarPage() {
                     fontSize: "0.78rem",
                     color: "var(--purple)",
                     fontWeight: 700,
-                    marginBottom: "1.2rem"
+                    marginBottom: "1.2rem",
+                    gap: "0.4rem",
+                    flexWrap: "wrap"
                   }}>
-                    <span>Tersambung Google: {googleEmail}</span>
+                    <span style={{ wordBreak: "break-all", whiteSpace: "normal" }}>Tersambung Google: {googleEmail}</span>
                     <button type="button" onClick={() => {
                       setGoogleName("");
                       setGoogleEmail("");
                       setStep("pilih");
-                    }} style={{ background: "none", border: "none", color: "var(--ink-soft)", textDecoration: "underline", fontSize: "0.72rem", cursor: "pointer" }}>Ganti</button>
+                    }} style={{ background: "none", border: "none", color: "var(--ink-soft)", textDecoration: "underline", fontSize: "0.72rem", cursor: "pointer", marginLeft: "auto" }}>Ganti</button>
                   </div>
                 )}
                 <div className="field">

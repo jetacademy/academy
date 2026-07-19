@@ -188,10 +188,12 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                   border: "1px solid rgba(46, 204, 113, 0.15)",
                   padding: "0.4rem 0.8rem",
                   borderRadius: "20px",
-                  marginBottom: "1.2rem"
+                  marginBottom: "1.2rem",
+                  maxWidth: "100%",
+                  boxSizing: "border-box"
                 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }}></span>
-                  <span style={{ fontSize: "0.75rem", color: "#27ae60", fontWeight: 700 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", display: "inline-block", flexShrink: 0 }}></span>
+                  <span style={{ fontSize: "0.75rem", color: "#27ae60", fontWeight: 700, wordBreak: "break-all", whiteSpace: "normal", textAlign: "left" }}>
                     Sudah Login: {emailVal}
                   </span>
                 </div>
@@ -204,7 +206,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                 <div style={{
                   background: "var(--chip)",
                   borderRadius: "10px",
-                  padding: "1.2rem",
+                  padding: "clamp(0.8rem, 3.5vw, 1.2rem)",
                   textAlign: "left",
                   marginBottom: "1.5rem",
                   border: "1px solid var(--line)"
@@ -212,15 +214,15 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                   <div style={{ display: "grid", gap: "0.6rem", fontSize: "0.88rem" }}>
                     <div>
                       <span style={{ color: "var(--ink-soft)", display: "block", fontSize: "0.75rem", fontWeight: 700 }}>NAMA LENGKAP</span>
-                      <strong style={{ color: "var(--ink)" }}>{nameVal}</strong>
+                      <strong style={{ color: "var(--ink)", wordBreak: "break-word" }}>{nameVal}</strong>
                     </div>
                     <div>
                       <span style={{ color: "var(--ink-soft)", display: "block", fontSize: "0.75rem", fontWeight: 700 }}>WHATSAPP</span>
-                      <strong style={{ color: "var(--ink)" }}>{whatsappVal}</strong>
+                      <strong style={{ color: "var(--ink)", wordBreak: "break-word" }}>{whatsappVal}</strong>
                     </div>
                     <div>
                       <span style={{ color: "var(--ink-soft)", display: "block", fontSize: "0.75rem", fontWeight: 700 }}>INSTANSI / LEMBAGA</span>
-                      <strong style={{ color: "var(--ink)" }}>{institutionVal}</strong>
+                      <strong style={{ color: "var(--ink)", wordBreak: "break-word" }}>{institutionVal}</strong>
                     </div>
                   </div>
                 </div>

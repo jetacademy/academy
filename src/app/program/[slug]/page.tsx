@@ -548,7 +548,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       {/* ===== FORM DAFTAR ===== */}
       <section className="section" id="daftar">
         <div className="container">
-          <div className="bento bento-purple reveal" style={{ padding: "clamp(1.6rem, 4vw, 3rem)" }}>
+          <div className="bento bento-purple reveal" style={{ padding: "clamp(1rem, 5vw, 3rem)" }}>
             <div className="hero-card" style={{ alignItems: "center" }}>
               <div>
                 <h2 style={{ fontSize: "clamp(1.9rem, 4.5vw, 3rem)", marginBottom: ".8rem" }}>
