@@ -37,7 +37,7 @@ export default async function LmsPage({
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    include: { program: true, completions: true, certificate: true },
+    include: { program: true, completions: true, certificate: true, batch: true },
   });
 
   if (!reg) redirect("/member");
@@ -45,10 +45,70 @@ export default async function LmsPage({
   // Validasi kepemilikan sesi
   if (reg.email !== sessionVal && reg.whatsapp !== sessionVal) redirect("/member");
 
-  // Proteksi pembayaran jika berbayar — user non-bayar hanya bisa lihat preview
-  const isPreviewMode = reg.status === "REGISTERED" && reg.program.price > 0;
-
   const program = reg.program;
+
+  // Automated LMS Access Restriction based on batch schedule
+  const sessionAt = reg.batch?.scheduleAt ?? program.scheduleAt;
+  const now = new Date();
+  const isLmsOpen = program.type !== "WEBINAR" || now >= sessionAt;
+
+  if (!isLmsOpen) {
+    const formattedJadwal = new Intl.DateTimeFormat("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Jakarta",
+      timeZoneName: "short"
+    }).format(sessionAt);
+
+    return (
+      <>
+        <Navbar minimal ctaHref="/member" ctaLabel="Dashboard Saya" />
+        <section className="section" style={{ minHeight: "85vh", display: "grid", placeItems: "center", background: "var(--bg-warm)" }}>
+          <div className="bento" style={{
+            textAlign: "center",
+            maxWidth: "36rem",
+            padding: "3.5rem 2rem",
+            background: "var(--white)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--r-md)",
+            boxShadow: "var(--shadow-md)"
+          }}>
+            <span style={{ fontSize: "3.5rem" }}>📅</span>
+            <span className="type-tag type-webinar" style={{ display: "inline-block", margin: "1.5rem 0 0.8rem" }}>Sesi Belum Dimulai</span>
+            <h2 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--ink)" }}>Akses LMS Belum Dibuka</h2>
+            <p style={{ color: "var(--ink-soft)", fontSize: "1rem", lineHeight: 1.6, marginTop: "1rem" }}>
+              Halo <strong>{reg.name}</strong>, akses pembelajaran mandiri &amp; klaim sertifikat untuk program <strong>{program.title}</strong> akan terbuka secara otomatis setelah sesi live webinar dimulai pada:
+            </p>
+            <div style={{
+              background: "rgba(108, 92, 231, 0.05)",
+              border: "1px solid rgba(108, 92, 231, 0.15)",
+              borderRadius: "var(--r-sm)",
+              padding: "1rem",
+              margin: "1.5rem 0",
+              fontWeight: 700,
+              fontSize: "1.05rem",
+              color: "var(--purple)"
+            }}>
+              {formattedJadwal}
+            </div>
+            <p style={{ color: "var(--ink-faint)", fontSize: "0.85rem", marginBottom: "2rem" }}>
+              Silakan pantau grup WhatsApp peserta untuk mendapatkan tautan Zoom Meeting live.
+            </p>
+            <Link href="/member" className="btn btn-purple btn-lg" style={{ display: "inline-block" }}>Kembali ke Dashboard</Link>
+          </div>
+        </section>
+        <Footer />
+        <WaFloat />
+      </>
+    );
+  }
+
+  // Proteksi pembayaran jika berbayar — user non-bayar hanya bisa lihat preview
+  const isPreviewMode = reg.status === "REGISTERED" && program.price > 0;
 
   // Kurikulum berjenjang: kelompok → modul → materi (+ modul tanpa kelompok di akhir).
   // Soal kuis diambil TANPA kunci jawaban.
@@ -111,7 +171,11 @@ export default async function LmsPage({
   const progressPercent = Math.round((completedCount / totalLessons) * 100);
 
   // Kelayakan sertifikat sesuai kriteria program (hasil tes / penyelesaian materi)
-  const hasPaid = (reg.status === "PAID" || reg.status === "PASSED") || (program.price === 0 && program.certPrice === 0);
+  const freeUntil = new Date(sessionAt.getTime() + 5 * 24 * 60 * 60 * 1000); // H+5
+  const isWithinFreePeriod = now <= freeUntil;
+  const isFreeClaim = program.price === 0 && isWithinFreePeriod;
+
+  const hasPaid = (reg.status === "PAID" || reg.status === "PASSED") || (program.price === 0 && program.certPrice === 0) || isFreeClaim;
   const eligibility = reg.certificate ? { eligible: true as const } : await checkCertEligibility(reg.id, program);
   const canClaim = !reg.certificate && hasPaid && eligibility.eligible;
 
@@ -199,12 +263,17 @@ export default async function LmsPage({
                 {reg.certificate ? (
                   <>
                     <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem", lineHeight: 1.6, margin: "1rem 0 2rem" }}>
-                      Sertifikat Anda sudah terbit. Unduh dan bagikan pencapaian Anda!
+                      Sertifikat Anda sudah terbit dengan nomor resmi. Unduh dan bagikan pencapaian Anda!
                     </p>
                     <Link href={`/sertifikat/${reg.certificate.number}`} className="btn btn-purple btn-lg">Unduh e-Sertifikat</Link>
                   </>
                 ) : canClaim ? (
                   <>
+                    {isFreeClaim ? (
+                      <div className="adm-alert ok" style={{ marginBottom: "1.5rem", textAlign: "left", padding: "1rem", borderRadius: "var(--r-sm)", border: "1px solid rgba(46, 204, 113, 0.2)", background: "rgba(46, 204, 113, 0.08)", color: "#27ae60" }}>
+                        <strong>Promo Terbatas:</strong> Anda berhak mengklaim e-sertifikat secara <strong>GRATIS</strong> (Hemat {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(program.certPrice)}) karena menyelesaikan semua syarat sebelum batas waktu H+5 ({new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(freeUntil)}).
+                      </div>
+                    ) : null}
                     <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem", lineHeight: 1.6, margin: "1rem 0 2rem" }}>
                       Seluruh syarat kelulusan {program.title} sudah terpenuhi. Klaim e-sertifikat resmi Anda sekarang.
                     </p>
@@ -212,6 +281,9 @@ export default async function LmsPage({
                   </>
                 ) : !hasPaid ? (
                   <>
+                    <div className="adm-alert warn" style={{ marginBottom: "1.5rem", textAlign: "left", padding: "1rem", borderRadius: "var(--r-sm)", border: "1px solid rgba(230, 126, 34, 0.2)", background: "rgba(230, 126, 34, 0.08)", color: "#d35400" }}>
+                      <strong>Batas Klaim Gratis Berakhir:</strong> Masa tenggang klaim sertifikat gratis (H+5) telah berakhir pada {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(freeUntil)}. Anda kini dialihkan ke paket sertifikat berbayar.
+                    </div>
                     <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem", lineHeight: 1.6, margin: "1rem 0 2rem" }}>
                       Selesaikan pembayaran paket sertifikat untuk menerbitkan e-sertifikat resmi Anda.
                     </p>
@@ -226,6 +298,11 @@ export default async function LmsPage({
                         ? eligibility.reason
                         : "Masih ada syarat kelulusan yang belum terpenuhi. Periksa kembali materi & tes Anda."}
                     </p>
+                    {program.price === 0 && isWithinFreePeriod && (
+                      <p style={{ fontSize: "0.85rem", color: "var(--purple)", fontWeight: 700, marginTop: "-1rem", marginBottom: "2rem" }}>
+                        ⚡ Selesaikan seluruh materi/tes sekarang untuk mengklaim sertifikat GRATIS (Masa tenggang H+5).
+                      </p>
+                    )}
                     <Link href="/member" className="btn btn-line btn-lg">Kembali ke Dashboard</Link>
                   </>
                 )}

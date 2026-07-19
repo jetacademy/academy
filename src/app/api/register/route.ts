@@ -114,14 +114,19 @@ export async function POST(req: Request) {
 
     // ── PROGRAM GRATIS (WEBINAR) ─────────────────────────────────
     if (program.price === 0) {
+      const activeScheduleAt = reg.batchId
+        ? (await prisma.programBatch.findUnique({ where: { id: reg.batchId } }))?.scheduleAt ?? program.scheduleAt
+        : program.scheduleAt;
+      const formattedJadwal = formatJadwal(activeScheduleAt);
+
       await sendWa(
         whatsapp,
-        msgWelcome(name, program.title, formatJadwal(program.scheduleAt), program.zoomLink, program.waGroupLink)
+        msgWelcome(name, program.title, formattedJadwal, program.zoomLink, program.waGroupLink)
       );
       await sendEmail({
         to: email,
         subject: `Pendaftaran Berhasil: ${program.title}`,
-        html: getWelcomeEmailHtml(name, program.title, formatJadwal(program.scheduleAt), program.waGroupLink ?? "")
+        html: getWelcomeEmailHtml(name, program.title, formattedJadwal, program.waGroupLink ?? "")
       }).catch((err) => console.error("Gagal mengirim email pendaftaran gratis:", err));
 
       return NextResponse.json({ ok: true, paid: false, free: true, waGroupLink: program.waGroupLink });

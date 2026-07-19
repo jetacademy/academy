@@ -233,7 +233,7 @@ async function getOwnedRegistration(registrationId: string) {
   if (!sessionVal) return null;
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    include: { program: true },
+    include: { program: true, batch: true },
   });
   if (!reg) return null;
   if (reg.email !== sessionVal && reg.whatsapp !== sessionVal) return null;
@@ -366,7 +366,12 @@ export async function claimLessonsCertificate(registrationId: string) {
   const reg = await getOwnedRegistration(registrationId);
   if (!reg) return { error: "Sesi tidak valid. Silakan login ulang." };
 
-  if (reg.status === "REGISTERED" && (reg.program.price > 0 || reg.program.certPrice > 0)) {
+  const sessionAt = reg.batch?.scheduleAt ?? reg.program.scheduleAt;
+  const freeUntil = new Date(sessionAt.getTime() + 5 * 24 * 60 * 60 * 1000); // H+5
+  const isWithinFreePeriod = new Date() <= freeUntil;
+  const isFreeClaim = reg.program.price === 0 && isWithinFreePeriod;
+
+  if (reg.status === "REGISTERED" && !isFreeClaim && (reg.program.price > 0 || reg.program.certPrice > 0)) {
     return { error: "Selesaikan pembayaran terlebih dahulu." };
   }
 

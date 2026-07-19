@@ -9,6 +9,7 @@ import type { ContentBlock } from "@/lib/content-blocks";
 const upcomingBatchesInclude = {
   where: { isActive: true, scheduleAt: { gte: new Date() } },
   orderBy: { scheduleAt: "asc" as const },
+  take: 1,
   select: { id: true, scheduleAt: true, seatsLeft: true },
 };
 

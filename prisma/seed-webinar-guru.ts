@@ -61,6 +61,21 @@ async function main() {
 
   console.log("✅ Program dibuat:", program.slug);
 
+  // Buat 4 batch berurutan (7-day lifecycle) mulai dari 2 Agustus 2026
+  const baseDate = new Date("2026-08-02T12:00:00.000Z");
+  for (let i = 0; i < 4; i++) {
+    const batchSchedule = new Date(baseDate.getTime() + i * 7 * 24 * 60 * 60 * 1000);
+    await prisma.programBatch.create({
+      data: {
+        programId: program.id,
+        scheduleAt: batchSchedule,
+        seatsLeft: 300,
+        isActive: true,
+      },
+    });
+    console.log(`   Batch B${String(i + 1).padStart(3, "0")} ditambahkan: ${batchSchedule.toISOString()}`);
+  }
+
   // Soal post-test (10 soal pilihan ganda, minimal skor 70 untuk lulus)
   const soal = [
     {

@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendWa, msgCertificate } from "@/lib/wa";
 import { sendEmail, getCertEmailHtml } from "@/lib/email";
-import { randomBytes } from "crypto";
 import { formatJadwal } from "@/lib/format";
 
 const CERT_CLAIM_DELAY_MS = 24 * 60 * 60 * 1000; // 1×24 jam setelah sesi berakhir
@@ -16,7 +15,7 @@ export async function issueCertificate(registrationId: string): Promise<{ number
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    include: { certificate: true, program: true },
+    include: { certificate: true, program: true, batch: true },
   });
   if (!reg) throw new Error("Registrasi tidak ditemukan.");
 
@@ -24,9 +23,54 @@ export async function issueCertificate(registrationId: string): Promise<{ number
     return { number: reg.certificate.number, url: `${baseUrl}/sertifikat/${reg.certificate.number}` };
   }
 
-  const year = new Date().getFullYear();
-  const randomSuffix = randomBytes(4).toString("hex"); // 8 hex chars
-  const number = `JSA-${year}-${randomSuffix}`;
+  const program = reg.program;
+  const year = (reg.batch?.scheduleAt ?? program.scheduleAt).getFullYear();
+
+  let progCode = "GEN";
+  if (program.slug.includes("guru") || program.slug.includes("teacher")) {
+    progCode = "TCH";
+  } else {
+    progCode = program.slug.replace(/[^a-zA-Z]/g, "").substring(0, 3).toUpperCase() || "GEN";
+  }
+
+  let batchNumStr = "001";
+  if (reg.batch) {
+    const previousBatchesCount = await prisma.programBatch.count({
+      where: {
+        programId: reg.programId,
+        scheduleAt: {
+          lt: reg.batch.scheduleAt,
+        },
+      },
+    });
+    batchNumStr = String(previousBatchesCount + 1).padStart(3, "0");
+  }
+
+  let sequence = 1;
+  const existingCount = await prisma.certificate.count({
+    where: {
+      registration: {
+        programId: reg.programId,
+        batchId: reg.batchId,
+      },
+    },
+  });
+  sequence = existingCount + 1;
+
+  let number = `JS-${progCode}-${year}-B${batchNumStr}-${String(sequence).padStart(5, "0")}`;
+
+  let isUnique = false;
+  let attempts = 0;
+  while (!isUnique && attempts < 10) {
+    const dupe = await prisma.certificate.findUnique({ where: { number } });
+    if (!dupe) {
+      isUnique = true;
+    } else {
+      sequence++;
+      number = `JS-${progCode}-${year}-B${batchNumStr}-${String(sequence).padStart(5, "0")}`;
+      attempts++;
+    }
+  }
 
   const cert = await prisma.$transaction(async (tx) => {
     const created = await tx.certificate.create({
