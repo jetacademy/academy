@@ -24,11 +24,12 @@ export default async function IntegrasiPage({
 
       <p className="adm-note" style={{ marginBottom: "1.2rem" }}>
         Endpoint ini menyajikan katalog lengkap program aktif (deskripsi, harga, jadwal, batch) dalam format JSON
-        untuk dikonsumsi sistem luar seperti Hermes agent marketing. Setiap permintaan wajib menyertakan header
-        <code> X-API-Key</code>.
+        untuk dikonsumsi sistem luar seperti Hermes agent marketing. Selain baca, tersedia juga endpoint tulis
+        untuk membuat/mengubah artikel, program, dan batch — misalnya lewat Hermes/agent AI. Setiap permintaan
+        wajib menyertakan header <code> X-API-Key</code>.
       </p>
 
-      <ApiIntegrationClient apiUrl={apiUrl} apiKey={apiKey} />
+      <ApiIntegrationClient apiUrl={apiUrl} apiKey={apiKey} siteUrl={SITE_URL} />
     </>
   );
 }
