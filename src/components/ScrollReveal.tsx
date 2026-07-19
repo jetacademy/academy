@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Mengaktifkan animasi .reveal saat elemen masuk layar.
  *
  * Urutan aman agar tidak menyebabkan hydration mismatch:
- *   1. useEffect → dijamin jalan SETELAH React selesai hydrate.
- *   2. setTimeout(0) → lepas ke task queue berikutnya (bukan microtask).
- *   3. requestAnimationFrame → tunggu 1 paint cycle browser selesai.
- *   Barulah IntersectionObserver di-setup, sehingga callback `in`
- *   tidak pernah menyentuh DOM saat React masih aktif reconcile.
+ *   1. useState/useEffect mounted guard -> pastikan seluruh halaman selesai di-hydrate.
+ *   2. render subcomponent -> jalankan setup IntersectionObserver secara aman.
  */
-export default function ScrollReveal() {
+function ScrollRevealActive() {
   useEffect(() => {
     let io: IntersectionObserver | undefined;
     let mo: MutationObserver | undefined;
@@ -20,7 +17,6 @@ export default function ScrollReveal() {
     let timerId: ReturnType<typeof setTimeout>;
 
     timerId = setTimeout(() => {
-      // requestAnimationFrame: pastikan satu paint cycle sudah lewat
       rafId = requestAnimationFrame(() => {
         io = new IntersectionObserver(
           (entries) => {
@@ -51,7 +47,7 @@ export default function ScrollReveal() {
         });
         mo.observe(document.body, { childList: true, subtree: true });
       });
-    }, 0); // 0ms = task queue berikutnya, setelah React commit selesai
+    }, 50);
 
     return () => {
       clearTimeout(timerId);
@@ -62,4 +58,16 @@ export default function ScrollReveal() {
   }, []);
 
   return null;
+}
+
+export default function ScrollReveal() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return <ScrollRevealActive />;
 }
