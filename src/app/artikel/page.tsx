@@ -51,11 +51,13 @@ export default async function ArtikelListPage() {
             <div className="prg-grid">
               {articles.map((a) => (
                 <Link key={a.slug} href={`/artikel/${a.slug}`} className="prg-card" style={{ display: "flex", flexDirection: "column" }}>
-                  {a.coverImageUrl && (
-                    <div className="prg-card-thumb">
+                  <div className="prg-card-thumb">
+                    {a.coverImageUrl ? (
                       <Image src={a.coverImageUrl} alt={a.title} fill sizes="(max-width: 780px) 92vw, 46vw" />
-                    </div>
-                  )}
+                    ) : (
+                      <span className="prg-card-thumb-fallback">📰</span>
+                    )}
+                  </div>
                   <h3 style={{ marginTop: "1rem", marginBottom: "0.5rem" }}>{a.title}</h3>
                   <p style={{ fontSize: "0.86rem", color: "var(--ink-soft)", margin: "0.2rem 0", flex: 1 }}>{a.excerpt}</p>
                   <p className="desc" style={{ marginTop: "auto", paddingTop: "1rem" }}>
