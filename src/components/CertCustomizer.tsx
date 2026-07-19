@@ -106,6 +106,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
     setLoading(true);
     const fd = new FormData();
     fd.append("file", file);
+    fd.append("target", target === "bg" ? "certificate" : "signature");
 
     try {
       const res = await uploadFileAction(fd);

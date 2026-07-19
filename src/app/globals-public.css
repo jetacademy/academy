@@ -803,12 +803,12 @@
 .prg-card-thumb {
   margin: -1.4rem -1.4rem 0;
   aspect-ratio: 16 / 9;
-  background: var(--chip);
+  background: var(--white);
   overflow: hidden;
   position: relative;
   flex-shrink: 0;
 }
-.prg-card-thumb img { object-fit: cover; transition: transform .25s ease; }
+.prg-card-thumb img { object-fit: contain; transition: transform .25s ease; }
 .prg-card:hover .prg-card-thumb img { transform: scale(1.04); }
 .prg-card-thumb-fallback {
   position: absolute; inset: 0;

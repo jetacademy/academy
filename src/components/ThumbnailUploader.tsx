@@ -17,6 +17,7 @@ export default function ThumbnailUploader({ name, defaultValue }: { name: string
     try {
       const fd = new FormData();
       fd.append("file", file);
+      fd.append("target", "thumbnail");
       const res = await uploadFileAction(fd);
       if (res.error || !res.url) {
         setError(res.error ?? "Upload gagal. Coba lagi.");

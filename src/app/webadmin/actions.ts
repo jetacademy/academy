@@ -713,12 +713,70 @@ export async function uploadFileAction(formData: FormData): Promise<{ url?: stri
     }
 
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    let buffer = Buffer.from(bytes);
     const uploadDir = UPLOADS_DIR;
     await mkdir(uploadDir, { recursive: true });
 
-    const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const filename = `${Date.now()}-${cleanName}`;
+    let finalFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+
+    // Check if it's an image
+    const isImage = ["png", "jpg", "jpeg", "webp"].includes(ext);
+    if (isImage) {
+      try {
+        const sharp = (await import("sharp")).default;
+        let pipeline = sharp(buffer);
+        
+        const target = formData.get("target") as string | null;
+
+        if (target === "thumbnail") {
+          // Resize proporsional tanpa crop agar seluruh gambar utuh terunggah
+          pipeline = pipeline.resize(1200, 675, {
+            fit: "inside",
+            withoutEnlargement: true
+          });
+        } else if (target === "avatar") {
+          // Crop/resize proporsional 1:1 (400x400)
+          pipeline = pipeline.resize(400, 400, {
+            fit: "cover",
+            position: "center"
+          });
+        } else if (target === "certificate") {
+          // background sertifikat: resize jika lebar > 1920
+          const metadata = await pipeline.metadata();
+          if (metadata.width && metadata.width > 1920) {
+            pipeline = pipeline.resize({ width: 1920, fit: "inside", withoutEnlargement: true });
+          }
+        } else {
+          // general image: max lebar 1200
+          const metadata = await pipeline.metadata();
+          if (metadata.width && metadata.width > 1200) {
+            pipeline = pipeline.resize({ width: 1200, fit: "inside", withoutEnlargement: true });
+          }
+        }
+
+        buffer = await pipeline.webp({ quality: 80 }).toBuffer();
+        
+        // Change the extension of finalFilename to .webp
+        const nameWithoutExt = finalFilename.substring(0, finalFilename.lastIndexOf(".")) || finalFilename;
+        finalFilename = `${nameWithoutExt}.webp`;
+      } catch (sharpError) {
+        console.error("[sharpError]", sharpError);
+      }
+    } else if (ext === "pdf") {
+      try {
+        const { PDFDocument } = await import("pdf-lib");
+        const pdfDoc = await PDFDocument.load(buffer);
+        const compressedPdfBytes = await pdfDoc.save({
+          useObjectStreams: true,
+          addCommandLineToProducer: false
+        });
+        buffer = Buffer.from(compressedPdfBytes);
+      } catch (pdfError) {
+        console.error("[pdfError]", pdfError);
+      }
+    }
+
+    const filename = `${Date.now()}-${finalFilename}`;
     await writeFile(join(uploadDir, filename), buffer);
 
     return { url: `/api/uploads/${filename}` };

@@ -15,6 +15,7 @@ export default function BlockImageField({ value, onChange }: { value: string; on
     try {
       const fd = new FormData();
       fd.append("file", file);
+      fd.append("target", "content");
       const res = await uploadFileAction(fd);
       if (res.error || !res.url) {
         setError(res.error ?? "Upload gagal. Coba lagi.");
