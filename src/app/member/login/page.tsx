@@ -212,6 +212,30 @@ export default function MemberLoginPage() {
                 }}>
                   Masuk aman & instan via Google. Akses semua pelatihan dan sertifikat Anda dari satu dashboard.
                 </p>
+
+                <div style={{
+                  marginTop: "1.5rem",
+                  paddingTop: "1.2rem",
+                  borderTop: "1px dashed var(--line)",
+                  textAlign: "center"
+                }}>
+                  <p style={{ fontSize: "0.9rem", color: "var(--ink-soft)", margin: 0 }}>
+                    Belum terdaftar sebagai peserta?
+                  </p>
+                  <Link
+                    href="/daftar"
+                    className="btn btn-line btn-sm"
+                    style={{
+                      marginTop: "0.6rem",
+                      display: "inline-block",
+                      fontWeight: 700,
+                      color: "var(--purple)",
+                      borderColor: "var(--purple-soft)"
+                    }}
+                  >
+                    Buat Akun Baru / Daftar Program
+                  </Link>
+                </div>
               </>
             )}
  
