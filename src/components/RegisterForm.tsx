@@ -349,16 +349,17 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
             )}
           </form>
         ) : (
-          /* CASE 2: Guest / Belum Login — Form Manual + Google Auth Terpadu */
-          <form onSubmit={onSubmit}>
-            <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+          /* CASE 2: Guest / Belum Login — Hanya ada tombol daftar via Google */
+          <div>
+            <div style={{ textAlign: "center", marginBottom: "1.8rem" }}>
               <h3 style={{ marginBottom: "0.4rem" }}>Amankan Kursi Anda</h3>
-              <p className="sub">
-                {programTitle}<br />{jadwal}
+              <p className="sub" style={{ fontSize: "0.9rem", color: "var(--ink-soft)" }}>
+                {programTitle}<br />
+                <span style={{ fontSize: "0.82rem", opacity: 0.9 }}>📅 {jadwal}</span>
               </p>
             </div>
 
-            {/* Tombol Google di bagian atas untuk pengisian instan */}
+            {/* Tombol Google saja */}
             <button
               type="button"
               className="btn btn-purple btn-lg btn-block"
@@ -369,9 +370,10 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                 gap: "0.6rem",
                 fontWeight: 700,
                 width: "100%",
-                padding: "0.9rem",
-                borderRadius: "var(--r-sm)",
-                marginBottom: "1rem"
+                padding: "1rem",
+                borderRadius: "var(--r-md)",
+                fontSize: "1.05rem",
+                boxShadow: "0 4px 14px var(--purple-soft)"
               }}
               onClick={() => setGoogleOpen(true)}
             >
@@ -384,74 +386,16 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
               Daftar Cepat dengan Google
             </button>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem", margin: "1.2rem 0" }}>
-              <div style={{ flex: 1, height: "1px", background: "var(--line)" }} />
-              <span style={{ fontSize: "0.75rem", color: "var(--ink-faint)", fontWeight: 600 }}>ATAU DAFTAR MANUAL</span>
-              <div style={{ flex: 1, height: "1px", background: "var(--line)" }} />
-            </div>
-
-            {error && <div className="form-error" style={{ marginBottom: "1rem" }}>{error}</div>}
-
-            <div className="field">
-              <label htmlFor="fNamaManual">Nama Lengkap (untuk di sertifikat)</label>
-              <input
-                id="fNamaManual"
-                name="name"
-                type="text"
-                placeholder="Contoh: Budi Santoso, S.Pd."
-                required
-                minLength={3}
-                value={nameVal}
-                onChange={(e) => setNameVal(e.target.value)}
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="fEmailManual">Email</label>
-              <input
-                id="fEmailManual"
-                name="email"
-                type="email"
-                placeholder="contoh@email.com"
-                required
-                value={emailVal}
-                onChange={(e) => setEmailVal(e.target.value)}
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="fWaManual">Nomor WhatsApp Aktif</label>
-              <input
-                id="fWaManual"
-                name="whatsapp"
-                type="tel"
-                placeholder="Contoh: 081234567890"
-                pattern="^08[0-9]{8,13}$"
-                required
-                value={whatsappVal}
-                onChange={(e) => setWhatsappVal(e.target.value)}
-              />
-            </div>
-
-            <div className="field">
-              <label htmlFor="fInstManual">Asal Lembaga / Instansi</label>
-              <input
-                id="fInstManual"
-                name="institution"
-                type="text"
-                placeholder="Contoh: SDN 1 Bandung / Umum"
-                required
-                value={institutionVal}
-                onChange={(e) => setInstitutionVal(e.target.value)}
-              />
-            </div>
-
-            <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={state === "loading"} style={{ width: "100%", marginTop: "0.5rem" }}>
-              {state === "loading"
-                ? "Memproses..."
-                : isPaid ? `Konfirmasi & Bayar — ${priceLabel}` : "Konfirmasi & Daftar"}
-            </button>
-          </form>
+            <p style={{
+              textAlign: "center",
+              fontSize: "0.8rem",
+              color: "var(--ink-faint)",
+              marginTop: "1.5rem",
+              lineHeight: 1.4
+            }}>
+              Pendaftaran aman & instan via Google. Data sertifikat Anda akan otomatis disinkronkan setelah masuk.
+            </p>
+          </div>
         )}
       </div>
 

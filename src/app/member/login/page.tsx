@@ -186,7 +186,9 @@ export default function MemberLoginPage() {
                   style={{
                     display: "flex", alignItems: "center", justifyContent: "center",
                     gap: "0.6rem", fontWeight: 700, width: "100%",
-                    padding: "0.9rem", borderRadius: "var(--r-sm)"
+                    padding: "1rem", borderRadius: "var(--r-md)",
+                    fontSize: "1.05rem",
+                    boxShadow: "0 4px 14px var(--purple-soft)"
                   }}
                   onClick={() => setGoogleOpen(true)}
                   disabled={isBusy}
@@ -199,123 +201,19 @@ export default function MemberLoginPage() {
                   </svg>
                   Masuk dengan Google
                 </button>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "1rem", margin: "1.5rem 0" }}>
-                  <div style={{ flex: 1, height: "1px", background: "var(--line)" }} />
-                  <span style={{ fontSize: "0.8rem", color: "var(--ink-faint)", fontWeight: 600 }}>ATAU</span>
-                  <div style={{ flex: 1, height: "1px", background: "var(--line)" }} />
-                </div>
-
-                {/* WA OTP Login */}
-                <div className="field">
-                  <label htmlFor="fIdentifier">Nomor WhatsApp atau Email</label>
-                  <input
-                    id="fIdentifier"
-                    type="text"
-                    placeholder="Contoh: 081234567890 atau email@anda.com"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    disabled={isBusy}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-line btn-lg btn-block"
-                  style={{ width: "100%" }}
-                  onClick={handleSendOtp}
-                  disabled={isBusy}
-                >
-                  {isBusy ? "Mengirim..." : "Kirim Kode OTP"}
-                </button>
-
-                <p style={{ textAlign: "center", marginTop: "1.5rem", fontSize: "0.82rem", color: "var(--ink-soft)" }}>
-                  Belum punya akun?{' '}
-                  <Link href="/daftar" style={{ color: "var(--purple)", fontWeight: 700 }}>
-                    Daftar akun baru
-                  </Link>
+ 
+                <p style={{
+                  textAlign: "center",
+                  fontSize: "0.8rem",
+                  color: "var(--ink-faint)",
+                  marginTop: "1.5rem",
+                  lineHeight: 1.4
+                }}>
+                  Masuk aman & instan via Google. Akses semua pelatihan dan sertifikat Anda dari satu dashboard.
                 </p>
               </>
             )}
-
-            {step === "otp" && (
-              <div>
-                <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", marginBottom: "1.2rem", textAlign: "center" }}>
-                  Kode verifikasi telah dikirim ke <strong>{identifier}</strong>{" "}
-                  {otpChannel === "whatsapp" ? "via WhatsApp" : otpChannel === "email" ? "via Email" : "via WhatsApp atau Email"}
-                </p>
-
-                {infoMessage && (
-                  <div className="form-success" style={{
-                    marginBottom: "1rem",
-                    padding: "0.6rem 0.8rem",
-                    background: "rgba(39, 174, 96, 0.05)",
-                    border: "1px solid rgba(39, 174, 96, 0.2)",
-                    borderRadius: "6px",
-                    color: "#27ae60",
-                    fontSize: "0.8rem",
-                    textAlign: "center",
-                    fontWeight: 600
-                  }}>
-                    {infoMessage}
-                  </div>
-                )}
-
-                <div className="field">
-                  <label htmlFor="fOtp">Kode OTP (6 digit)</label>
-                  <input
-                    id="fOtp"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    placeholder="Contoh: 482916"
-                    maxLength={6}
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                    disabled={isBusy}
-                    autoFocus
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-purple btn-lg btn-block"
-                  style={{ width: "100%" }}
-                  onClick={handleVerifyOtp}
-                  disabled={isBusy}
-                >
-                  {isBusy ? "Memverifikasi..." : "Masuk"}
-                </button>
-
-                <div style={{ textAlign: "center", fontSize: "0.82rem", marginTop: "1rem", borderTop: "1px solid var(--line)", paddingTop: "1rem" }}>
-                  <p style={{ color: "var(--ink-soft)", marginBottom: "0.5rem" }}>Belum menerima kode verifikasi?</p>
-                  {countdown > 0 ? (
-                    <span style={{ color: "var(--ink-faint)", fontWeight: 600 }}>
-                      Kirim OTP via Email tersedia dalam {countdown} detik
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={resendLoading}
-                      onClick={handleResendEmailOtp}
-                      className="btn btn-line btn-sm"
-                      style={{ padding: "0.4rem 1rem", fontSize: "0.78rem" }}
-                    >
-                      {resendLoading ? "Mengirim..." : "Kirim OTP via Email"}
-                    </button>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  className="btn btn-line btn-sm"
-                  style={{ width: "100%", marginTop: "1rem" }}
-                  onClick={() => { setStep("pilih-metode"); setOtpCode(""); setInfoMessage(null); }}
-                  disabled={isBusy}
-                >
-                  Ganti metode login
-                </button>
-              </div>
-            )}
-
+ 
             {step === "loading" && (
               <div style={{ textAlign: "center", padding: "2rem 0" }}>
                 <div style={{ width: "2rem", height: "2rem", border: "3px solid var(--purple-soft)", borderTopColor: "var(--purple)", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />

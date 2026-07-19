@@ -181,7 +181,41 @@ export async function memberLoginWithGoogle(credential: string) {
       return { error: "Email Google Anda belum diverifikasi." };
     }
 
-    return loginByIdentifier(payload.email.trim());
+    const email = payload.email.trim();
+    let name = email.split("@")[0];
+    const payloadObj = payload as Record<string, unknown>;
+    if (typeof payloadObj.name === "string" && payloadObj.name) {
+      name = payloadObj.name;
+    }
+
+    // Cari User record
+    let user = await prisma.user.findFirst({
+      where: { OR: [{ email }, { whatsapp: email }] }
+    });
+
+    if (!user) {
+      // Cari apakah ada registrasi dengan email ini (misal pendaftaran offline)
+      const existingReg = await prisma.registration.findFirst({
+        where: { email }
+      });
+      user = await prisma.user.create({
+        data: {
+          name: existingReg?.name ?? name,
+          email,
+          whatsapp: existingReg?.whatsapp ?? "",
+          role: "STUDENT"
+        }
+      });
+      
+      // Hubungkan registrasi lama ke user baru jika ada
+      await prisma.registration.updateMany({
+        where: { email, userId: null },
+        data: { userId: user.id }
+      });
+    }
+
+    await createMemberSession(email);
+    return { ok: true };
   } catch (err) {
     console.error("[memberLoginWithGoogle] Unexpected error:", err);
     return { error: "Gagal menghubungi server Google. Periksa koneksi dan coba lagi." };
