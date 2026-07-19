@@ -11,6 +11,12 @@ export function normalizeWa(raw: string): string {
   return n;
 }
 
+/** Identifier login (WhatsApp atau email) → bentuk baku, tanpa mengubah email. */
+export function normalizeIdentifier(raw: string): string {
+  const trimmed = raw.trim();
+  return trimmed.includes("@") ? trimmed : normalizeWa(trimmed);
+}
+
 export async function sendWa(to: string, text: string): Promise<boolean> {
   const url = process.env.EVOLUTION_API_URL;
   const apikey = process.env.EVOLUTION_API_API_KEY;

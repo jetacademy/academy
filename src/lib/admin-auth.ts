@@ -39,21 +39,13 @@ export async function getAdminSession(): Promise<AdminSession | null> {
               select: { id: true, name: true, email: true, role: true },
             });
             if (user && (user.role === "ADMIN" || user.role === "TEACHER")) {
-              // Sukses! Buat cookie admin secara otomatis agar tersinkronisasi
-              const value = `${user.id}:${user.role}`;
-              const signedValue = `${value}::${sign(value)}`;
-              try {
-                jar.set(COOKIE, signedValue, {
-                  httpOnly: true,
-                  sameSite: "lax",
-                  secure: process.env.NODE_ENV === "production",
-                  maxAge: 60 * 60 * 24 * 7, // 7 hari
-                  path: "/",
-                });
-              } catch (cookieErr) {
-                console.warn("Gagal membuat cookie session admin otomatis:", cookieErr);
-              }
-
+              // Admin/teacher yang login lewat sesi member (Google) — sengaja
+              // TIDAK menulis cookie jsa_admin di sini: getAdminSession() bisa
+              // dipanggil dari render Server Component (bukan hanya Server
+              // Action/Route Handler), dan Next.js melarang set-cookie di luar
+              // konteks itu. Middleware sudah menerima jsa_member sebagai cukup
+              // untuk lolos ke halaman panel; verifikasi role tetap terjadi di
+              // sini pada setiap request lewat lookup DB di atas.
               return {
                 userId: user.id,
                 role: user.role as "ADMIN" | "TEACHER",

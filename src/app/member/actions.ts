@@ -7,6 +7,7 @@ import { createMemberSession, destroyMemberSession, getMemberSession } from "@/l
 import { issueCertificate, checkCertEligibility } from "@/lib/certificates";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sendOtp, verifyOtp } from "@/lib/otp";
+import { normalizeWa, normalizeIdentifier } from "@/lib/wa";
 import { sendEmail, getWelcomeMemberEmailHtml } from "@/lib/email";
 import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 
@@ -71,7 +72,7 @@ export async function memberSendOtp(identifier: string, forceEmail: boolean = fa
   try {
     const hdrs = await headers();
     const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "member-otp";
-    const cleanVal = identifier.trim();
+    const cleanVal = normalizeIdentifier(identifier);
     if (!cleanVal) return { error: "WhatsApp atau Email tidak boleh kosong." };
 
     // Rate limit ganda: per IP (cegah bot) + per identifier (cegah bypass VPN)
@@ -97,7 +98,7 @@ export async function memberVerifyOtp(identifier: string, code: string): Promise
     const limit = checkRateLimit(`member-verify:${ip}`, 5, 60_000);
     if (!limit.ok) return { error: "Terlalu banyak percobaan. Coba lagi nanti." };
 
-    const cleanVal = identifier.trim();
+    const cleanVal = normalizeIdentifier(identifier);
     const cleanCode = code.trim();
     if (!cleanVal || !cleanCode) return { error: "Data tidak lengkap." };
 
@@ -122,7 +123,7 @@ export async function memberLogin(identifier: string): Promise<{ ok?: boolean; e
     const limit = checkRateLimit(`member-login:${ip}`, 10, 60_000);
     if (!limit.ok) return { error: "Terlalu banyak percobaan login. Coba lagi nanti." };
 
-    const cleanVal = identifier.trim();
+    const cleanVal = normalizeIdentifier(identifier);
     if (!cleanVal) {
       return { error: "WhatsApp atau Email tidak boleh kosong." };
     }
@@ -391,6 +392,7 @@ export async function registerUser(formData: FormData): Promise<{ ok?: boolean; 
     if (!/^[a-zA-Z0-9\s'.,&-]+$/.test(name)) return { error: "Nama mengandung karakter tidak valid." };
     if (!/^08[0-9]{8,13}$/.test(whatsappRaw)) return { error: "Nomor WhatsApp tidak valid (08xxx)." };
     if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Email tidak valid." };
+    const whatsapp = normalizeWa(whatsappRaw);
 
     const hdrs = await headers();
     const ip = hdrs.get("x-forwarded-for") ?? hdrs.get("x-real-ip") ?? "register";
@@ -399,7 +401,7 @@ export async function registerUser(formData: FormData): Promise<{ ok?: boolean; 
 
     // Cek apakah email/WA sudah terdaftar sebagai user
     const existing = await prisma.user.findFirst({
-      where: { OR: [{ email }, { whatsapp: whatsappRaw }] },
+      where: { OR: [{ email }, { whatsapp }] },
     });
     if (existing) {
       return { error: "Email atau nomor WhatsApp sudah terdaftar. Silakan login." };
@@ -407,12 +409,12 @@ export async function registerUser(formData: FormData): Promise<{ ok?: boolean; 
 
     // Cek apakah sudah ada registrasi dengan data ini (backfill)
     const regs = await prisma.registration.findMany({
-      where: { OR: [{ email }, { whatsapp: whatsappRaw }] },
+      where: { OR: [{ email }, { whatsapp }] },
     });
 
     // Buat user
     const user = await prisma.user.create({
-      data: { name, email, whatsapp: whatsappRaw, role: "STUDENT" },
+      data: { name, email, whatsapp, role: "STUDENT" },
     });
 
     // Hubungkan registrasi yang ada ke user ini

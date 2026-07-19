@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin, createAdminSession, destroyAdminSession } from "@/lib/admin-auth";
 import { hashPassword } from "@/lib/crypto";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { sendWa, msgAccess, msgPaid } from "@/lib/wa";
+import { sendWa, msgAccess, msgPaid, normalizeWa } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml } from "@/lib/email";
 
@@ -539,7 +539,8 @@ export async function saveRegistration(formData: FormData) {
   const id = optStr(formData, "id");
   const programId = String(formData.get("programId") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
-  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  const whatsappInput = String(formData.get("whatsapp") ?? "").trim();
+  const whatsapp = whatsappInput ? normalizeWa(whatsappInput) : whatsappInput;
   const email = String(formData.get("email") ?? "").trim();
   const status = String(formData.get("status") ?? "REGISTERED") as "REGISTERED" | "PAID" | "PASSED";
   const institution = optStr(formData, "institution");
@@ -708,7 +709,8 @@ export async function saveUser(formData: FormData) {
   const id = optStr(formData, "id");
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const whatsapp = optStr(formData, "whatsapp");
+  const whatsappInput = optStr(formData, "whatsapp");
+  const whatsapp = whatsappInput ? normalizeWa(whatsappInput) : whatsappInput;
   const role = String(formData.get("role") ?? "STUDENT") as "ADMIN" | "TEACHER" | "STUDENT";
   const password = String(formData.get("password") ?? "");
 
