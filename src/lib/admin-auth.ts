@@ -23,7 +23,49 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   try {
     const jar = await cookies();
     const raw = jar.get(COOKIE)?.value;
-    if (!raw) return null;
+    if (!raw) {
+      // Coba periksa apakah ada session member (misal dari Google OAuth)
+      const memberRaw = jar.get("jsa_member")?.value;
+      if (memberRaw) {
+        const [email, signature] = memberRaw.split(":");
+        if (email && signature) {
+          // Verifikasi signature member
+          const memberSecret = process.env.MEMBER_SESSION_SECRET || (process.env.NODE_ENV !== "production" ? "default-member-session-secret-key" : "");
+          const expectedSig = createHmac("sha256", memberSecret).update(email).digest("hex");
+          if (expectedSig === signature) {
+            // Cari user di database untuk memverifikasi role-nya
+            const user = await prisma.user.findUnique({
+              where: { email },
+              select: { id: true, name: true, email: true, role: true },
+            });
+            if (user && (user.role === "ADMIN" || user.role === "TEACHER")) {
+              // Sukses! Buat cookie admin secara otomatis agar tersinkronisasi
+              const value = `${user.id}:${user.role}`;
+              const signedValue = `${value}::${sign(value)}`;
+              try {
+                jar.set(COOKIE, signedValue, {
+                  httpOnly: true,
+                  sameSite: "lax",
+                  secure: process.env.NODE_ENV === "production",
+                  maxAge: 60 * 60 * 24 * 7, // 7 hari
+                  path: "/",
+                });
+              } catch (cookieErr) {
+                console.warn("Gagal membuat cookie session admin otomatis:", cookieErr);
+              }
+
+              return {
+                userId: user.id,
+                role: user.role as "ADMIN" | "TEACHER",
+                name: user.name,
+                email: user.email,
+              };
+            }
+          }
+        }
+      }
+      return null;
+    }
     const [sessionVal, signature] = raw.split("::");
     if (!sessionVal || !signature) return null;
     if (sign(sessionVal) !== signature) return null;

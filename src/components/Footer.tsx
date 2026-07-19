@@ -18,9 +18,14 @@ export default function Footer() {
             Jetschool Academy
           </div>
           <nav className="footer-links">
+            <Link href="/about">Tentang Kami</Link>
             <Link href="/program">Program</Link>
+            <Link href="/faq">FAQ</Link>
+            <Link href="/contact">Hubungi Kami</Link>
+            <Link href="/terms">Syarat & Ketentuan</Link>
+            <Link href="/privacy-policy">Kebijakan Privasi</Link>
             <Link href="/sertifikat">Ambil Sertifikat</Link>
-            <a href={`https://wa.me/${waAdmin}`}>WhatsApp Admin</a>
+            <a href={`https://wa.me/${waAdmin}`} target="_blank" rel="noopener noreferrer">WhatsApp Admin</a>
           </nav>
           <span style={{ fontSize: ".78rem" }}>© {new Date().getFullYear()} Jetschool Academy</span>
         </div>

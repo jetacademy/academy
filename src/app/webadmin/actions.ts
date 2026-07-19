@@ -29,6 +29,10 @@ export async function adminLogin(formData: FormData) {
 
 export async function adminLogout() {
   await destroyAdminSession();
+  try {
+    const { cookies } = await import("next/headers");
+    (await cookies()).delete("jsa_member");
+  } catch {}
   redirect("/webadmin/login");
 }
 
