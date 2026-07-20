@@ -69,31 +69,37 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   let memberProfile = null;
   let isAlreadyRegistered = false;
   if (sessionVal) {
-    // 1. Cari data dari tabel User dulu (karena user yang baru daftar belum tentu punya registration)
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
-      },
-      select: {
-        name: true,
-        email: true,
-        whatsapp: true,
-      },
-    });
-
-    // 2. Cari data tambahan (institution) dari registrasi terakhir jika ada
-    const lastReg = await prisma.registration.findFirst({
-      where: {
-        OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
-      },
-      select: {
-        name: true,
-        email: true,
-        whatsapp: true,
-        institution: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    // Parallel queries untuk profil member & cek registrasi
+    const [user, lastReg, existingReg] = await Promise.all([
+      prisma.user.findFirst({
+        where: {
+          OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
+        },
+        select: {
+          name: true,
+          email: true,
+          whatsapp: true,
+        },
+      }),
+      prisma.registration.findFirst({
+        where: {
+          OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
+        },
+        select: {
+          name: true,
+          email: true,
+          whatsapp: true,
+          institution: true,
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.registration.findFirst({
+        where: {
+          programId: program.id,
+          OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
+        },
+      }),
+    ]);
 
     if (user) {
       memberProfile = {
@@ -111,12 +117,6 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       };
     }
 
-    const existingReg = await prisma.registration.findFirst({
-      where: {
-        programId: program.id,
-        OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
-      },
-    });
     if (existingReg) {
       isAlreadyRegistered = true;
     }

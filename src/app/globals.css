@@ -1,10 +1,6 @@
 /* ============================================================
-   JETSCHOOL ACADEMY — Entry Point CSS
-   Imports modular CSS files for better caching and tree-shaking.
+   JETSCHOOL ACADEMY — Entry Point CSS (halaman publik saja)
    ============================================================ */
 
 @import "./globals-core.css";
 @import "./globals-public.css";
-@import "./globals-admin.css";
-@import "./globals-lms.css";
-@import "./globals-cert.css";

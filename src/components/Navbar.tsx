@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 /**
  * Navbar 2 mode:
@@ -15,15 +15,10 @@ export default function Navbar({ minimal = false, ctaHref = "/program", ctaLabel
   ctaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const hasCookie = document.cookie.includes("jsa_member=");
-    const timer = setTimeout(() => {
-      setIsLoggedIn(hasCookie);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
+  // Sync read — cegah re-render & hydration delay dari useEffect + setTimeout
+  const [isLoggedIn] = useState(() =>
+    typeof document !== "undefined" && document.cookie.includes("jsa_member=")
+  );
 
   return (
     <header className="nav">

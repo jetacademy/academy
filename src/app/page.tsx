@@ -9,7 +9,8 @@ import { getPrograms } from "@/lib/programs";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 import { formatHari, formatJam, rupiah, getDaysLeft } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
+// ISR: regenerate setiap 5 menit. Program jarang berubah & tidak ada data personal di sini.
+export const revalidate = 300;
 
 const TYPE_CLASS: Record<ProgramType, string> = {
   WEBINAR: "type-webinar",
