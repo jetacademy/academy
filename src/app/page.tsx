@@ -7,7 +7,7 @@ import Faq from "@/components/Faq";
 import Icon, { TYPE_ICON } from "@/components/Icon";
 import { getPrograms } from "@/lib/programs";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
-import { formatHari, formatJam, rupiah, getDaysLeft } from "@/lib/format";
+import { formatHariTanggal, formatJam, rupiah, getDaysLeft } from "@/lib/format";
 
 // ISR: regenerate setiap 5 menit. Program jarang berubah & tidak ada data personal di sini.
 export const revalidate = 300;
@@ -139,7 +139,7 @@ export default async function Home() {
                     </span>
                   </div>
                   <h3>{p.title}</h3>
-                  <p className="desc">{formatHari(p.scheduleAt)}, {formatJam(p.scheduleAt)} · {p.durationLabel}</p>
+                  <p className="desc">{formatHariTanggal(p.scheduleAt)}, {formatJam(p.scheduleAt)} · {p.durationLabel}</p>
                   <div className="prg-foot">
                     <div className="prg-price">
                       {p.price === 0
@@ -212,7 +212,7 @@ export default async function Home() {
                 <h2 style={{ marginBottom: ".5rem" }}>{webinarGratis ? "Webinar gratis" : "Program terdekat"}</h2>
                 <p style={{ fontWeight: 800, fontSize: "1.25rem" }}>
                   {webinarGratis
-                    ? `${formatHari(webinarGratis.scheduleAt)}, ${formatJam(webinarGratis.scheduleAt)} — tanpa biaya.`
+                    ? `${formatHariTanggal(webinarGratis.scheduleAt)}, ${formatJam(webinarGratis.scheduleAt)} — tanpa biaya.`
                     : "Pilih program yang sesuai untuk Anda."}
                 </p>
                 {daysLeft !== null && (

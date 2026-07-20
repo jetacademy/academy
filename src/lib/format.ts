@@ -18,6 +18,17 @@ export function formatHari(d: Date): string {
   }).format(d);
 }
 
+// Hari + tanggal singkat, mis. "Kamis, 30 Jul" — dipakai di tempat yang
+// perlu menunjukkan tanggal batch terdekat secara jelas (bukan cuma nama hari).
+export function formatHariTanggal(d: Date): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+    timeZone: "Asia/Jakarta",
+  }).format(d);
+}
+
 export function formatJam(d: Date): string {
   return new Intl.DateTimeFormat("id-ID", {
     hour: "2-digit",
