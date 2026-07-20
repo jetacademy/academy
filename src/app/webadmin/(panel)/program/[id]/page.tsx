@@ -24,7 +24,7 @@ export default async function AdminProgramEdit({
   try {
     type RawRow = { certClaimOpen: number };
     const rows = await prisma.$queryRaw<RawRow[]>(
-      Prisma.sql`SELECT certClaimOpen FROM \`program\` WHERE id = ${id} LIMIT 1`
+      Prisma.sql`SELECT certClaimOpen FROM \`Program\` WHERE id = ${id} LIMIT 1`
     );
     if (rows[0]) certClaimOpen = rows[0].certClaimOpen === 1;
   } catch {

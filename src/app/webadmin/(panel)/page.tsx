@@ -40,8 +40,8 @@ export default async function AdminDashboard() {
         COUNT(r.id) as total_regs,
         SUM(CASE WHEN r.status IN ('PAID', 'PASSED') THEN 1 ELSE 0 END) as paid_regs,
         SUM(CASE WHEN p.status = 'PAID' THEN p.amount ELSE 0 END) as total_income
-      FROM registration r
-      LEFT JOIN payment p ON p.registrationId = r.id
+      FROM Registration r
+      LEFT JOIN Payment p ON p.registrationId = r.id
       GROUP BY r.programId
     `,
   ]);

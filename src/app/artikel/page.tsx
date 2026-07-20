@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import WaFloat from "@/components/WaFloat";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Artikel — Tips & Wawasan Seputar AI",
@@ -22,7 +22,10 @@ export default async function ArtikelListPage() {
     where: { isPublished: true },
     orderBy: { publishedAt: "desc" },
     select: { slug: true, title: true, excerpt: true, coverImageUrl: true, authorName: true, publishedAt: true },
-  }).catch(() => []);
+  }).catch((err) => {
+    console.error("[artikel] gagal mengambil daftar artikel:", err);
+    return [];
+  });
 
   return (
     <>

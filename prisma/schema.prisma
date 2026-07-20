@@ -96,7 +96,6 @@ model Program {
   updatedAt          DateTime           @updatedAt
 
   @@index([categoryId])
-  @@map("program")
 }
 
 // Jadwal berulang (angkatan/batch) untuk satu program. Program tetap satu
@@ -117,7 +116,6 @@ model ProgramBatch {
   @@index([programId])
   @@index([programId, scheduleAt])
   @@index([scheduleAt])
-  @@map("programbatch")
 }
 
 // Pendaftar webinar (leads dari iklan Meta)
@@ -151,7 +149,6 @@ model Registration {
   @@index([status, programId]) // filter status per program di dashboard
   @@index([createdAt])
   @@index([userId])
-  @@map("registration")
 }
 
 enum RegistrationStatus {
@@ -177,7 +174,6 @@ model Payment {
   updatedAt       DateTime      @updatedAt
 
   @@index([status])
-  @@map("payment")
 }
 
 enum PaymentStatus {
@@ -204,7 +200,6 @@ model Question {
 
   @@index([programId])
   @@index([lessonId])
-  @@map("question")
 }
 
 // Riwayat pengerjaan post-test (lessonId null) atau kuis materi (lessonId terisi)
@@ -221,7 +216,6 @@ model TestAttempt {
   @@index([registrationId, lessonId])
   @@index([lessonId]) // untuk agregasi hasil kuis per materi
   @@index([passed, registrationId]) // cek apakah sudah pernah lulus
-  @@map("testattempt")
 }
 
 // Sertifikat — terbit otomatis saat lulus post-test
@@ -233,7 +227,6 @@ model Certificate {
   issuedAt       DateTime     @default(now())
 
   @@index([issuedAt])
-  @@map("certificate")
 }
 
 // Kelompok modul — jenjang teratas kurikulum (mis. "Bagian 1: Dasar-dasar")
@@ -246,7 +239,6 @@ model LmsGroup {
   modules   LmsModule[]
 
   @@index([programId])
-  @@map("lmsgroup")
 }
 
 // Modul / sub-bab — berisi materi; bisa berdiri sendiri atau di dalam kelompok
@@ -262,7 +254,6 @@ model LmsModule {
 
   @@index([programId])
   @@index([groupId])
-  @@map("lmsmodule")
 }
 
 // LMS Lessons (Materi pembelajaran: video / teks / PDF / kuis)
@@ -283,7 +274,6 @@ model Lesson {
   completions  Completion[]
 
   @@index([moduleId])
-  @@map("lesson")
 }
 
 // LMS Completions (Status selesai pengerjaan materi oleh peserta)
@@ -299,7 +289,6 @@ model Completion {
   @@index([registrationId])
   @@index([lessonId])
   @@index([lessonId, registrationId]) // agregasi completion per pelajaran
-  @@map("completion")
 }
 
 // OTP untuk login member — dikirim via WhatsApp, berlaku 5 menit
@@ -315,7 +304,6 @@ model OtpCode {
   @@index([identifier, code]) // verifikasi OTP
   @@index([expiresAt]) // cleanup job: hapus OTP kedaluwarsa
   @@index([used, expiresAt]) // hapus OTP lama yang tidak terpakai
-  @@map("otpcode")
 }
 
 // Kategori program
@@ -328,7 +316,6 @@ model Category {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  @@map("category")
 }
 
 enum Role {
@@ -351,7 +338,6 @@ model User {
 
   @@index([role]) // filter by role di halaman user management
   @@index([createdAt]) // sort terbaru di daftar user
-  @@map("user")
 }
 
 // API key untuk integrasi mesin-ke-mesin (mis. Hermes agent marketing) —
@@ -365,7 +351,6 @@ model ApiKey {
   createdAt  DateTime  @default(now())
 
   @@index([key])
-  @@map("apikey")
 }
 
 // Artikel blog — konten SEO, tidak tampil di beranda, hanya lewat menu & /artikel.
@@ -383,5 +368,4 @@ model Article {
   updatedAt     DateTime  @updatedAt
 
   @@index([isPublished, publishedAt])
-  @@map("article")
 }
