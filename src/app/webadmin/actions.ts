@@ -8,7 +8,7 @@ import { requireAdmin, createAdminSession, destroyAdminSession } from "@/lib/adm
 import { hashPassword, generateApiKey } from "@/lib/crypto";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sendWa, msgAccess, msgPaid, normalizeWa } from "@/lib/wa";
-import { formatJadwal } from "@/lib/format";
+import { formatJadwal, parseWIB } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml } from "@/lib/email";
 import { createBunnyVideo, getBunnyUploadAuth, deleteBunnyVideo } from "@/lib/bunny";
 import { sanitizeHtml } from "@/lib/sanitize";
@@ -92,7 +92,7 @@ export async function saveProgram(formData: FormData) {
     materi: parseLines(String(formData.get("materi") ?? "")),
     deliverables: parseDeliverables(String(formData.get("deliverables") ?? "")),
     guarantee: rawGuarantee ? (await sanitizeHtml(rawGuarantee) ?? rawGuarantee) : null,
-    scheduleAt: new Date(String(formData.get("scheduleAt"))),
+    scheduleAt: parseWIB(String(formData.get("scheduleAt"))),
     durationLabel: String(formData.get("durationLabel") ?? "2 jam").trim(),
     zoomLink: optStr(formData, "zoomLink"),
     waGroupLink: optStr(formData, "waGroupLink"),
@@ -915,7 +915,7 @@ export async function createBatch(formData: FormData) {
   if (!programId) redirect("/webadmin/program");
   if (!scheduleAtRaw) redirect(`/webadmin/program/${programId}/batch?e=lengkapi`);
 
-  const scheduleAt = new Date(scheduleAtRaw);
+  const scheduleAt = parseWIB(scheduleAtRaw);
   if (isNaN(scheduleAt.getTime())) redirect(`/webadmin/program/${programId}/batch?e=tanggal`);
 
   await prisma.programBatch.create({

@@ -1,6 +1,7 @@
 import { saveProgram } from "@/app/webadmin/actions";
 import type { Deliverable } from "@/lib/fallback";
 import ThumbnailUploader from "@/components/ThumbnailUploader";
+import { toWIBInput } from "@/lib/format";
 
 type ProgramRow = {
   id: string; slug: string; type: string; title: string; tagline: string; description: string;
@@ -20,10 +21,9 @@ type CategoryRow = {
   slug: string;
 };
 
-/** Format Date → nilai input datetime-local (waktu server = WIB) */
+/** Format Date → nilai input datetime-local (dikonversi dari UTC ke WIB) */
 function toLocalInput(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  return toWIBInput(d);
 }
 
 function Section({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {

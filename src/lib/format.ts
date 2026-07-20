@@ -1,5 +1,29 @@
 // Format tanggal & rupiah gaya Indonesia
 
+/** Ubah string datetime-local (Y-m-dTH:M dari form, yang dianggap UTC oleh JS) ke Date WIB.
+ *  Input datetime-local tanpa timezone → di-parse JS sebagai UTC.
+ *  Kita tambah +07:00 agar interpretasinya benar sebagai WIB. */
+export function parseWIB(s: string): Date {
+  // Hapus spasi, pastikan format YYYY-MM-DDTHH:MM
+  const clean = s.trim();
+  if (!clean) return new Date(NaN);
+  // Jika belum ada timezone info, anggap WIB
+  if (!/[+-]\d{2}:\d{2}$|Z$/i.test(clean)) {
+    return new Date(clean + "+07:00");
+  }
+  return new Date(clean);
+}
+
+/** Format Date (UTC dari DB) → string untuk input datetime-local WIB.
+ *  getHours/getMinutes mengembalikan waktu lokal server.
+ *  Untuk konsistensi, paksa hitung manual sebagai UTC+7. */
+export function toWIBInput(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  // Konversi UTC → WIB secara eksplisit
+  const wib = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+  return `${wib.getUTCFullYear()}-${p(wib.getUTCMonth() + 1)}-${p(wib.getUTCDate())}T${p(wib.getUTCHours())}:${p(wib.getUTCMinutes())}`;
+}
+
 export function formatJadwal(d: Date): string {
   return new Intl.DateTimeFormat("id-ID", {
     weekday: "long",
