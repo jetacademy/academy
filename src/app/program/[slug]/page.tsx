@@ -532,12 +532,12 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
 
               <div style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.2rem" }}>
                 {[
-                  { icon: "😩", time: "Setiap pagi", title: "Bangun tidur, HP udah 25 WA", desc: "Pelanggan nanya dari semalem. Ada yang complain 'kok slow respon?' — padahal kamu cuma satu orang." },
-                  { icon: "😮‍💨", time: "Setiap minggu", title: "Bikin konten? Kapan?", desc: "Mau posting, tapi setelah packing + kirim, udah malem. Feed sepi, penjualan anget-anget aja." },
-                  { icon: "😬", time: "Setiap hari", title: "Follow-up? Lupa. Pelanggan ilang", desc: "Udah nego-nego, tinggal closing — eh lupa difollow-up. Pelanggan potensial lenyap gitu aja." },
-                  { icon: "😤", time: "Setiap malam", title: "Laporan? Ngitung manual", desc: "Habis tutup toko, masih ngitung pemasukan pake kalkulator HP. Capek, rentan salah." },
-                  { icon: "😫", time: "Setiap bulan", title: "Gaji 2 orang Rp7jt — kerjaan nggak beres", desc: "Bayar karyawan, tapi masih harus ngecek kerjaan mereka. Uang keluar, kepala pusing." },
-                  { icon: "😰", time: "Setiap saat", title: "Takut ketinggalan, bingung mulai", desc: "Semua orang udah pake AI. Tapi tools-nya ribet, perlu coding, mahal. Kamu cuma mau yang beneran jalan." },
+                  { icon: "😩", time: "Setiap hari", title: "Follow-up client? Lupa terus", desc: "Udah nego-nego, tinggal closing. Eh besoknya lupa. Pelanggan potensial lenyap gitu aja. Kehilangan duit." },
+                  { icon: "😮‍💨", time: "Setiap minggu", title: "Cari customer baru? Capek", desc: "Harus promosi manual, chat satu-satu, hunting prospek sendiri. Hasil? Nggak sebanding sama tenaga yang dikeluarin." },
+                  { icon: "😤", time: "Setiap malam", title: "Bikin laporan? Ngitung manual", desc: "Setelah tutup toko, masih harus rekap pemasukan, stok, pengeluaran. Pake kalkulator HP. Capek, rentan salah." },
+                  { icon: "😩", time: "Setiap saat", title: "Kelola website sendiri? Bingung", desc: "Mau update konten, ganti promo, tambah produk. Tapi ribet, harus call teknisi, bayar lagi. Jadinya diemin aja." },
+                  { icon: "😫", time: "Setiap bulan", title: "Gaji 2 orang Rp7jt — kerjaan nggak beres", desc: "Bayar karyawan buat CS, admin, sales. Tapi masih harus ngecek. Uang keluar, kepala pusing." },
+                  { icon: "😰", time: "Setiap saat", title: "Bingung mulai pake AI", desc: "Tools AI di luar banyak, tapi ribet, perlu coding, mahal. Kamu cuma mau yang beneran jalan — langsung kepake." },
                 ].map((pain, i) => (
                   <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid rgba(231, 76, 60, 0.15)", background: "var(--white)", borderRadius: "var(--r-md)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "0.6rem" }}>
