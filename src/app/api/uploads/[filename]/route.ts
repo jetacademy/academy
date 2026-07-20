@@ -3,7 +3,7 @@ import { readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 
-const UPLOADS_DIR = process.env.UPLOADS_DIR ?? join(/* turbopackIgnore: true */ process.cwd(), "uploads");
+const UPLOADS_DIR = process.env.UPLOADS_DIR ?? join(process.cwd(), "uploads");
 
 const MIME_MAP: Record<string, string> = {
   png: "image/png",
@@ -29,9 +29,9 @@ export async function GET(
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  const filePath = join(UPLOADS_DIR, filename);
+  const filePath = join(/* turbopackIgnore: true */ UPLOADS_DIR, filename);
 
-  if (!existsSync(filePath)) {
+  if (!existsSync(/* turbopackIgnore: true */ filePath)) {
     return new NextResponse("Not Found", { status: 404 });
   }
 
@@ -39,7 +39,7 @@ export async function GET(
   const contentType = MIME_MAP[ext] ?? "application/octet-stream";
 
   try {
-    const buffer = await readFile(filePath);
+    const buffer = await readFile(/* turbopackIgnore: true */ filePath);
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": contentType,
