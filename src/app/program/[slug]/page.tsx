@@ -674,7 +674,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                   Perubahan kecil — dampak besar. Lihat sendiri perbedaan sebelum dan sesudah.
                 </p>
               </div>
-              <div style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", maxWidth: "50rem", marginInline: "auto" }}>
+              <div style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "1fr", gap: "1.5rem", maxWidth: "40rem", marginInline: "auto" }}>
                 <div className="bento" style={{ padding: "2rem", border: "1px solid rgba(231, 76, 60, 0.2)", background: "rgba(231, 76, 60, 0.03)", borderRadius: "var(--r-md)" }}>
                   <span className="type-tag" style={{ background: "rgba(231, 76, 60, 0.1)", color: "#e74c3c", marginBottom: "1rem", display: "inline-block", fontWeight: 800 }}>Tanpa AI Agent</span>
                   <div style={{ display: "grid", gap: "1rem" }}>
