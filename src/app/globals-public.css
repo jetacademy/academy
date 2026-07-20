@@ -1422,6 +1422,15 @@
 .field input:focus, .field select:focus { border-color: var(--purple); background: var(--white); }
 .field input::placeholder { color: var(--ink-faint); font-weight: 500; }
 .reg-note { font-size: .74rem; color: var(--ink-faint); margin-top: .9rem; font-weight: 600; }
+/* Tombol submit di reg-card berisi label dinamis (mis. "Konfirmasi & Bayar —
+   Rp 225.000") yang bisa lebih panjang dari lebar kartu di HP. .btn default
+   pakai white-space: nowrap — tanpa override ini teksnya overflow lalu
+   kepotong oleh overflow:hidden milik .bento-purple. Biarkan wrap 2 baris. */
+.reg-card .btn {
+  white-space: normal;
+  text-align: center;
+  line-height: 1.3;
+}
 .form-error {
   background: #FDECEC; color: var(--red);
   border-radius: var(--r-sm);
