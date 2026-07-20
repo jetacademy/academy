@@ -129,6 +129,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const isZeroHuman = program.slug === "zero-human-company";
   const jadwal = formatJadwal(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
+  const earlyBirdDeadline = new Date(Date.now() + 5 * 86400000).toISOString();
 
 
   const faqItems = isAiForTeachers
@@ -603,6 +604,9 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                   <span className="eb-save">Hemat 54%</span>
                 </div>
                 <p className="eb-note">Kunci harga spesial ini sekarang — setelah H-4 sebelum workshop, harga kembali ke Rp 490.000.</p>
+                <div style={{ marginTop: "0.8rem" }}>
+                  <OfferTimer target={earlyBirdDeadline} note="🔥 Promo early bird berakhir dalam" />
+                </div>
               </div>
 
               <div className="hero-card" style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.2rem" }}>
