@@ -266,6 +266,13 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               </span>
               <h1 className="prg-hero-h1">{program.title}</h1>
               <p className="prg-hero-lead">{program.tagline}</p>
+              {isZeroHuman && (
+                <div style={{ marginTop: "1.2rem", padding: "0.7rem 1.2rem", background: "rgba(46, 204, 113, 0.08)", borderLeft: "4px solid #27ae60", borderRadius: "0 12px 12px 0", display: "inline-block" }}>
+                  <p style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#27ae60" }}>
+                    💤 Owner tidur — bisnis tetap jalan.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Kolom kanan — Gambar Program (upload admin) atau ilustrasi bawaan */}
