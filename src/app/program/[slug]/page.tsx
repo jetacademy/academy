@@ -569,9 +569,9 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               </div>
               <div style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
                 {[
-                  { name: "Rina Wijaya", role: "Owner — Fashionalicious Store", text: "Dulu saya balas WA pelanggan sampe jam 12 malem sendiri. Sekarang CS Agent yang handle — saya tinggal tidur. Pelanggan seneng, saya juga seneng.", stars: 5 },
-                  { name: "Dimas Pratama", role: "Founder — Kreativa Studio", text: "Konten agency saya dulu mandek berminggu-minggu. Content Agent sekarang nulis artikel tiap minggu, SEO-friendly. Tinggal set topik, beres.", stars: 5 },
-                  { name: "Sari Dewi", role: "Owner — Dewi Ayu Spa", text: "Sales Agent yang follow-up otomatis bikin booking naik 40% dalam sebulan. Saya nggak nyangka segampang ini.", stars: 5 },
+                  { name: "Rina Wijaya", role: "Owner UMKM Fashion", text: "Dulu saya balas WA pelanggan sampe jam 12 malem sendiri. Sekarang CS Agent yang handle — saya tinggal tidur. Pelanggan seneng, saya juga seneng.", stars: 5 },
+                  { name: "Dimas Pratama", role: "Founder Startup Kreatif", text: "Konten agency saya dulu mandek berminggu-minggu. Content Agent sekarang nulis artikel tiap minggu. Tinggal set topik, beres.", stars: 5 },
+                  { name: "Sari Dewi", role: "Owner Bisnis Jasa", text: "Sales Agent yang follow-up otomatis bikin booking naik 40% dalam sebulan. Saya nggak nyangka segampang ini.", stars: 5 },
                 ].map((t, i) => (
                   <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)", display: "flex", flexDirection: "column", gap: "0.8rem" }}>
                     <div style={{ fontSize: "0.9rem", color: "#f59e0b", letterSpacing: "2px" }}>{'★'.repeat(t.stars)}</div>
