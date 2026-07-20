@@ -61,7 +61,7 @@ export default async function MemberDashboardPage() {
       // Prisma.join aman untuk IN clause
       const { Prisma: PrismaLib } = await import("@prisma/client");
       const rows = await prisma.$queryRaw<RawRow[]>(
-        PrismaLib.sql`SELECT id, certClaimOpen FROM \`Program\` WHERE id IN (${PrismaLib.join(programIds)})`
+        PrismaLib.sql`SELECT id, certClaimOpen FROM \`program\` WHERE id IN (${PrismaLib.join(programIds)})`
       );
       for (const row of rows) {
         certClaimMap.set(row.id, row.certClaimOpen === 1);

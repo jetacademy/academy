@@ -19,7 +19,7 @@ export default async function AdminProgramList() {
       type RawRow = { id: string; certClaimOpen: number };
       const ids = programs.map((p) => p.id);
       const rows = await prisma.$queryRaw<RawRow[]>(
-        Prisma.sql`SELECT id, certClaimOpen FROM \`Program\` WHERE id IN (${Prisma.join(ids)})`
+        Prisma.sql`SELECT id, certClaimOpen FROM \`program\` WHERE id IN (${Prisma.join(ids)})`
       );
       for (const row of rows) {
         certClaimMap.set(row.id, row.certClaimOpen === 1);
