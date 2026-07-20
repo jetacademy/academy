@@ -8,8 +8,9 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-function sabtuDate(day: number, month: number): Date {
-  return new Date(Date.UTC(2026, month - 1, day, 6, 0, 0)); // 13:00 WIB = 06:00 UTC
+/** Helper: buat Date jam 13:00 WIB (UTC 06:00) */
+function makeDate(day: number, month: number, year: number = 2026): Date {
+  return new Date(Date.UTC(year, month - 1, day, 6, 0, 0));
 }
 
 async function main() {
@@ -63,7 +64,7 @@ async function main() {
         { label: "e-Sertifikat Resmi + Grup WA Alumni", value: 0 },
       ],
       guarantee: null,
-      scheduleAt: sabtuDate(25, 7),
+      scheduleAt: makeDate(30, 7),
       durationLabel: "3 jam · Live Zoom",
       price: 225000,
       priceOld: 490000,
@@ -79,9 +80,9 @@ async function main() {
 
   // ── 3. BATCH ──────────────────────────────────────────────────────
   const batchDates = [
-    { label: "BATCH-001", date: sabtuDate(25, 7) },
-    { label: "BATCH-002", date: sabtuDate(8, 8) },
-    { label: "BATCH-003", date: sabtuDate(22, 8) },
+    { label: "BATCH-001", date: makeDate(30, 7) },  // 30 Juli 2026
+    { label: "BATCH-002", date: makeDate(6, 8) },   // 6 Agustus 2026
+    { label: "BATCH-003", date: makeDate(13, 8) },  // 13 Agustus 2026
   ];
 
   for (const b of batchDates) {
@@ -97,7 +98,7 @@ async function main() {
   console.log(`📋 Program: Zero Human Company`);
   console.log(`   URL     : /program/zero-human-company`);
   console.log(`   Harga   : Rp 225.000 (WORKSHOP)`);
-  console.log(`   Batch   : 3 batch (25 Jul — 22 Agu 2026)`);
+  console.log(`   Batch   : 3 batch (30 Jul — 13 Agu 2026)`);
   console.log(`   Modul   : Workshop murni — 3 jam live Zoom`);
 }
 
