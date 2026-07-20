@@ -265,13 +265,6 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               </span>
               <h1 className="prg-hero-h1">{program.title}</h1>
               <p className="prg-hero-lead">{program.tagline}</p>
-              {isZeroHuman && (
-                <div style={{ marginTop: "1.5rem", padding: "0.8rem 1.2rem", background: "rgba(46, 204, 113, 0.08)", border: "1px solid rgba(46, 204, 113, 0.2)", borderRadius: "12px", display: "inline-block" }}>
-                  <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#27ae60" }}>
-                    💤 Owner tidur — bisnis tetap jalan. Marketing, CS, sales kerja 24 jam.
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Kolom kanan — Gambar Program (upload admin) atau ilustrasi bawaan */}
@@ -551,12 +544,9 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 ))}
               </div>
 
-              <div style={{ textAlign: "center", marginTop: "2rem", padding: "1.5rem", background: "linear-gradient(135deg, rgba(108,92,231,0.08), rgba(46,204,113,0.08))", borderRadius: "16px", border: "1px solid rgba(108,92,231,0.15)" }}>
-                <p style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--purple)", margin: 0 }}>
-                  Sekarang bayangkan: semua ini beres. Otomatis. 24 jam. <span style={{ color: "#27ae60" }}>Tanpa kamu harus begadang.</span>
-                </p>
-                <p style={{ fontSize: "0.95rem", color: "var(--ink-soft)", marginTop: "0.5rem", marginBottom: 0 }}>
-                  💤 Owner tidur — bisnis tetap jalan. Ini bukan mimpi. Ini yang kamu bawa pulang dari workshop ini. 👇
+              <div style={{ textAlign: "center", marginTop: "2rem" }}>
+                <p style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--purple)" }}>
+                  ✋ Tenang — ini bukan akhir. Ini awal dari solusinya. 👇
                 </p>
               </div>
             </div>
