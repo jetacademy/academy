@@ -118,10 +118,10 @@ export async function saveProgram(formData: FormData) {
   try {
     if (id) {
       await prisma.program.update({ where: { id }, data });
-      await prisma.$executeRaw`UPDATE \`Program\` SET \`certClaimOpen\` = ${certClaimOpen} WHERE \`id\` = ${id}`;
+      await prisma.$executeRaw`UPDATE \`program\` SET \`certClaimOpen\` = ${certClaimOpen} WHERE \`id\` = ${id}`;
     } else {
       const created = await prisma.program.create({ data });
-      await prisma.$executeRaw`UPDATE \`Program\` SET \`certClaimOpen\` = ${certClaimOpen} WHERE \`id\` = ${created.id}`;
+      await prisma.$executeRaw`UPDATE \`program\` SET \`certClaimOpen\` = ${certClaimOpen} WHERE \`id\` = ${created.id}`;
     }
   } catch (err) {
     if (isUniqueError(err)) {
@@ -252,7 +252,7 @@ export async function toggleCertClaim(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
   // Gunakan raw SQL agar tidak bergantung pada versi Prisma client yang ter-cache
-  await prisma.$executeRaw`UPDATE \`Program\` SET \`certClaimOpen\` = NOT \`certClaimOpen\` WHERE \`id\` = ${id}`;
+  await prisma.$executeRaw`UPDATE \`program\` SET \`certClaimOpen\` = NOT \`certClaimOpen\` WHERE \`id\` = ${id}`;
   revalidatePath("/webadmin/program");
   revalidatePath("/member");
 }
