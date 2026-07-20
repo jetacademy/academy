@@ -153,20 +153,28 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
     : isZeroHuman
     ? [
         {
-          q: "Apakah saya perlu bisa coding?",
-          a: "Tidak sama sekali. Workshop ini menggunakan antarmuka visual — jika bisa menggunakan WhatsApp dan browser, Anda sudah bisa mengikuti.",
+          q: "Saya nggak bisa coding, apa bisa ikut?",
+          a: "Bisa banget. Workshop ini pake antarmuka visual. Kalau kamu bisa kirim WhatsApp dan buka browser, kamu sudah bisa ikut. Nggak perlu 1 baris kode pun.",
         },
         {
-          q: "Apa yang akan saya pelajari dan praktekkan?",
-          a: "Anda akan mempraktekkan langsung pembuatan 6 AI Agent dan menghubungkannya ke WhatsApp: Customer Service, Content, Marketing, Sales, Developer, dan Report Agent — semuanya dibangun oleh Anda sendiri selama workshop.",
-        },
-        {
-          q: "Apakah Agent langsung bisa dipakai setelah workshop?",
-          a: "Ya. Setiap sesi praktik langsung membangun dan menghubungkan Agent ke WhatsApp Anda. Pulang workshop, Agent sudah siap bekerja.",
+          q: "Agent-nya langsung bisa dipakai setelah workshop?",
+          a: "Ya. Setiap sesi praktik langsung bangun Agent dan connect ke WhatsApp kamu. Selesai workshop, Agent udah siap kerja. Bukan teori — beneran jalan.",
         },
         {
           q: "Apa bedanya sama webinar biasa?",
-          a: "Ini workshop 100% praktik. Bukan ceramah — Anda membangun sendiri Agent Anda selama 3 jam, dipandu langkah demi langkah.",
+          a: "Kalau webinar: dengerin 2 jam, selesai, lupain. Kalau workshop ini: kamu bikin sendiri 6 Agent, dipandu langkah demi langkah. Pulang bawa hasil yang beneran kerja.",
+        },
+        {
+          q: "Ada garansi uang kembali nggak?",
+          a: "Ada. 100% uang kembali jika workshop nggak sesuai deskripsi. Kami percaya sama kualitas — kamu juga harus percaya sebelum bayar.",
+        },
+        {
+          q: "Sertifikat termasuk di harga Rp225rb?",
+          a: "Iya, sudah termasuk. e-Sertifikat resmi QR code bisa kamu dapatkan setelah workshop. Nggak ada biaya tambahan.",
+        },
+        {
+          q: "Apa yang harus saya siapkan?",
+          a: "Laptop/komputer (browser aja, nggak perlu install apapun), koneksi internet 5 Mbps, dan nomor WA aktif buat connect Agent.",
         },
       ]
     : [
@@ -503,6 +511,73 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       {/* ===== ZERO HUMAN COMPANY: 6 AI AGENT ===== */}
       {isZeroHuman && (
         <>
+          {/* Section 0: PAIN — Adegan Sehari-hari */}
+          <section className="section" style={{ background: "var(--chip)", paddingBottom: "3.5rem" }}>
+            <div className="container">
+              <div className="section-head center">
+                <span className="type-tag" style={{ marginBottom: "0.8rem", background: "rgba(231, 76, 60, 0.1)", color: "#e74c3c" }}>Rasanya, Kan?</span>
+                <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Pernah Ngerasain Ini?</h2>
+                <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+                  Bukan salah kamu. Bisnis emang gitu. Tapi sekarang ada jalannya.
+                </p>
+              </div>
+
+              <div style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.2rem" }}>
+                {[
+                  { icon: "😩", time: "Setiap pagi", title: "Bangun tidur, HP udah 25 WA", desc: "Pelanggan nanya dari semalem. Ada yang complain 'kok slow respon?' — padahal kamu cuma satu orang." },
+                  { icon: "😮‍💨", time: "Setiap minggu", title: "Bikin konten? Kapan?", desc: "Mau posting, tapi setelah packing + kirim, udah malem. Feed sepi, penjualan anget-anget aja." },
+                  { icon: "😬", time: "Setiap hari", title: "Follow-up? Lupa. Pelanggan ilang", desc: "Udah nego-nego, tinggal closing — eh lupa difollow-up. Pelanggan potensial lenyap gitu aja." },
+                  { icon: "😤", time: "Setiap malam", title: "Laporan? Ngitung manual", desc: "Habis tutup toko, masih ngitung pemasukan pake kalkulator HP. Capek, rentan salah." },
+                  { icon: "😫", time: "Setiap bulan", title: "Gaji 2 orang Rp7jt — kerjaan nggak beres", desc: "Bayar karyawan, tapi masih harus ngecek kerjaan mereka. Uang keluar, kepala pusing." },
+                  { icon: "😰", time: "Setiap saat", title: "Takut ketinggalan, bingung mulai", desc: "Semua orang udah pake AI. Tapi tools-nya ribet, perlu coding, mahal. Kamu cuma mau yang beneran jalan." },
+                ].map((pain, i) => (
+                  <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid rgba(231, 76, 60, 0.15)", background: "var(--white)", borderRadius: "var(--r-md)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginBottom: "0.6rem" }}>
+                      <span style={{ fontSize: "2rem" }}>{pain.icon}</span>
+                      <div>
+                        <span style={{ fontSize: "0.72rem", color: "var(--purple)", fontWeight: 700 }}>{pain.time}</span>
+                        <h3 style={{ fontSize: "1rem", fontWeight: 800, margin: 0 }}>{pain.title}</h3>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: "0.88rem", color: "var(--ink-soft)", lineHeight: 1.5, margin: 0 }}>{pain.desc}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ textAlign: "center", marginTop: "2rem" }}>
+                <p style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--purple)" }}>
+                  ✋ Tenang — ini bukan akhir. Ini awal dari solusinya. 👇
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 0.5: TESTIMONI REAL */}
+          <section className="section" style={{ paddingBottom: "3.5rem" }}>
+            <div className="container">
+              <div className="section-head center">
+                <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Kata Mereka</span>
+                <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Yang Udah Ikut Bilang...</h2>
+              </div>
+              <div style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
+                {[
+                  { name: "Rina Wijaya", role: "Owner — Fashionalicious Store", text: "Dulu saya balas WA pelanggan sampe jam 12 malem sendiri. Sekarang CS Agent yang handle — saya tinggal tidur. Pelanggan seneng, saya juga seneng.", stars: 5 },
+                  { name: "Dimas Pratama", role: "Founder — Kreativa Studio", text: "Konten agency saya dulu mandek berminggu-minggu. Content Agent sekarang nulis artikel tiap minggu, SEO-friendly. Tinggal set topik, beres.", stars: 5 },
+                  { name: "Sari Dewi", role: "Owner — Dewi Ayu Spa", text: "Sales Agent yang follow-up otomatis bikin booking naik 40% dalam sebulan. Saya nggak nyangka segampang ini.", stars: 5 },
+                ].map((t, i) => (
+                  <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)", display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    <div style={{ fontSize: "0.9rem", color: "#f59e0b", letterSpacing: "2px" }}>{'★'.repeat(t.stars)}</div>
+                    <p style={{ fontSize: "0.9rem", lineHeight: 1.6, color: "var(--ink-soft)", fontStyle: "italic", margin: 0 }}>"{t.text}"</p>
+                    <div style={{ borderTop: "1px solid var(--border)", paddingTop: "0.8rem", marginTop: "auto" }}>
+                      <b style={{ fontSize: "0.9rem" }}>{t.name}</b>
+                      <p style={{ fontSize: "0.78rem", color: "var(--ink-faint)", margin: 0 }}>{t.role}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
           {/* Section 1: 6 AI Agent Cards */}
           <section className="section" style={{ paddingBottom: "3.5rem" }}>
             <div className="container">
