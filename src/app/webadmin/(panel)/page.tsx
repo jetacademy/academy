@@ -7,6 +7,9 @@ const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
   REGISTERED: { cls: "dim", label: "Terdaftar" },
   PAID: { cls: "y", label: "Lunas" },
   PASSED: { cls: "g", label: "Lulus" },
+  FAILED: { cls: "dim", label: "Gagal" },
+  EXPIRED: { cls: "dim", label: "Kadaluwarsa" },
+  CANCELLED: { cls: "dim", label: "Dibatalkan" },
 };
 
 interface ProgramStatsRaw {
@@ -116,7 +119,7 @@ export default async function AdminDashboard() {
           </thead>
           <tbody>
             {latest.map((r) => {
-              const b = STATUS_BADGE[r.status];
+              const b = STATUS_BADGE[r.status] ?? { cls: "dim", label: r.status };
               return (
                 <tr key={r.id}>
                   <td data-label="Nama" style={{ fontWeight: 600 }}>{r.name}</td>
