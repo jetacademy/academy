@@ -78,7 +78,6 @@ export async function POST(req: Request) {
       error: `Nama "${name}" sudah digunakan.`,
     }, { status: 400 });
   }
-  }
   const participantCount = 1 + participants.length; // pendaftar utama + tambahan
   if (participantCount > 10) {
     return NextResponse.json({ error: "Maksimal 10 peserta dalam satu pendaftaran." }, { status: 400 });
