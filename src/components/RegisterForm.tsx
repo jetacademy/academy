@@ -473,6 +473,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                     type="text"
                     placeholder="Contoh: SDN 1 Bandung / Umum"
                     required
+                    minLength={3}
                     value={institutionVal}
                     onChange={(e) => setInstitutionVal(e.target.value)}
                   />
