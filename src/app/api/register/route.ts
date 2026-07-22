@@ -65,12 +65,19 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
     // Cegah duplikasi nama dalam satu group
-    if (participants.includes(trimmed) || trimmed === name) {
+    if (participants.includes(trimmed)) {
       return NextResponse.json({
-        error: `Nama "${trimmed}" terduplikasi. Nama peserta harus unik dalam satu pendaftaran.`,
+        error: `Nama "${trimmed}" sudah dipakai untuk peserta lain. Setiap peserta harus punya nama berbeda.`,
       }, { status: 400 });
     }
     participants.push(trimmed);
+  }
+  // Cek nama utama jangan sama dengan peserta tambahan
+  if (participants.includes(name)) {
+    return NextResponse.json({
+      error: `Nama "${name}" sudah digunakan.`,
+    }, { status: 400 });
+  }
   }
   const participantCount = 1 + participants.length; // pendaftar utama + tambahan
   if (participantCount > 10) {
