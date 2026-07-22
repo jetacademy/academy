@@ -685,8 +685,8 @@ export async function deleteBunnyVideoAction(guid: string) {
 
 const ALLOWED_UPLOAD_EXT = ["pdf", "png", "jpg", "jpeg", "webp"];
 
-/** Direktori penyimpanan file upload — pakai env UPLOADS_DIR atau fallback ke ./uploads (luar public/ agar tidak hilang saat redeploy). */
-const UPLOADS_DIR = process.env.UPLOADS_DIR ?? join(process.cwd(), "uploads");
+/** Direktori penyimpanan file upload — pakai env UPLOADS_DIR atau fallback ke home untuk persistensi. */
+const UPLOADS_DIR = process.env.UPLOADS_DIR ?? join(process.env.HOME || "/tmp", "jetschool-uploads");
 const ALLOWED_UPLOAD_MIME = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20 MB
 
