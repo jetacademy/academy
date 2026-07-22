@@ -196,6 +196,8 @@ export default async function MemberDashboardPage() {
                   statusBadge = <span className="badge y">Pembayaran Sertifikat Pending</span>;
                 } else if (pay && pay.status === "PENDING") {
                   statusBadge = <span className="badge y">Menunggu Pembayaran</span>;
+                } else if (pay && pay.status === "EXPIRED") {
+                  statusBadge = <span className="badge" style={{ background: "#e74c3c", color: "#fff" }}>Pembayaran Kedaluwarsa</span>;
                 } else if (reg.status === "EXPIRED") {
                   statusBadge = <span className="badge" style={{ background: "#ff6b6b", color: "#fff" }}>Kedaluwarsa</span>;
                 } else if (reg.status === "FAILED") {
@@ -244,8 +246,15 @@ export default async function MemberDashboardPage() {
                     {/* ── Kanan: Aksi ── */}
                     <div className="member-card-actions">
 
-                      {/* ══ KASUS 1: REGISTERED + PROGRAM BERBAYAR ══ */}
-                      {reg.status === "REGISTERED" && prog.price > 0 && pay && (
+                      {/* ══ KASUS 1a: PAYMENT EXPIRED — buat pembayaran baru ══ */}
+                      {reg.status === "REGISTERED" && prog.price > 0 && pay && pay.status === "EXPIRED" && (
+                        <a href={`/program/${prog.slug}`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                          Buat Pembayaran Baru
+                        </a>
+                      )}
+
+                      {/* ══ KASUS 1b: REGISTERED + PROGRAM BERBAYAR + INVOICE VALID ══ */}
+                      {reg.status === "REGISTERED" && prog.price > 0 && pay && pay.status === "PENDING" && (
                         <>
                           <a
                             href={pay.invoiceUrl ?? "#"}
