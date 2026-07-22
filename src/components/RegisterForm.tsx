@@ -36,6 +36,14 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
   const router = useRouter();
 
   const [nameVal, setNameVal] = useState(memberProfile?.name ?? "");
+
+  // Filter auto-fill bug: phone number terselip di field nama
+  const safeName = (v: string) => {
+    const clean = v.trim();
+    // Deteksi "P" diikuti angka (phone auto-fill)
+    if (/^P\d{6,}/.test(clean)) return clean.replace(/^P/, "");
+    return clean;
+  };
   const [emailVal, setEmailVal] = useState(memberProfile?.email ?? "");
   const [whatsappVal, setWhatsappVal] = useState(memberProfile?.whatsapp ?? "");
   const [institutionVal, setInstitutionVal] = useState(memberProfile?.institution ?? "");
@@ -67,7 +75,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     setError("");
     setState("loading");
     const data: Record<string, unknown> = {
-      name: nameVal.trim(),
+      name: safeName(nameVal),
       whatsapp: whatsappVal.trim(),
       email: emailVal.trim(),
       institution: institutionVal.trim(),
@@ -102,7 +110,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
       // [FIX G2] Set result agar tampilan sukses muncul
       window.fbq?.("track", "Lead");
       setResult({
-        name: nameVal.trim(),
+        name: safeName(nameVal),
         paid: (json.paid as boolean) ?? false,
         free: (json.free as boolean) ?? true,
         waGroupLink: json.waGroupLink as string | null ?? null,
