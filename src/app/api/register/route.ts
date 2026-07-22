@@ -9,6 +9,7 @@ import { createMemberSession } from "@/lib/member-auth";
 
 /**
  * POST /api/register — satu pintu untuk semua tipe program.
+ * Dukungan multi-pendaftar (1 group WA/email, banyak peserta via participants[]).
  *
  * - Program GRATIS (webinar): simpan pendaftar → WA sambutan (Zoom + grup).
  * - Program BERBAYAR (kelas/workshop/bootcamp): simpan pendaftar →
@@ -23,7 +24,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: limit.error }, { status: limit.status });
   }
 
-  let body: { name?: string; whatsapp?: string; email?: string; programSlug?: string; institution?: string; batchId?: string; credential?: string };
+  let body: {
+    name?: string;
+    whatsapp?: string;
+    email?: string;
+    programSlug?: string;
+    institution?: string;
+    batchId?: string;
+    credential?: string;
+    participants?: string[];
+  };
   try {
     body = await req.json();
   } catch {
@@ -43,6 +53,29 @@ export async function POST(req: Request) {
   if (name.length < 3) return NextResponse.json({ error: "Nama minimal 3 huruf." }, { status: 400 });
   if (!/^628[0-9]{8,13}$/.test(whatsapp)) return NextResponse.json({ error: "Nomor WhatsApp tidak valid (contoh: 081234567890)." }, { status: 400 });
   if (!/^\S+@\S+\.\S+$/.test(email)) return NextResponse.json({ error: "Email tidak valid." }, { status: 400 });
+
+  // ── Multi-pendaftar: parse & validasi peserta tambahan ──────────
+  const rawParticipants = Array.isArray(body.participants) ? body.participants : [];
+  const participants: string[] = [];
+  for (const p of rawParticipants) {
+    const trimmed = (typeof p === "string" ? p : "").trim().slice(0, 100);
+    if (trimmed.length < 3) {
+      return NextResponse.json({
+        error: "Nama peserta tidak valid. Setiap nama minimal 3 huruf.",
+      }, { status: 400 });
+    }
+    // Cegah duplikasi nama dalam satu group
+    if (participants.includes(trimmed) || trimmed === name) {
+      return NextResponse.json({
+        error: `Nama "${trimmed}" terduplikasi. Nama peserta harus unik dalam satu pendaftaran.`,
+      }, { status: 400 });
+    }
+    participants.push(trimmed);
+  }
+  const participantCount = 1 + participants.length; // pendaftar utama + tambahan
+  if (participantCount > 10) {
+    return NextResponse.json({ error: "Maksimal 10 peserta dalam satu pendaftaran." }, { status: 400 });
+  }
 
   // ── [FIX C1] Verifikasi Google credential jika dikirim ──────────
   if (credential) {
@@ -94,13 +127,16 @@ export async function POST(req: Request) {
       const batch = await prisma.programBatch.findFirst({ where: { id: batchIdInput, programId: program.id, isActive: true } });
       if (!batch) return NextResponse.json({ error: "Jadwal batch tidak valid. Silakan pilih ulang." }, { status: 400 });
 
-      // [FIX C5] Validasi seatsLeft batch
+      // [FIX C5] Validasi seatsLeft batch terhadap total peserta (multi-pendaftar)
       if (batch.seatsLeft !== null && batch.seatsLeft !== undefined) {
         const regCount = await prisma.registration.count({
           where: { batchId: batch.id, programId: program.id },
         });
-        if (regCount >= batch.seatsLeft) {
-          return NextResponse.json({ error: "Maaf, kursus untuk batch ini sudah penuh." }, { status: 400 });
+        if (regCount + participantCount > batch.seatsLeft) {
+          const remaining = batch.seatsLeft - regCount;
+          return NextResponse.json({
+            error: `Maaf, kursus untuk batch ini tidak mencukupi. Sisa kursi: ${remaining}, peserta yang didaftarkan: ${participantCount}.`,
+          }, { status: 400 });
         }
       }
 
@@ -109,7 +145,7 @@ export async function POST(req: Request) {
 
     // ── EARLY BIRD PRICE: zero-human-company ──────────────────────
     // Harga Rp 225.000 sampai H-4, setelah itu Rp 490.000
-    let effectivePrice = program.price;
+    let unitPrice = program.price;
     if (program.slug === "zero-human-company") {
       const EARLY_BIRD_PRICE = 225000;
       const FULL_PRICE = 490000;
@@ -117,8 +153,11 @@ export async function POST(req: Request) {
         ? (await prisma.programBatch.findUnique({ where: { id: batchId } }))?.scheduleAt ?? program.scheduleAt
         : program.scheduleAt;
       const earlyBirdDeadline = new Date(sessionDate.getTime() - 4 * 24 * 60 * 60 * 1000);
-      effectivePrice = new Date() <= earlyBirdDeadline ? EARLY_BIRD_PRICE : FULL_PRICE;
+      unitPrice = new Date() <= earlyBirdDeadline ? EARLY_BIRD_PRICE : FULL_PRICE;
     }
+
+    // Total harga = harga per peserta × jumlah peserta
+    const totalPrice = unitPrice * participantCount;
 
     // ── [FIX C2] Validasi duplikasi yang lebih ketat ──
     // Cari registrasi existing dengan kombinasi whatsapp ATAU email
@@ -177,10 +216,19 @@ export async function POST(req: Request) {
     }
 
     // idempoten: daftar dua kali dengan nomor sama = tetap sukses (update data terbaru)
+    // Data multi-pendaftar disimpan di field participants (Json array of strings)
     const reg = await prisma.registration.upsert({
       where: { whatsapp_programId: { whatsapp, programId: program.id } },
-      create: { name, whatsapp, email, institution, programId: program.id, userId: user.id, batchId },
-      update: { name, email, institution, userId: user.id, ...(batchId ? { batchId } : {}) },
+      create: {
+        name, whatsapp, email, institution,
+        programId: program.id, userId: user.id, batchId,
+        participants: participants.length > 0 ? participants : undefined,
+      },
+      update: {
+        name, email, institution, userId: user.id,
+        ...(batchId ? { batchId } : {}),
+        ...(participants.length > 0 ? { participants } : {}),
+      },
       include: { payment: true },
     });
 
@@ -194,28 +242,53 @@ export async function POST(req: Request) {
         : program.scheduleAt;
       const formattedJadwal = formatJadwal(activeScheduleAt);
 
+      // Gabung semua nama peserta untuk keperluan notifikasi
+      const allNames = [name, ...participants];
+
       await sendWa(
         whatsapp,
         msgWelcome(name, program.title, formattedJadwal, program.zoomLink, program.waGroupLink)
       );
+
+      const pesertaInfo = participantCount > 1
+        ? `\n\n📋 Total peserta: ${participantCount} orang (${allNames.join(", ")})`
+        : "";
+
       await sendEmail({
         to: email,
         subject: `Pendaftaran Berhasil: ${program.title}`,
         html: getWelcomeEmailHtml(name, program.title, formattedJadwal, program.waGroupLink ?? "")
+          .replace("</div>", `${pesertaInfo}</div>`),
       }).catch((err) => console.error("Gagal mengirim email pendaftaran gratis:", err));
 
-      return NextResponse.json({ ok: true, paid: false, free: true, waGroupLink: program.waGroupLink });
+      return NextResponse.json({
+        ok: true, paid: false, free: true,
+        waGroupLink: program.waGroupLink,
+        participantCount,
+        participants,
+      });
     }
 
     // ── PROGRAM BERBAYAR ─────────────────────────────────────────
     // sudah lunas sebelumnya → langsung beri akses lagi
     if (reg.status !== "REGISTERED") {
-      return NextResponse.json({ ok: true, paid: true, waGroupLink: program.waGroupLink, lmsLink: program.lmsLink });
+      return NextResponse.json({
+        ok: true, paid: true,
+        waGroupLink: program.waGroupLink,
+        lmsLink: program.lmsLink,
+        participantCount,
+        participants,
+      });
     }
 
     // invoice pending masih berlaku → pakai ulang
     if (reg.payment?.status === "PENDING" && reg.payment.invoiceUrl) {
-      return NextResponse.json({ ok: true, invoiceUrl: reg.payment.invoiceUrl });
+      return NextResponse.json({
+        ok: true,
+        invoiceUrl: reg.payment.invoiceUrl,
+        participantCount,
+        participants,
+      });
     }
 
     // MODE DEV: bypass Xendit jika env XENDIT_DEV_BYPASS=true
@@ -227,7 +300,7 @@ export async function POST(req: Request) {
       await prisma.$transaction([
         prisma.payment.upsert({
           where: { registrationId: reg.id },
-          create: { registrationId: reg.id, amount: effectivePrice, status: "PAID", paidAt: new Date() },
+          create: { registrationId: reg.id, amount: totalPrice, status: "PAID", paidAt: new Date() },
           update: { status: "PAID", paidAt: new Date() },
         }),
         prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
@@ -247,30 +320,46 @@ export async function POST(req: Request) {
         html: getPaidEmailHtml(name, program.title, `${baseUrl}/member`, program.zoomLink, program.waGroupLink, program.lmsLink)
       }).catch((err) => console.error("Gagal mengirim email pembayaran dev:", err));
 
-      return NextResponse.json({ ok: true, paid: true, waGroupLink: program.waGroupLink, lmsLink: program.lmsLink });
+      return NextResponse.json({
+        ok: true, paid: true,
+        waGroupLink: program.waGroupLink,
+        lmsLink: program.lmsLink,
+        participantCount,
+        participants,
+      });
     }
+
+    // Deskripsi invoice: cantumkan jumlah peserta
+    const pesertaDesc = participantCount > 1
+      ? `${program.title} × ${participantCount} peserta (${name} dkk.)`
+      : `${program.title} (${name})`;
 
     const invoice = await createInvoice({
       externalId: `ACADEMY-${reg.id}`,
-      amount: effectivePrice,
+      amount: totalPrice,
       payerEmail: email,
-      description: `${program.title} (${name})`,
+      description: pesertaDesc,
       successRedirectUrl: `${baseUrl}/member`, // [FIX G5] Redirect ke dashboard, bukan program page
     });
 
     await prisma.payment.upsert({
       where: { registrationId: reg.id },
-      create: { registrationId: reg.id, amount: effectivePrice, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url },
-      update: { xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING", amount: effectivePrice },
+      create: { registrationId: reg.id, amount: totalPrice, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url },
+      update: { xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING", amount: totalPrice },
     });
 
     await sendEmail({
       to: email,
       subject: `Selesaikan Pembayaran: ${program.title}`,
-      html: getInvoiceEmailHtml({ name, programTitle: program.title, price: effectivePrice, invoiceUrl: invoice.invoice_url }),
+      html: getInvoiceEmailHtml({ name, programTitle: program.title, price: totalPrice, invoiceUrl: invoice.invoice_url }),
     }).catch((err) => console.error("Gagal mengirim email invoice:", err));
 
-    return NextResponse.json({ ok: true, invoiceUrl: invoice.invoice_url });
+    return NextResponse.json({
+      ok: true,
+      invoiceUrl: invoice.invoice_url,
+      participantCount,
+      participants,
+    });
   } catch (err: unknown) {
     console.error("[register]", err);
     return NextResponse.json(

@@ -134,6 +134,7 @@ model Registration {
   batch       ProgramBatch?      @relation(fields: [batchId], references: [id], onDelete: SetNull)
   batchId     String? // batch/angkatan yang dipilih peserta (null = program tanpa batch, pakai Program.scheduleAt)
   status      RegistrationStatus @default(REGISTERED)
+  participants Json? // array string: nama peserta tambahan (multi-pendaftar 1 group WA/email)
   payment     Payment?
   attempts    TestAttempt[]
   certificate Certificate?

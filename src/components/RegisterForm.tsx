@@ -49,6 +49,8 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
   const [institutionVal, setInstitutionVal] = useState(memberProfile?.institution ?? "");
   const [credentialVal, setCredentialVal] = useState<string | undefined>(undefined);
   const [batchId, setBatchId] = useState<string | undefined>(batches?.[0]?.id);
+  const [jumlahPeserta, setJumlahPeserta] = useState(1);
+  const [additionalNames, setAdditionalNames] = useState<string[]>([]);
 
   const isPaid = price > 0;
   const hasCompletedProfile = !!(whatsappVal.trim() && institutionVal.trim());
@@ -73,9 +75,26 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+
+    // Validasi: semua nama minimal 3 karakter
+    const mainName = safeName(nameVal).trim();
+    if (mainName.length < 3) {
+      setError("Nama utama harus minimal 3 karakter.");
+      return;
+    }
+    const extraNames = additionalNames.map((n) => n.trim()).filter((n) => n.length > 0);
+    for (let i = 0; i < extraNames.length; i++) {
+      if (extraNames[i].length < 3) {
+        setError(`Nama Peserta ${i + 2} harus minimal 3 karakter.`);
+        return;
+      }
+    }
+
     setState("loading");
+    const participants = [mainName, ...extraNames];
     const data: Record<string, unknown> = {
-      name: safeName(nameVal),
+      name: mainName,
+      participants,
       whatsapp: whatsappVal.trim(),
       email: emailVal.trim(),
       institution: institutionVal.trim(),
@@ -152,6 +171,42 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     }
   }
 
+  function handleJumlahPesertaChange(val: number) {
+    setJumlahPeserta(val);
+    setAdditionalNames((prev) => {
+      if (val <= 1) return [];
+      if (prev.length >= val - 1) return prev.slice(0, val - 1);
+      return [...prev, ...Array(val - 1 - prev.length).fill("")];
+    });
+  }
+
+  function renderAdditionalNameFields() {
+    if (jumlahPeserta <= 1) return null;
+    return (
+      <>
+        {additionalNames.map((n, i) => (
+          <div className="field" key={i}>
+            <label htmlFor={`fNamaPeserta${i + 2}`}>Nama Peserta {i + 2}</label>
+            <input
+              id={`fNamaPeserta${i + 2}`}
+              name={`participantName${i + 2}`}
+              type="text"
+              placeholder="Contoh: Siti Nurhaliza"
+              required
+              minLength={3}
+              value={n}
+              onChange={(e) => {
+                const copy = [...additionalNames];
+                copy[i] = e.target.value;
+                setAdditionalNames(copy);
+              }}
+            />
+          </div>
+        ))}
+      </>
+    );
+  }
+
   if (state === "done" && result) {
     return (
       <div className="reg-card" style={{ textAlign: "center" }}>
@@ -192,6 +247,23 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
             </select>
           </div>
         )}
+
+        {/* Jumlah Peserta — dipilih sebelum form */}
+        <div className="field" style={{ marginBottom: "1.2rem" }}>
+          <label htmlFor="fJumlahPeserta">Jumlah Peserta</label>
+          <select
+            id="fJumlahPeserta"
+            value={jumlahPeserta}
+            onChange={(e) => handleJumlahPesertaChange(Number(e.target.value))}
+          >
+            {[1, 2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>
+                {n} Orang
+              </option>
+            ))}
+          </select>
+        </div>
+
         {googleSelected ? (
           /* CASE 1: Akun sudah terhubung / User sudah Login */
           <form onSubmit={onSubmit}>
@@ -246,6 +318,8 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                     </div>
                   </div>
                 </div>
+
+                {renderAdditionalNameFields()}
 
                 <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={state === "loading"} style={{ width: "100%" }}>
                   {state === "loading"
@@ -382,6 +456,8 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                     onChange={(e) => setInstitutionVal(e.target.value)}
                   />
                 </div>
+
+                {renderAdditionalNameFields()}
 
                 <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={state === "loading"} style={{ width: "100%" }}>
                   {state === "loading"
