@@ -3,7 +3,8 @@ import { readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 
-const UPLOADS_DIR = process.env.UPLOADS_DIR ?? join(process.cwd(), "uploads");
+// Upload ke folder persisten di luar project (biar nggak ilang saat rebuild)
+const UPLOADS_DIR = process.env.UPLOADS_DIR ?? join(process.env.HOME || "/tmp", "jetschool-uploads");
 
 const MIME_MAP: Record<string, string> = {
   png: "image/png",
