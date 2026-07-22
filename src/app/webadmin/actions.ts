@@ -847,6 +847,102 @@ export async function deleteCategory(formData: FormData) {
   redirect("/webadmin/kategori?deleted=1");
 }
 
+// ─── Voucher / Diskon ────────────────────────────────────────────
+
+export async function saveVoucher(formData: FormData) {
+  await requireAdmin();
+
+  const id = optStr(formData, "id");
+  const code = String(formData.get("code") ?? "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
+  const type = (String(formData.get("type") ?? "PERCENT") === "FIXED" ? "FIXED" : "PERCENT") as "PERCENT" | "FIXED";
+  const value = num(formData, "value");
+  const maxDiscount = num(formData, "maxDiscount") || null;
+  const maxUses = num(formData, "maxUses") || null;
+  const isActive = formData.get("isActive") === "on";
+  const validFromRaw = String(formData.get("validFrom") ?? "").trim();
+  const validUntilRaw = String(formData.get("validUntil") ?? "").trim();
+  const validFrom = validFromRaw ? parseWIB(validFromRaw) : null;
+  const validUntil = validUntilRaw ? parseWIB(validUntilRaw) : null;
+
+  if (!code || value <= 0) redirect(id ? `/webadmin/voucher?id=${id}&e=lengkapi` : "/webadmin/voucher?e=lengkapi");
+  if (type === "PERCENT" && value > 100) redirect(id ? `/webadmin/voucher?id=${id}&e=persen` : "/webadmin/voucher?e=persen");
+  if ((validFrom && isNaN(validFrom.getTime())) || (validUntil && isNaN(validUntil.getTime()))) {
+    redirect(id ? `/webadmin/voucher?id=${id}&e=tanggal` : "/webadmin/voucher?e=tanggal");
+  }
+
+  const data = { code, type, value, maxDiscount, maxUses, isActive, validFrom, validUntil };
+
+  try {
+    if (id) {
+      await prisma.voucher.update({ where: { id }, data });
+    } else {
+      await prisma.voucher.create({ data });
+    }
+  } catch (err) {
+    if (isUniqueError(err)) {
+      redirect(id ? `/webadmin/voucher?id=${id}&e=kode` : "/webadmin/voucher?e=kode");
+    }
+    throw err;
+  }
+
+  revalidatePath("/webadmin/voucher");
+  redirect("/webadmin/voucher?ok=1");
+}
+
+export async function toggleVoucher(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const cur = await prisma.voucher.findUnique({ where: { id } });
+  if (cur) await prisma.voucher.update({ where: { id }, data: { isActive: !cur.isActive } });
+  revalidatePath("/webadmin/voucher");
+}
+
+export async function deleteVoucher(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  // Payment.voucherId pakai onDelete: SetNull — histori transaksi yang sudah memakai voucher ini tetap ada.
+  await prisma.voucher.delete({ where: { id } }).catch((err) => console.error("[deleteVoucher] Gagal:", err));
+  revalidatePath("/webadmin/voucher");
+  redirect("/webadmin/voucher?deleted=1");
+}
+
+// ─── Refund ──────────────────────────────────────────────────────
+
+/** Catat refund manual (dana dikembalikan admin di luar sistem) + cabut akses peserta otomatis. */
+export async function refundPayment(
+  registrationId: string,
+  amount: number,
+  reason: string
+): Promise<{ ok?: true; error?: string }> {
+  await requireAdmin();
+
+  const reg = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    include: { payment: true },
+  });
+  if (!reg || !reg.payment) return { error: "Pendaftaran atau pembayaran tidak ditemukan." };
+  if (reg.payment.status !== "PAID" || !["PAID", "PASSED"].includes(reg.status)) {
+    return { error: "Hanya pembayaran yang sudah lunas yang bisa direfund." };
+  }
+  if (!Number.isFinite(amount) || amount <= 0 || amount > reg.payment.amount) {
+    return { error: `Jumlah refund harus antara Rp 1 dan Rp ${reg.payment.amount.toLocaleString("id-ID")}.` };
+  }
+  const trimmedReason = reason.trim();
+  if (!trimmedReason) return { error: "Alasan refund wajib diisi." };
+
+  await prisma.$transaction([
+    prisma.payment.update({
+      where: { id: reg.payment.id },
+      data: { status: "REFUNDED", refundedAt: new Date(), refundAmount: amount, refundReason: trimmedReason },
+    }),
+    prisma.registration.update({ where: { id: reg.id }, data: { status: "REFUNDED" } }),
+  ]);
+
+  revalidatePath("/webadmin/pendaftar");
+  revalidatePath("/webadmin");
+  return { ok: true };
+}
+
 // ─── User Management ─────────────────────────────────────────────
 
 export async function saveUser(formData: FormData) {

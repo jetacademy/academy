@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { rupiah } from "@/lib/format";
 import { markPaid, deleteRegistration } from "../../actions";
 import ConfirmButton from "@/components/ConfirmButton";
+import RefundButton from "@/components/RefundButton";
 
 const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
   REGISTERED: { cls: "dim", label: "Terdaftar" },
@@ -11,6 +12,7 @@ const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
   FAILED: { cls: "dim", label: "Gagal" },
   EXPIRED: { cls: "dim", label: "Kadaluwarsa" },
   CANCELLED: { cls: "dim", label: "Dibatalkan" },
+  REFUNDED: { cls: "dim", label: "Direfund" },
 };
 
 export default async function AdminPendaftar({ searchParams }: {
@@ -25,7 +27,7 @@ export default async function AdminPendaftar({ searchParams }: {
   const where = {
     ...(q ? { OR: [{ name: { contains: q } }, { whatsapp: { contains: q } }, { email: { contains: q } }] } : {}),
     ...(program ? { programId: program } : {}),
-    ...(status ? { status: status as "REGISTERED" | "PAID" | "PASSED" } : {}),
+    ...(status ? { status: status as "REGISTERED" | "PAID" | "PASSED" | "EXPIRED" | "FAILED" | "CANCELLED" | "REFUNDED" } : {}),
   };
 
   const [programs, regs, totalCount] = await Promise.all([
@@ -35,7 +37,7 @@ export default async function AdminPendaftar({ searchParams }: {
       orderBy: { createdAt: "desc" },
       skip,
       take: limit,
-      include: { program: true, payment: true, certificate: true },
+      include: { program: true, payment: { include: { voucher: { select: { code: true } } } }, certificate: true },
     }),
     prisma.registration.count({ where }),
   ]);
@@ -61,6 +63,10 @@ export default async function AdminPendaftar({ searchParams }: {
           <option value="REGISTERED">Terdaftar</option>
           <option value="PAID">Lunas</option>
           <option value="PASSED">Lulus</option>
+          <option value="EXPIRED">Kadaluwarsa</option>
+          <option value="FAILED">Gagal</option>
+          <option value="CANCELLED">Dibatalkan</option>
+          <option value="REFUNDED">Direfund</option>
         </select>
         <button type="submit" className="btn btn-sm">Filter</button>
       </form>
@@ -84,7 +90,27 @@ export default async function AdminPendaftar({ searchParams }: {
                   <td data-label="Status"><span className={`badge ${b.cls}`}>{b.label}</span></td>
                   <td data-label="Pembayaran">
                     {r.payment
-                      ? <>{rupiah(r.payment.amount)}<div className="muted">{r.payment.status}</div></>
+                      ? <>
+                          {r.payment.discountAmount > 0 && r.payment.originalAmount ? (
+                            <>
+                              <span style={{ textDecoration: "line-through", color: "var(--ink-faint)", fontSize: "0.8rem" }}>{rupiah(r.payment.originalAmount)}</span>
+                              {" "}{rupiah(r.payment.amount)}
+                              <div className="muted">
+                                Diskon {rupiah(r.payment.discountAmount)}{r.payment.voucher ? ` (${r.payment.voucher.code})` : ""}
+                              </div>
+                            </>
+                          ) : (
+                            rupiah(r.payment.amount)
+                          )}
+                          {r.payment.status === "REFUNDED" ? (
+                            <div className="muted" title={r.payment.refundReason ?? ""}>
+                              Direfund {r.payment.refundAmount ? rupiah(r.payment.refundAmount) : ""}
+                              {r.payment.refundedAt ? ` · ${new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" }).format(r.payment.refundedAt)}` : ""}
+                            </div>
+                          ) : (
+                            <div className="muted">{r.payment.status}</div>
+                          )}
+                        </>
                       : <span className="muted">—</span>}
                   </td>
                   <td data-label="Aksi">
@@ -97,6 +123,14 @@ export default async function AdminPendaftar({ searchParams }: {
                             Tandai Lunas
                           </button>
                         </form>
+                      )}
+                      {["PAID", "PASSED"].includes(r.status) && r.payment?.status === "PAID" && (
+                        <RefundButton
+                          registrationId={r.id}
+                          defaultAmount={r.payment.amount}
+                          className="btn btn-sm btn-danger"
+                          title="Catat refund manual + cabut akses peserta"
+                        />
                       )}
                       {r.certificate && (
                         <a href={`/sertifikat/${r.certificate.number}`} target="_blank" className="btn btn-sm">Sertifikat ↗</a>

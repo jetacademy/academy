@@ -17,9 +17,11 @@ export default function CheckoutForm({ programs }: { programs: ProgramOption[] }
     setError("");
     setLoading(true);
     const form = e.currentTarget;
+    const voucherInput = form.elements.namedItem("voucherCode") as HTMLInputElement | null;
     const data = {
       whatsapp: (form.elements.namedItem("whatsapp") as HTMLInputElement).value.trim(),
       programSlug: (form.elements.namedItem("programSlug") as HTMLSelectElement).value,
+      voucherCode: voucherInput?.value.trim() || undefined,
     };
 
     try {
@@ -64,6 +66,10 @@ export default function CheckoutForm({ programs }: { programs: ProgramOption[] }
       <div className="field">
         <label htmlFor="cWa">Nomor WhatsApp Terdaftar</label>
         <input id="cWa" name="whatsapp" type="tel" placeholder="contoh: 081234567890" pattern="0[0-9]{8,13}" required />
+      </div>
+      <div className="field">
+        <label htmlFor="cVoucher">Kode Voucher (opsional)</label>
+        <input id="cVoucher" name="voucherCode" type="text" placeholder="cth: DISKON20" />
       </div>
 
       <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={loading}>

@@ -51,6 +51,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
   const [batchId, setBatchId] = useState<string | undefined>(batches?.[0]?.id);
   const [jumlahPeserta, setJumlahPeserta] = useState(1);
   const [additionalNames, setAdditionalNames] = useState<string[]>([]);
+  const [voucherVal, setVoucherVal] = useState("");
 
   const isPaid = price > 0;
   const hasCompletedProfile = !!(whatsappVal.trim() && institutionVal.trim());
@@ -105,6 +106,9 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     }
     if (batchId) {
       data.batchId = batchId;
+    }
+    if (isPaid && voucherVal.trim()) {
+      data.voucherCode = voucherVal.trim();
     }
 
     try {
@@ -178,6 +182,22 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
       if (prev.length >= val - 1) return prev.slice(0, val - 1);
       return [...prev, ...Array(val - 1 - prev.length).fill("")];
     });
+  }
+
+  function renderVoucherField() {
+    if (!isPaid) return null;
+    return (
+      <div className="field">
+        <label htmlFor="fVoucher">Kode Voucher (opsional)</label>
+        <input
+          id="fVoucher"
+          type="text"
+          placeholder="cth: DISKON20"
+          value={voucherVal}
+          onChange={(e) => setVoucherVal(e.target.value)}
+        />
+      </div>
+    );
   }
 
   function renderAdditionalNameFields() {
@@ -320,6 +340,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                 </div>
 
                 {renderAdditionalNameFields()}
+                {renderVoucherField()}
 
                 <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={state === "loading"} style={{ width: "100%" }}>
                   {state === "loading"
@@ -458,6 +479,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
                 </div>
 
                 {renderAdditionalNameFields()}
+                {renderVoucherField()}
 
                 <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={state === "loading"} style={{ width: "100%" }}>
                   {state === "loading"

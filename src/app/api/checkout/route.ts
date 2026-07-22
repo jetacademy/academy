@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 import { normalizeWa } from "@/lib/wa";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { validateVoucher } from "@/lib/voucher";
 
 /**
  * POST /api/checkout — buat invoice Xendit untuk paket sertifikat.
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: limit.error }, { status: limit.status });
   }
 
-  let body: { whatsapp?: string; programSlug?: string };
+  let body: { whatsapp?: string; programSlug?: string; voucherCode?: string };
   try {
     body = await req.json();
   } catch {
@@ -29,6 +30,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nomor WhatsApp tidak valid (contoh: 081234567890)." }, { status: 400 });
   }
   const programSlug = (body.programSlug ?? "").trim();
+  const voucherCode = (body.voucherCode ?? "").trim();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
   try {
@@ -76,41 +78,64 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, invoiceUrl: reg.payment.invoiceUrl });
     }
 
-    // MODE DEV tanpa Xendit: langsung tandai lunas
+    // ── Voucher/diskon (opsional) ──────────────────────────────────
+    const voucherResult = voucherCode
+      ? await validateVoucher(voucherCode, program.certPrice)
+      : null;
+    if (voucherResult && "error" in voucherResult) {
+      return NextResponse.json({ error: voucherResult.error }, { status: 400 });
+    }
+    const discountAmount = voucherResult ? voucherResult.discountAmount : 0;
+    const voucherId = voucherResult ? voucherResult.voucher.id : null;
+    const originalAmount = voucherResult ? program.certPrice : null;
+    const chargeAmount = voucherResult ? voucherResult.finalAmount : program.certPrice;
+
+    // MODE DEV tanpa Xendit, ATAU voucher menutup seluruh harga → langsung tandai lunas
     if (!isXenditConfigured()) {
       console.warn("[checkout] XENDIT_SECRET_KEY kosong — MODE DEV: pembayaran dianggap lunas.");
       if (process.env.NODE_ENV === "production" && process.env.XENDIT_DEV_BYPASS !== "true") {
         return NextResponse.json({ error: "Pembayaran belum dikonfigurasi. Hubungi admin." }, { status: 503 });
       }
+    }
+    if (!isXenditConfigured() || chargeAmount === 0) {
       await prisma.$transaction([
         prisma.payment.upsert({
           where: { registrationId: reg.id },
-          create: { registrationId: reg.id, amount: program.certPrice, status: "PAID", paidAt: new Date() },
-          update: { amount: program.certPrice, status: "PAID", paidAt: new Date() },
+          create: { registrationId: reg.id, amount: chargeAmount, originalAmount, discountAmount, voucherId, status: "PAID", paidAt: new Date() },
+          update: { amount: chargeAmount, originalAmount, discountAmount, voucherId, status: "PAID", paidAt: new Date() },
         }),
         prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
+        ...(voucherId ? [prisma.voucher.update({ where: { id: voucherId }, data: { usedCount: { increment: 1 } } })] : []),
       ]);
       return NextResponse.json({ ok: true, postTestUrl: `${baseUrl}/member` });
     }
 
     const invoice = await createInvoice({
       externalId: `ACADEMY-${reg.id}`,
-      amount: program.certPrice,
+      amount: chargeAmount,
       payerEmail: reg.email,
-      description: `Paket Sertifikat — ${program.title} (${reg.name})`,
+      description: voucherResult
+        ? `Paket Sertifikat — ${program.title} (${reg.name}) (Voucher: ${voucherResult.voucher.code})`
+        : `Paket Sertifikat — ${program.title} (${reg.name})`,
       successRedirectUrl: `${baseUrl}/member`,
     });
 
-    await prisma.payment.upsert({
-      where: { registrationId: reg.id },
-      create: {
-        registrationId: reg.id,
-        amount: program.certPrice,
-        xenditInvoiceId: invoice.id,
-        invoiceUrl: invoice.invoice_url,
-      },
-      update: { amount: program.certPrice, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING" },
-    });
+    await prisma.$transaction([
+      prisma.payment.upsert({
+        where: { registrationId: reg.id },
+        create: {
+          registrationId: reg.id,
+          amount: chargeAmount,
+          originalAmount,
+          discountAmount,
+          voucherId,
+          xenditInvoiceId: invoice.id,
+          invoiceUrl: invoice.invoice_url,
+        },
+        update: { amount: chargeAmount, originalAmount, discountAmount, voucherId, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING" },
+      }),
+      ...(voucherId ? [prisma.voucher.update({ where: { id: voucherId }, data: { usedCount: { increment: 1 } } })] : []),
+    ]);
 
     return NextResponse.json({ ok: true, invoiceUrl: invoice.invoice_url });
   } catch (err) {

@@ -162,6 +162,7 @@ enum RegistrationStatus {
   EXPIRED // pembayaran kadaluarsa
   FAILED // pembayaran gagal
   CANCELLED // dibatalkan
+  REFUNDED // sudah bayar lalu direfund admin — akses dicabut kembali
 }
 
 // Pembayaran paket sertifikat via Xendit Invoice
@@ -174,10 +175,18 @@ model Payment {
   amount          Int
   status          PaymentStatus @default(PENDING)
   paidAt          DateTime?
+  originalAmount  Int? // harga sebelum diskon (null = tidak ada diskon dipakai)
+  discountAmount  Int           @default(0)
+  voucher         Voucher?      @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  voucherId       String?
+  refundedAt      DateTime?
+  refundAmount    Int? // jumlah dana yang dikembalikan (dicatat manual oleh admin)
+  refundReason    String?       @db.Text
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   @@index([status])
+  @@index([voucherId])
   @@map("payment")
 }
 
@@ -186,6 +195,32 @@ enum PaymentStatus {
   PAID
   EXPIRED
   FAILED
+  REFUNDED
+}
+
+enum VoucherType {
+  PERCENT // potongan persentase dari harga
+  FIXED // potongan nominal Rupiah tetap
+}
+
+// Kode voucher/diskon — berlaku global untuk checkout program berbayar & paket sertifikat webinar
+model Voucher {
+  id          String      @id @default(cuid())
+  code        String      @unique // disimpan huruf besar, mis. "DISKON20"
+  type        VoucherType @default(PERCENT)
+  value       Int // PERCENT: 1-100 | FIXED: nominal Rupiah
+  maxDiscount Int? // cap potongan Rupiah utk tipe PERCENT (opsional)
+  maxUses     Int? // null = tak terbatas
+  usedCount   Int         @default(0)
+  isActive    Boolean     @default(true)
+  validFrom   DateTime?
+  validUntil  DateTime?
+  payments    Payment[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([isActive])
+  @@map("voucher")
 }
 
 // Soal pilihan ganda — post-test program (lessonId null) atau kuis materi (lessonId terisi)

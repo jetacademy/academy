@@ -63,7 +63,11 @@ export default async function AdminProgramList() {
                   <td data-label="Tipe"><span className={`badge${p.price === 0 ? " y" : ""}`}>{TYPE_LABEL[p.type as ProgramType]}</span></td>
                   <td data-label="Jadwal" className="muted">{formatHari(p.scheduleAt)}, {formatJam(p.scheduleAt)}</td>
                   <td data-label="Harga">{p.price === 0 ? `Gratis · Sert. ${rupiah(p.certPrice)}` : rupiah(p.price)}</td>
-                  <td data-label="Pendaftar">{p._count.registrations}</td>
+                  <td data-label="Pendaftar">
+                    <Link href={`/webadmin/pendaftar?program=${p.id}`} className="btn btn-sm">
+                      {p._count.registrations} pendaftar
+                    </Link>
+                  </td>
                   <td data-label="Soal"><Link href={`/webadmin/program/${p.id}/soal`} className="btn btn-sm">{p._count.questions} soal</Link></td>
                   <td data-label="Status">{p.isActive ? <span className="badge g">Aktif</span> : <span className="badge dim">Nonaktif</span>}</td>
 

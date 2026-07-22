@@ -6,6 +6,7 @@ import { formatJadwal } from "@/lib/format";
 import { sendEmail, getWelcomeEmailHtml, getPaidEmailHtml, getInvoiceEmailHtml } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createMemberSession } from "@/lib/member-auth";
+import { validateVoucher } from "@/lib/voucher";
 
 /**
  * POST /api/register — satu pintu untuk semua tipe program.
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
     batchId?: string;
     credential?: string;
     participants?: string[];
+    voucherCode?: string;
   };
   try {
     body = await req.json();
@@ -48,6 +50,7 @@ export async function POST(req: Request) {
   const institution = (body.institution ?? "").trim().slice(0, 100).replace(/<[^>]*>/g, "");
   const batchIdInput = (body.batchId ?? "").trim();
   const credential = (body.credential ?? "").trim();
+  const voucherCode = (body.voucherCode ?? "").trim();
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
   if (name.length < 3) return NextResponse.json({ error: "Nama minimal 3 huruf." }, { status: 400 });
@@ -164,6 +167,18 @@ export async function POST(req: Request) {
 
     // Total harga = harga per peserta × jumlah peserta
     const totalPrice = unitPrice * participantCount;
+
+    // ── Voucher/diskon (opsional) ──────────────────────────────────
+    const voucherResult = voucherCode && totalPrice > 0
+      ? await validateVoucher(voucherCode, totalPrice)
+      : null;
+    if (voucherResult && "error" in voucherResult) {
+      return NextResponse.json({ error: voucherResult.error }, { status: 400 });
+    }
+    const discountAmount = voucherResult ? voucherResult.discountAmount : 0;
+    const voucherId = voucherResult ? voucherResult.voucher.id : null;
+    const originalAmount = voucherResult ? totalPrice : null;
+    const chargeAmount = voucherResult ? voucherResult.finalAmount : totalPrice;
 
     // ── [FIX C2] Validasi duplikasi yang lebih ketat ──
     // Cari registrasi existing dengan kombinasi whatsapp ATAU email
@@ -303,13 +318,18 @@ export async function POST(req: Request) {
       if (process.env.NODE_ENV === "production" && process.env.XENDIT_DEV_BYPASS !== "true") {
         return NextResponse.json({ error: "Pembayaran belum dikonfigurasi. Hubungi admin." }, { status: 503 });
       }
+    }
+
+    // Xendit tidak dikonfigurasi (dev bypass), ATAU voucher menutup seluruh harga → langsung lunas tanpa invoice
+    if (!isXenditConfigured() || chargeAmount === 0) {
       await prisma.$transaction([
         prisma.payment.upsert({
           where: { registrationId: reg.id },
-          create: { registrationId: reg.id, amount: totalPrice, status: "PAID", paidAt: new Date() },
-          update: { status: "PAID", paidAt: new Date() },
+          create: { registrationId: reg.id, amount: chargeAmount, originalAmount, discountAmount, voucherId, status: "PAID", paidAt: new Date() },
+          update: { amount: chargeAmount, originalAmount, discountAmount, voucherId, status: "PAID", paidAt: new Date() },
         }),
         prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
+        ...(voucherId ? [prisma.voucher.update({ where: { id: voucherId }, data: { usedCount: { increment: 1 } } })] : []),
       ]);
       await sendWa(whatsapp, msgAccess({
         name,
@@ -335,29 +355,33 @@ export async function POST(req: Request) {
       });
     }
 
-    // Deskripsi invoice: cantumkan jumlah peserta
+    // Deskripsi invoice: cantumkan jumlah peserta + kode voucher jika dipakai
     const pesertaDesc = participantCount > 1
       ? `${program.title} × ${participantCount} peserta (${name} dkk.)`
       : `${program.title} (${name})`;
+    const invoiceDesc = voucherResult ? `${pesertaDesc} (Voucher: ${voucherResult.voucher.code})` : pesertaDesc;
 
     const invoice = await createInvoice({
       externalId: `ACADEMY-${reg.id}`,
-      amount: totalPrice,
+      amount: chargeAmount,
       payerEmail: email,
-      description: pesertaDesc,
+      description: invoiceDesc,
       successRedirectUrl: `${baseUrl}/member`, // [FIX G5] Redirect ke dashboard, bukan program page
     });
 
-    await prisma.payment.upsert({
-      where: { registrationId: reg.id },
-      create: { registrationId: reg.id, amount: totalPrice, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url },
-      update: { xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING", amount: totalPrice },
-    });
+    await prisma.$transaction([
+      prisma.payment.upsert({
+        where: { registrationId: reg.id },
+        create: { registrationId: reg.id, amount: chargeAmount, originalAmount, discountAmount, voucherId, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url },
+        update: { xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING", amount: chargeAmount, originalAmount, discountAmount, voucherId },
+      }),
+      ...(voucherId ? [prisma.voucher.update({ where: { id: voucherId }, data: { usedCount: { increment: 1 } } })] : []),
+    ]);
 
     await sendEmail({
       to: email,
       subject: `Selesaikan Pembayaran: ${program.title}`,
-      html: getInvoiceEmailHtml({ name, programTitle: program.title, price: totalPrice, invoiceUrl: invoice.invoice_url }),
+      html: getInvoiceEmailHtml({ name, programTitle: program.title, price: chargeAmount, invoiceUrl: invoice.invoice_url }),
     }).catch((err) => console.error("Gagal mengirim email invoice:", err));
 
     return NextResponse.json({

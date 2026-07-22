@@ -10,6 +10,7 @@ const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
   FAILED: { cls: "dim", label: "Gagal" },
   EXPIRED: { cls: "dim", label: "Kadaluwarsa" },
   CANCELLED: { cls: "dim", label: "Dibatalkan" },
+  REFUNDED: { cls: "dim", label: "Direfund" },
 };
 
 interface ProgramStatsRaw {

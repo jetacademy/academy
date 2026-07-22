@@ -26,6 +26,10 @@ export default function ProgramSubTabs({ programId }: { programId: string }) {
           </Link>
         );
       })}
+      {/* Peserta bukan bagian dari editor program — arahkan ke daftar pendaftar global, sudah difilter ke program ini */}
+      <Link href={`/webadmin/pendaftar?program=${programId}`}>
+        Peserta
+      </Link>
     </nav>
   );
 }

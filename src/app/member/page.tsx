@@ -202,6 +202,8 @@ export default async function MemberDashboardPage() {
                   statusBadge = <span className="badge" style={{ background: "#ff6b6b", color: "#fff" }}>Kedaluwarsa</span>;
                 } else if (reg.status === "FAILED") {
                   statusBadge = <span className="badge" style={{ background: "#e74c3c", color: "#fff" }}>Gagal</span>;
+                } else if (reg.status === "REFUNDED") {
+                  statusBadge = <span className="badge" style={{ background: "#e74c3c", color: "#fff" }}>Direfund</span>;
                 }
 
                 return (
