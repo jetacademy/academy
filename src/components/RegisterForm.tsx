@@ -91,7 +91,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     }
 
     setState("loading");
-    const participants = [mainName, ...extraNames];
+    const participants = extraNames;
     const data: Record<string, unknown> = {
       name: mainName,
       participants,
