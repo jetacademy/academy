@@ -11,6 +11,7 @@ import ClaimCertButton from "@/components/ClaimCertButton";
 import MemberPayCertButton from "@/components/MemberPayCertButton";
 import BonusCountdown from "@/components/BonusCountdown";
 import FreeWebinarClaimSection from "@/components/FreeWebinarClaimSection";
+import EditProfileModal from "@/components/EditProfileModal";
 import { rupiah, formatJadwal } from "@/lib/format";
 import { Registration, Program, Payment, Certificate } from "@prisma/client";
 
@@ -72,6 +73,9 @@ export default async function MemberDashboardPage() {
   }
 
   const memberName = registrations[0]?.name ?? "Member";
+  const memberEmail = registrations[0]?.email ?? "";
+  const memberWhatsapp = (registrations[0]?.whatsapp ?? "").replace(/^628/, "08");
+  const memberInstitution = registrations[0]?.institution ?? "";
   const isSuperadmin = await isAdmin();
 
   return (
@@ -115,9 +119,17 @@ export default async function MemberDashboardPage() {
               </p>
             </div>
             <div>
-              <form action={memberLogout}>
-                <button type="submit" className="btn btn-line btn-sm">Keluar Akun</button>
-              </form>
+              <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
+                <EditProfileModal
+                  defaultName={memberName}
+                  defaultWhatsapp={memberWhatsapp}
+                  defaultEmail={memberEmail}
+                  defaultInstitution={memberInstitution}
+                />
+                <form action={memberLogout}>
+                  <button type="submit" className="btn btn-line btn-sm">Keluar Akun</button>
+                </form>
+              </div>
             </div>
           </div>
 
