@@ -835,8 +835,9 @@
   position: relative !important;
   object-fit: contain !important;
   display: block;
-  transition: transform .25s ease;
 }
+/* Artikel thumbnail — konsisten 16:9 */
+.article-card-thumb { aspect-ratio: 16 / 9 !important; }
 .prg-card:hover .prg-card-thumb-img-dynamic { transform: scale(1.04); }
 .prg-card-thumb-fallback {
   position: absolute; inset: 0;
@@ -1375,6 +1376,18 @@
 }
 .wa-float:hover { transform: scale(1.12); }
 .wa-float svg { width: 30px; height: 30px; fill: #fff; }
+
+/* ── Rich Text Article ── */
+.rt-content { font-size: 1.05rem; line-height: 1.85; color: var(--ink); }
+.rt-content h2 { font-size: 1.5rem; font-weight: 800; margin: 2rem 0 .8rem; letter-spacing: -.02em; line-height: 1.3; }
+.rt-content h3 { font-size: 1.2rem; font-weight: 700; margin: 1.8rem 0 .6rem; line-height: 1.4; }
+.rt-content p { margin: 0 0 1.2rem; }
+.rt-content img { width: 100%; border-radius: 12px; margin: 1.5rem 0; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+.rt-content blockquote { border-left: 4px solid var(--purple); margin: 1.5rem 0; padding: .8rem 1.2rem; background: rgba(108,92,231,.04); border-radius: 0 12px 12px 0; font-style: italic; color: var(--ink-soft); }
+.rt-content ul, .rt-content ol { margin: 0 0 1.2rem; padding-left: 1.5rem; }
+.rt-content li { margin-bottom: .4rem; }
+.rt-content code { background: var(--chip); padding: .2em .4em; border-radius: 4px; font-size: .9em; }
+.rt-content a { color: var(--purple); text-decoration: underline; font-weight: 600; }
 
 /* ---------- Bar CTA lengket (mobile) ---------- */
 .sticky-cta {

@@ -309,11 +309,15 @@ export default async function MemberDashboardPage() {
                       {/* ══ KASUS 2: REGISTERED + WEBINAR GRATIS ══ */}
                       {reg.status === "REGISTERED" && prog.price === 0 && (
                         <>
-                          {/* WA Grup — selalu tersedia */}
-                          {prog.waGroupLink && (
+                          {/* WA Grup — hanya jika tersedia */}
+                          {prog.waGroupLink ? (
                             <a href={prog.waGroupLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
                               Gabung Grup WA Pelatihan
                             </a>
+                          ) : (
+                            <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", textAlign: "center", margin: "0.5rem 0" }}>
+                              Info grup WA akan dikirim H-1 ya Kak 🙏
+                            </p>
                           )}
 
                           {/* Zoom — muncul saat live */}
@@ -345,6 +349,11 @@ export default async function MemberDashboardPage() {
                             <a href={prog.zoomLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
                               Masuk Zoom Live
                             </a>
+                          )}
+                          {!prog.zoomLink && (
+                            <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", textAlign: "center", margin: "0.5rem 0" }}>
+                              Link Zoom akan dikirim H-1 ya Kak 🙏
+                            </p>
                           )}
                           {hasInternalLms ? (
                             <Link href={`/member/lms/${reg.id}`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>

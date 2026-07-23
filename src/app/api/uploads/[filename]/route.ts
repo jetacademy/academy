@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readFile } from "fs/promises";
+import { mkdir, readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 
@@ -24,6 +24,9 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename } = await params;
+
+  // Pastikan folder uploads ada (auto-terbuat kalau ilang pas rebuild)
+  await mkdir(UPLOADS_DIR, { recursive: true }).catch(() => {});
 
   // Security: cegah path traversal
   if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
