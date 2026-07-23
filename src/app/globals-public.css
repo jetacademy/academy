@@ -826,7 +826,7 @@
 }
 .prg-card:hover .prg-card-thumb img { transform: scale(1.04); }
 .prg-card-thumb-dynamic {
-  aspect-ratio: auto !important;
+  aspect-ratio: 16 / 9 !important;
   height: auto !important;
 }
 .prg-card-thumb-img-dynamic {
