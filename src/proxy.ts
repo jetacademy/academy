@@ -31,7 +31,9 @@ export async function proxy(request: NextRequest) {
     !pathname.startsWith("/webadmin/login")
   ) {
     if (!request.cookies.has("jsa_admin") && !request.cookies.has("jsa_member")) {
-      return NextResponse.redirect(new URL("/member/login", request.url));
+      const loginUrl = new URL("/member/login", request.url);
+      loginUrl.searchParams.set("next", pathname + request.nextUrl.search);
+      return NextResponse.redirect(loginUrl);
     }
   }
 
@@ -43,7 +45,11 @@ export async function proxy(request: NextRequest) {
     !memberPublic.some((p) => pathname.startsWith(p))
   ) {
     if (!request.cookies.has("jsa_member")) {
-      return NextResponse.redirect(new URL("/member/login", request.url));
+      // ?next= bawa pengunjung balik ke halaman yang tadinya dituju setelah login
+      // (mis. link undangan affiliate) — bukan selalu ke /member generik.
+      const loginUrl = new URL("/member/login", request.url);
+      loginUrl.searchParams.set("next", pathname + request.nextUrl.search);
+      return NextResponse.redirect(loginUrl);
     }
   }
 

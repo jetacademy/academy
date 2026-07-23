@@ -22,6 +22,17 @@ export default function MemberLoginPage() {
   const [countdown, setCountdown] = useState(0);
   const [resendLoading, setResendLoading] = useState(false);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  // Kembalikan pengguna ke halaman yang tadinya ingin dituju (mis. link undangan
+  // affiliate) setelah login berhasil — bukan selalu ke /member. Dibaca via
+  // window.location (bukan useSearchParams) supaya halaman ini tidak perlu
+  // dibungkus Suspense. Lazy initializer (bukan useEffect+setState) karena cuma
+  // dibaca sekali saat mount. Divalidasi harus path relatif ("/...") agar tidak
+  // bisa dipakai untuk open-redirect ke domain luar.
+  const [nextUrl] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const n = new URLSearchParams(window.location.search).get("next");
+    return n && n.startsWith("/") && !n.startsWith("//") ? n : null;
+  });
   const router = useRouter();
 
   async function handleGoogleSelect(email: string, _name: string, credential?: string) {
@@ -45,7 +56,7 @@ export default function MemberLoginPage() {
         if (res.isAdmin) {
           router.push("/webadmin");
         } else {
-          router.push("/member");
+          router.push(nextUrl || "/member");
         }
       } else {
         setError("Terjadi kesalahan tak terduga. Silakan coba lagi.");
@@ -132,7 +143,7 @@ export default function MemberLoginPage() {
       if (res.isAdmin) {
         router.push("/webadmin");
       } else {
-        router.push("/member");
+        router.push(nextUrl || "/member");
       }
     }
   }

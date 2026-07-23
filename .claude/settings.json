@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -X POST http://localhost:3001/api/register -H 'Content-Type: application/json' -d '{\"name\":\"Test Expired User\",\"whatsapp\":\"081234500002\",\"email\":\"testexpired1@example.com\",\"institution\":\"Test Inst\",\"programSlug\":\"zero-human-company\"}' -w '\\\\nHTTP_STATUS:%{http_code}\\\\n')",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -o /dev/null -w \"STATUS:%{http_code}\\\\nREDIRECT:%{redirect_url}\\\\n\" http://localhost:3001/member/affiliate)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless=new --disable-gpu --remote-debugging-port=9333 --user-data-dir=\"C:\\\\Users\\\\HUBUNG~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Hubungan-Alumni-OneDrive-Dokumen-APLIKASI-2026-academy\\\\106fa60b-4547-46d2-bd1b-6dfb89bdede8\\\\scratchpad\\\\chrome-profile\")",
+      "Bash(echo \"launched pid $!\")",
+      "Bash(curl -s http://localhost:9333/json/version)",
+      "Bash(node \"C:\\\\Users\\\\HUBUNG~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Hubungan-Alumni-OneDrive-Dokumen-APLIKASI-2026-academy\\\\106fa60b-4547-46d2-bd1b-6dfb89bdede8\\\\scratchpad\\\\shot.mjs\")",
+      "Bash(curl -s -X PUT http://localhost:9333/json/new)",
+      "Bash(node \"C:\\\\Users\\\\HUBUNG~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Hubungan-Alumni-OneDrive-Dokumen-APLIKASI-2026-academy\\\\106fa60b-4547-46d2-bd1b-6dfb89bdede8\\\\scratchpad\\\\shot2.mjs\")",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | Where-Object { $_.CommandLine -match 'remote-debugging-port' } | Select-Object ProcessId, CommandLine | Format-List)"
+    ]
+  }
+}
