@@ -7,6 +7,7 @@ import { sendEmail, getWelcomeEmailHtml, getPaidEmailHtml, getInvoiceEmailHtml }
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createMemberSession } from "@/lib/member-auth";
 import { validateVoucher } from "@/lib/voucher";
+import { resolveAffiliateForCheckout, applyAffiliateDiscount, recordAffiliateConversion, getAffiliateRefCookie } from "@/lib/affiliate";
 
 /**
  * POST /api/register — satu pintu untuk semua tipe program.
@@ -168,17 +169,23 @@ export async function POST(req: Request) {
     // Total harga = harga per peserta × jumlah peserta
     const totalPrice = unitPrice * participantCount;
 
-    // ── Voucher/diskon (opsional) ──────────────────────────────────
-    const voucherResult = voucherCode && totalPrice > 0
+    // ── Affiliate (kode manual ATAU cookie dari link ?ref=) — diprioritaskan di atas voucher ──
+    const refCookie = await getAffiliateRefCookie();
+    const affiliate = totalPrice > 0 ? await resolveAffiliateForCheckout(voucherCode, refCookie) : null;
+
+    // ── Voucher/diskon (opsional) — dilewati jika sudah dapat diskon dari affiliate ──────────
+    const voucherResult = !affiliate && voucherCode && totalPrice > 0
       ? await validateVoucher(voucherCode, totalPrice)
       : null;
     if (voucherResult && "error" in voucherResult) {
       return NextResponse.json({ error: voucherResult.error }, { status: 400 });
     }
-    const discountAmount = voucherResult ? voucherResult.discountAmount : 0;
+    const affiliateResult = affiliate ? applyAffiliateDiscount(affiliate, totalPrice) : null;
+    const discountAmount = affiliateResult ? affiliateResult.discountAmount : voucherResult ? voucherResult.discountAmount : 0;
     const voucherId = voucherResult ? voucherResult.voucher.id : null;
-    const originalAmount = voucherResult ? totalPrice : null;
-    const chargeAmount = voucherResult ? voucherResult.finalAmount : totalPrice;
+    const affiliateId = affiliateResult ? affiliateResult.affiliate.id : null;
+    const originalAmount = affiliateResult || voucherResult ? totalPrice : null;
+    const chargeAmount = affiliateResult ? affiliateResult.finalAmount : voucherResult ? voucherResult.finalAmount : totalPrice;
 
     // ── [FIX C2] Validasi duplikasi yang lebih ketat ──
     // Cari registrasi existing dengan kombinasi whatsapp ATAU email
@@ -247,6 +254,9 @@ export async function POST(req: Request) {
       },
       update: {
         name, email, institution, userId: user.id,
+        // Registrasi lama (EXPIRED/FAILED/CANCELLED/REFUNDED) di-reset ke REGISTERED saat coba bayar lagi —
+        // Kasus 3 di atas sudah menolak lebih dulu kalau statusnya benar-benar PAID/PASSED.
+        status: "REGISTERED",
         ...(batchId ? { batchId } : {}),
         ...(participants.length > 0 ? { participants } : {}),
       },
@@ -291,8 +301,9 @@ export async function POST(req: Request) {
     }
 
     // ── PROGRAM BERBAYAR ─────────────────────────────────────────
-    // sudah lunas sebelumnya → langsung beri akses lagi
-    if (reg.status !== "REGISTERED") {
+    // sudah lunas sebelumnya → langsung beri akses lagi (bukan sekadar "!= REGISTERED",
+    // karena EXPIRED/FAILED/CANCELLED/REFUNDED juga bukan REGISTERED tapi HARUS bisa bayar ulang)
+    if (reg.status === "PAID" || reg.status === "PASSED") {
       return NextResponse.json({
         ok: true, paid: true,
         waGroupLink: program.waGroupLink,
@@ -322,15 +333,16 @@ export async function POST(req: Request) {
 
     // Xendit tidak dikonfigurasi (dev bypass), ATAU voucher menutup seluruh harga → langsung lunas tanpa invoice
     if (!isXenditConfigured() || chargeAmount === 0) {
-      await prisma.$transaction([
+      const [payment] = await prisma.$transaction([
         prisma.payment.upsert({
           where: { registrationId: reg.id },
-          create: { registrationId: reg.id, amount: chargeAmount, originalAmount, discountAmount, voucherId, status: "PAID", paidAt: new Date() },
-          update: { amount: chargeAmount, originalAmount, discountAmount, voucherId, status: "PAID", paidAt: new Date() },
+          create: { registrationId: reg.id, amount: chargeAmount, originalAmount, discountAmount, voucherId, affiliateId, status: "PAID", paidAt: new Date() },
+          update: { amount: chargeAmount, originalAmount, discountAmount, voucherId, affiliateId, status: "PAID", paidAt: new Date() },
         }),
         prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
         ...(voucherId ? [prisma.voucher.update({ where: { id: voucherId }, data: { usedCount: { increment: 1 } } })] : []),
       ]);
+      if (affiliateId) await recordAffiliateConversion(payment.id);
       await sendWa(whatsapp, msgAccess({
         name,
         programTitle: program.title,
@@ -359,7 +371,9 @@ export async function POST(req: Request) {
     const pesertaDesc = participantCount > 1
       ? `${program.title} × ${participantCount} peserta (${name} dkk.)`
       : `${program.title} (${name})`;
-    const invoiceDesc = voucherResult ? `${pesertaDesc} (Voucher: ${voucherResult.voucher.code})` : pesertaDesc;
+    const invoiceDesc = affiliateResult
+      ? `${pesertaDesc} (Affiliate: ${affiliateResult.affiliate.code})`
+      : voucherResult ? `${pesertaDesc} (Voucher: ${voucherResult.voucher.code})` : pesertaDesc;
 
     const invoice = await createInvoice({
       externalId: `ACADEMY-${reg.id}`,
@@ -372,8 +386,8 @@ export async function POST(req: Request) {
     await prisma.$transaction([
       prisma.payment.upsert({
         where: { registrationId: reg.id },
-        create: { registrationId: reg.id, amount: chargeAmount, originalAmount, discountAmount, voucherId, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url },
-        update: { xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING", amount: chargeAmount, originalAmount, discountAmount, voucherId },
+        create: { registrationId: reg.id, amount: chargeAmount, originalAmount, discountAmount, voucherId, affiliateId, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url },
+        update: { xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING", amount: chargeAmount, originalAmount, discountAmount, voucherId, affiliateId },
       }),
       ...(voucherId ? [prisma.voucher.update({ where: { id: voucherId }, data: { usedCount: { increment: 1 } } })] : []),
     ]);

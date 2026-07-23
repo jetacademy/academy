@@ -6,6 +6,21 @@ import { formatJadwal } from "@/lib/format";
 const CERT_CLAIM_DELAY_MS = 24 * 60 * 60 * 1000; // 1×24 jam setelah sesi berakhir
 
 /**
+ * Sakelar global penerbitan sertifikat (`SystemSetting.certIssuanceEnabled`) — dipakai admin
+ * utk menghentikan sementara penerbitan sertifikat BARU di seluruh situs (mis. lagi ada bug
+ * yang perlu diuji). Gagal baca (mis. di unit test tanpa mock model ini) DIANGGAP AKTIF —
+ * supaya kegagalan infra tidak diam-diam mengunci seluruh sistem sertifikat.
+ */
+export async function isCertIssuanceEnabled(): Promise<boolean> {
+  try {
+    const setting = await prisma.systemSetting.findUnique({ where: { id: "singleton" } });
+    return setting?.certIssuanceEnabled ?? true;
+  } catch {
+    return true;
+  }
+}
+
+/**
  * Terbitkan sertifikat dengan nomor random (JSA-<tahun>-<8 hex>),
  * set status PASSED, lalu kirim notifikasi WA + email (best-effort).
  * Idempoten: jika sertifikat sudah ada, kembalikan yang lama.
@@ -124,6 +139,13 @@ export async function checkCertEligibility(
   registrationId: string,
   program: { id: string; type: string; scheduleAt: Date; completionCriteria: "ALL_LESSONS" | "ALL_QUIZZES" }
 ): Promise<{ eligible: boolean; reason?: string; availableAt?: Date }> {
+  if (!(await isCertIssuanceEnabled())) {
+    return {
+      eligible: false,
+      reason: "Penerbitan sertifikat sedang dihentikan sementara untuk pemeliharaan. Coba lagi nanti atau hubungi admin.",
+    };
+  }
+
   if (program.type === "WEBINAR") {
     const reg = await prisma.registration.findUnique({
       where: { id: registrationId },

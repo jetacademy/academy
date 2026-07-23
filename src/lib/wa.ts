@@ -111,6 +111,68 @@ export function msgAccess(params: {
   ].filter((l) => l !== null).join("\n");
 }
 
+// ---------- Template pesan — Program Affiliate ----------
+
+export function msgAffiliateInvite(name: string, dashboardUrl: string) {
+  return [
+    `Halo ${name},`,
+    ``,
+    `Selamat! Anda diundang untuk bergabung menjadi *Affiliate Jetschool Academy*.`,
+    ``,
+    `Sebagai affiliate, Anda bisa mendapatkan komisi setiap kali orang lain mendaftar program lewat link referral Anda — dan pembeli yang pakai kode Anda juga dapat harga lebih murah.`,
+    ``,
+    `Terima undangan dan atur kode referral Anda di sini:`,
+    dashboardUrl,
+    ``,
+    `Salam,`,
+    `Tim Jetschool Academy`,
+  ].join("\n");
+}
+
+export function msgAffiliateWithdrawalCompleted(name: string, amount: string, dashboardUrl: string) {
+  return [
+    `Halo ${name},`,
+    ``,
+    `Penarikan komisi affiliate Anda sebesar *${amount}* telah kami proses dan cairkan.`,
+    ``,
+    `Cek detailnya di dashboard affiliate Anda:`,
+    dashboardUrl,
+    ``,
+    `Salam,`,
+    `Tim Jetschool Academy`,
+  ].join("\n");
+}
+
+export function msgAffiliateWithdrawalRejected(name: string, amount: string, reason: string, dashboardUrl: string) {
+  return [
+    `Halo ${name},`,
+    ``,
+    `Mohon maaf, pengajuan penarikan komisi Anda sebesar *${amount}* belum bisa kami proses.`,
+    ``,
+    `Alasan: ${reason}`,
+    ``,
+    `Silakan cek dashboard affiliate Anda untuk detail lebih lanjut:`,
+    dashboardUrl,
+    ``,
+    `Salam,`,
+    `Tim Jetschool Academy`,
+  ].join("\n");
+}
+
+export function msgTicketReply(name: string, subject: string, ticketUrl: string) {
+  return [
+    `Halo ${name},`,
+    ``,
+    `Ada balasan baru untuk tiket Anda: *${subject}*.`,
+    ``,
+    `Lihat balasannya di sini:`,
+    ticketUrl,
+    ``,
+    `Salam,`,
+    `Tim Jetschool Academy`,
+  ].join("\n");
+}
+
 export function msgCertificate(name: string, certNumber: string, certUrl: string) {
   return [
     `Halo ${name},`,

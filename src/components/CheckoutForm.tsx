@@ -68,8 +68,11 @@ export default function CheckoutForm({ programs }: { programs: ProgramOption[] }
         <input id="cWa" name="whatsapp" type="tel" placeholder="contoh: 081234567890" pattern="0[0-9]{8,13}" required />
       </div>
       <div className="field">
-        <label htmlFor="cVoucher">Kode Voucher (opsional)</label>
-        <input id="cVoucher" name="voucherCode" type="text" placeholder="cth: DISKON20" />
+        <label htmlFor="cVoucher">Kode Voucher / Afiliasi (opsional)</label>
+        <input id="cVoucher" name="voucherCode" type="text" placeholder="cth: DISKON20 atau kode affiliate" />
+        <span style={{ fontSize: "0.76rem", color: "var(--ink-faint)", marginTop: "0.35rem", display: "block" }}>
+          Datang lewat link referral affiliate? Diskon Anda terdeteksi otomatis — kolom ini boleh dikosongkan.
+        </span>
       </div>
 
       <button type="submit" className="btn btn-purple btn-lg btn-block" disabled={loading}>

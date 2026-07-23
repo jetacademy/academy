@@ -1438,6 +1438,13 @@
   font-size: .86rem; font-weight: 700;
   margin-bottom: 1rem;
 }
+.form-success {
+  background: #E9F9EF; color: #1e8e4a;
+  border-radius: var(--r-sm);
+  padding: .8em 1em;
+  font-size: .86rem; font-weight: 700;
+  margin-bottom: 1rem;
+}
 
 /* ---------- Pain Points / Tantangan Guru Grid & Cards ---------- */
 .pain-points-grid {

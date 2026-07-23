@@ -4,10 +4,13 @@ import { isValidCallback } from "@/lib/xendit";
 import { sendWa, msgPaid, msgAccess } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml, getInvoiceExpiredEmailHtml, getInvoiceFailedEmailHtml } from "@/lib/email";
+import { recordAffiliateConversion, settleWithdrawalConversions, notifyWithdrawalResult } from "@/lib/affiliate";
 
 /**
- * POST /api/webhooks/xendit — dipanggil server Xendit saat status invoice berubah.
- * Set URL ini di Dashboard Xendit → Settings → Webhooks → Invoices:
+ * POST /api/webhooks/xendit — dipanggil server Xendit untuk 2 jenis event yang beda bentuk payload:
+ *  1. Invoice (pembayaran masuk) — payload flat: { id, external_id, status, paid_at }.
+ *  2. Payout (pencairan komisi affiliate keluar) — payload berbungkus: { event, data: { id, reference_id, status } }.
+ * Set URL ini di Dashboard Xendit → Settings → Webhooks, untuk kategori Invoices DAN Payouts:
  *   https://domainkamu.com/api/webhooks/xendit
  */
 export async function POST(req: Request) {
@@ -16,13 +19,49 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Token tidak valid." }, { status: 401 });
   }
 
-  let event: { id?: string; external_id?: string; status?: string; paid_at?: string };
+  let raw: unknown;
   try {
-    event = await req.json();
+    raw = await req.json();
   } catch {
     return NextResponse.json({ error: "Payload tidak valid." }, { status: 400 });
   }
 
+  // ── Payout callback (pencairan komisi affiliate) ─────────────────────
+  const maybePayout = raw as { event?: string; data?: { id?: string; reference_id?: string; status?: string; failure_code?: string } };
+  if (typeof maybePayout.event === "string" && maybePayout.event.startsWith("payout.")) {
+    try {
+      const data = maybePayout.data ?? {};
+      const referenceId = data.reference_id; // kita isi dengan AffiliateWithdrawal.id saat createPayout
+      if (!referenceId) return NextResponse.json({ error: "reference_id tidak ditemukan." }, { status: 400 });
+
+      const withdrawal = await prisma.affiliateWithdrawal.findFirst({
+        where: { OR: [{ id: referenceId }, { xenditPayoutId: data.id ?? "" }] },
+      });
+      if (!withdrawal) return NextResponse.json({ error: "Penarikan tidak ditemukan." }, { status: 404 });
+      if (withdrawal.status !== "PROCESSING") {
+        return NextResponse.json({ ok: true }); // sudah final / idempoten, tidak ada yang perlu diubah
+      }
+
+      if (data.status === "SUCCEEDED") {
+        await prisma.affiliateWithdrawal.update({ where: { id: withdrawal.id }, data: { status: "COMPLETED", processedAt: new Date() } });
+        await settleWithdrawalConversions(withdrawal.affiliateId, withdrawal.amount);
+        await notifyWithdrawalResult(withdrawal.id, "completed");
+      } else if (data.status === "FAILED") {
+        await prisma.affiliateWithdrawal.update({
+          where: { id: withdrawal.id },
+          data: { status: "FAILED", failureReason: data.failure_code ?? "Payout gagal diproses Xendit." },
+        });
+        await notifyWithdrawalResult(withdrawal.id, "rejected", data.failure_code ?? "Payout gagal diproses Xendit.");
+      }
+      return NextResponse.json({ ok: true });
+    } catch (err) {
+      console.error("[webhook xendit payout]", err);
+      return NextResponse.json({ error: "Gagal memproses webhook payout." }, { status: 500 });
+    }
+  }
+
+  // ── Invoice callback (pembayaran masuk) ──────────────────────────────
+  const event = raw as { id?: string; external_id?: string; status?: string; paid_at?: string };
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
   try {
@@ -62,6 +101,8 @@ export async function POST(req: Request) {
             data: { status: "PAID" },
           }),
         ]);
+
+        await recordAffiliateConversion(payment.id);
 
         const reg = payment.registration;
         const memberUrl = `${baseUrl}/member`;

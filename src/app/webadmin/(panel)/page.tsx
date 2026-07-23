@@ -2,6 +2,50 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { rupiah } from "@/lib/format";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
+import DailyRevenueChart from "@/components/DailyRevenueChart";
+
+export const dynamic = "force-dynamic";
+
+const DAY_RANGES = [7, 14, 30, 90] as const;
+type DayRange = (typeof DAY_RANGES)[number];
+
+interface DailyRevenueRaw {
+  day: Date | string;
+  total: number | null;
+}
+
+/** Rekap pendapatan lunas per hari (kalender WIB), N hari terakhir termasuk hari ini —
+ *  hari tanpa transaksi tetap muncul dengan nilai 0 supaya grafik tidak bolong. */
+async function getDailyRevenue(days: DayRange) {
+  const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+  const nowWib = new Date(Date.now() + WIB_OFFSET_MS);
+  const todayWib = new Date(Date.UTC(nowWib.getUTCFullYear(), nowWib.getUTCMonth(), nowWib.getUTCDate()));
+  const sinceWib = new Date(todayWib.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
+  const sinceUtc = new Date(sinceWib.getTime() - WIB_OFFSET_MS);
+
+  const rows = await prisma.$queryRaw<DailyRevenueRaw[]>`
+    SELECT DATE(DATE_ADD(paidAt, INTERVAL 7 HOUR)) as day, SUM(amount) as total
+    FROM payment
+    WHERE status = 'PAID' AND paidAt >= ${sinceUtc}
+    GROUP BY day
+    ORDER BY day ASC
+  `;
+
+  const byDate = new Map<string, number>();
+  for (const r of rows) {
+    const key = new Date(r.day).toISOString().slice(0, 10);
+    byDate.set(key, Number(r.total ?? 0));
+  }
+
+  const points: { date: string; label: string; amount: number }[] = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(sinceWib.getTime() + i * 24 * 60 * 60 * 1000);
+    const key = d.toISOString().slice(0, 10);
+    const label = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "UTC" }).format(d);
+    points.push({ date: key, label, amount: byDate.get(key) ?? 0 });
+  }
+  return points;
+}
 
 const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
   REGISTERED: { cls: "dim", label: "Terdaftar" },
@@ -20,8 +64,17 @@ interface ProgramStatsRaw {
   total_income: number | null;
 }
 
-export default async function AdminDashboard() {
-  const [regCount, revenue, certCount, programs, latest, statsRaw] = await Promise.all([
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ hari?: string }>;
+}) {
+  const { hari } = await searchParams;
+  const selectedRange: DayRange = (DAY_RANGES as readonly number[]).includes(Number(hari))
+    ? (Number(hari) as DayRange)
+    : 30;
+
+  const [regCount, revenue, certCount, programs, latest, statsRaw, dailyRevenue] = await Promise.all([
     prisma.registration.count(),
     prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
     prisma.certificate.count(),
@@ -48,6 +101,7 @@ export default async function AdminDashboard() {
       LEFT JOIN payment p ON p.registrationId = r.id
       GROUP BY r.programId
     `,
+    getDailyRevenue(selectedRange),
   ]);
 
   const statsMap = new Map<string, { total: number; paid: number; income: number }>();
@@ -81,6 +135,24 @@ export default async function AdminDashboard() {
         <div className="adm-stat"><b>{rupiah(revenue._sum.amount ?? 0)}</b><span>Pendapatan Lunas</span></div>
         <div className="adm-stat"><b>{certCount}</b><span>Sertifikat Terbit</span></div>
         <div className="adm-stat"><b>{programs.filter((p) => p.isActive).length}</b><span>Program Aktif</span></div>
+      </div>
+
+      <div className="adm-head" style={{ marginTop: "2.4rem" }}>
+        <h2 style={{ fontSize: "1.25rem" }}>Pendapatan Harian</h2>
+        <div style={{ display: "flex", gap: "0.4rem" }}>
+          {DAY_RANGES.map((d) => (
+            <Link
+              key={d}
+              href={`/webadmin?hari=${d}`}
+              className={`btn btn-sm ${selectedRange === d ? "btn-purple" : ""}`}
+            >
+              {d} Hari
+            </Link>
+          ))}
+        </div>
+      </div>
+      <div className="tbl-wrap" style={{ padding: "1.4rem" }}>
+        <DailyRevenueChart data={dailyRevenue} />
       </div>
 
       <div className="adm-head" style={{ marginTop: "2.4rem" }}>

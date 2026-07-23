@@ -4,6 +4,7 @@ import { createInvoice, isXenditConfigured } from "@/lib/xendit";
 import { normalizeWa } from "@/lib/wa";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { validateVoucher } from "@/lib/voucher";
+import { resolveAffiliateForCheckout, applyAffiliateDiscount, recordAffiliateConversion, getAffiliateRefCookie } from "@/lib/affiliate";
 
 /**
  * POST /api/checkout — buat invoice Xendit untuk paket sertifikat.
@@ -78,19 +79,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, invoiceUrl: reg.payment.invoiceUrl });
     }
 
-    // ── Voucher/diskon (opsional) ──────────────────────────────────
-    const voucherResult = voucherCode
+    // ── Affiliate (kode manual ATAU cookie dari link ?ref=) — diprioritaskan di atas voucher ──
+    const refCookie = await getAffiliateRefCookie();
+    const affiliate = await resolveAffiliateForCheckout(voucherCode, refCookie);
+
+    // ── Voucher/diskon (opsional) — dilewati jika sudah dapat diskon dari affiliate ──────────
+    const voucherResult = !affiliate && voucherCode
       ? await validateVoucher(voucherCode, program.certPrice)
       : null;
     if (voucherResult && "error" in voucherResult) {
       return NextResponse.json({ error: voucherResult.error }, { status: 400 });
     }
-    const discountAmount = voucherResult ? voucherResult.discountAmount : 0;
+    const affiliateResult = affiliate ? applyAffiliateDiscount(affiliate, program.certPrice) : null;
+    const discountAmount = affiliateResult ? affiliateResult.discountAmount : voucherResult ? voucherResult.discountAmount : 0;
     const voucherId = voucherResult ? voucherResult.voucher.id : null;
-    const originalAmount = voucherResult ? program.certPrice : null;
-    const chargeAmount = voucherResult ? voucherResult.finalAmount : program.certPrice;
+    const affiliateId = affiliateResult ? affiliateResult.affiliate.id : null;
+    const originalAmount = affiliateResult || voucherResult ? program.certPrice : null;
+    const chargeAmount = affiliateResult ? affiliateResult.finalAmount : voucherResult ? voucherResult.finalAmount : program.certPrice;
 
-    // MODE DEV tanpa Xendit, ATAU voucher menutup seluruh harga → langsung tandai lunas
+    // MODE DEV tanpa Xendit, ATAU diskon menutup seluruh harga → langsung tandai lunas
     if (!isXenditConfigured()) {
       console.warn("[checkout] XENDIT_SECRET_KEY kosong — MODE DEV: pembayaran dianggap lunas.");
       if (process.env.NODE_ENV === "production" && process.env.XENDIT_DEV_BYPASS !== "true") {
@@ -98,15 +105,16 @@ export async function POST(req: Request) {
       }
     }
     if (!isXenditConfigured() || chargeAmount === 0) {
-      await prisma.$transaction([
+      const [payment] = await prisma.$transaction([
         prisma.payment.upsert({
           where: { registrationId: reg.id },
-          create: { registrationId: reg.id, amount: chargeAmount, originalAmount, discountAmount, voucherId, status: "PAID", paidAt: new Date() },
-          update: { amount: chargeAmount, originalAmount, discountAmount, voucherId, status: "PAID", paidAt: new Date() },
+          create: { registrationId: reg.id, amount: chargeAmount, originalAmount, discountAmount, voucherId, affiliateId, status: "PAID", paidAt: new Date() },
+          update: { amount: chargeAmount, originalAmount, discountAmount, voucherId, affiliateId, status: "PAID", paidAt: new Date() },
         }),
         prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
         ...(voucherId ? [prisma.voucher.update({ where: { id: voucherId }, data: { usedCount: { increment: 1 } } })] : []),
       ]);
+      if (affiliateId) await recordAffiliateConversion(payment.id);
       return NextResponse.json({ ok: true, postTestUrl: `${baseUrl}/member` });
     }
 
@@ -114,7 +122,9 @@ export async function POST(req: Request) {
       externalId: `ACADEMY-${reg.id}`,
       amount: chargeAmount,
       payerEmail: reg.email,
-      description: voucherResult
+      description: affiliateResult
+        ? `Paket Sertifikat — ${program.title} (${reg.name}) (Affiliate: ${affiliateResult.affiliate.code})`
+        : voucherResult
         ? `Paket Sertifikat — ${program.title} (${reg.name}) (Voucher: ${voucherResult.voucher.code})`
         : `Paket Sertifikat — ${program.title} (${reg.name})`,
       successRedirectUrl: `${baseUrl}/member`,
@@ -129,10 +139,11 @@ export async function POST(req: Request) {
           originalAmount,
           discountAmount,
           voucherId,
+          affiliateId,
           xenditInvoiceId: invoice.id,
           invoiceUrl: invoice.invoice_url,
         },
-        update: { amount: chargeAmount, originalAmount, discountAmount, voucherId, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING" },
+        update: { amount: chargeAmount, originalAmount, discountAmount, voucherId, affiliateId, xenditInvoiceId: invoice.id, invoiceUrl: invoice.invoice_url, status: "PENDING" },
       }),
       ...(voucherId ? [prisma.voucher.update({ where: { id: voucherId }, data: { usedCount: { increment: 1 } } })] : []),
     ]);

@@ -10,6 +10,7 @@ import { sendOtp, verifyOtp } from "@/lib/otp";
 import { normalizeWa, normalizeIdentifier } from "@/lib/wa";
 import { sendEmail, getWelcomeMemberEmailHtml } from "@/lib/email";
 import { createInvoice, isXenditConfigured } from "@/lib/xendit";
+import { findActiveAffiliateByCode, applyAffiliateDiscount, recordAffiliateConversion, getAffiliateRefCookie } from "@/lib/affiliate";
 
 async function loginByIdentifier(cleanVal: string): Promise<{ ok?: boolean; error?: string; isAdmin?: boolean }> {
   // 1. Cari User record terlebih dahulu — user yang baru daftar akun
@@ -516,28 +517,41 @@ export async function initiateCertificateCheckout(registrationId: string) {
     return { redirectUrl: payment.invoiceUrl };
   }
 
-  // MODE DEV tanpa Xendit: langsung tandai lunas
-  if (!isXenditConfigured()) {
-    if (process.env.NODE_ENV === "production" && process.env.XENDIT_DEV_BYPASS !== "true") {
+  // Atribusi affiliate otomatis lewat cookie ?ref= (1-click checkout ini tidak punya kolom kode manual)
+  const refCookie = await getAffiliateRefCookie();
+  const affiliate = refCookie ? await findActiveAffiliateByCode(refCookie) : null;
+  const affiliateResult = affiliate ? applyAffiliateDiscount(affiliate, program.certPrice) : null;
+  const affiliateId = affiliateResult ? affiliateResult.affiliate.id : null;
+  const chargeAmount = affiliateResult ? affiliateResult.finalAmount : program.certPrice;
+  const originalAmount = affiliateResult ? program.certPrice : null;
+  const discountAmount = affiliateResult ? affiliateResult.discountAmount : 0;
+
+  // MODE DEV tanpa Xendit, ATAU diskon affiliate menutup seluruh harga: langsung tandai lunas
+  const xenditReady = isXenditConfigured();
+  if (!xenditReady || chargeAmount === 0) {
+    if (!xenditReady && process.env.NODE_ENV === "production" && process.env.XENDIT_DEV_BYPASS !== "true") {
       return { error: "Pembayaran belum dikonfigurasi. Hubungi admin." };
     }
-    await prisma.$transaction([
+    const [payment] = await prisma.$transaction([
       prisma.payment.upsert({
         where: { registrationId: reg.id },
-        create: { registrationId: reg.id, amount: program.certPrice, status: "PAID", paidAt: new Date() },
-        update: { amount: program.certPrice, status: "PAID", paidAt: new Date() },
+        create: { registrationId: reg.id, amount: chargeAmount, originalAmount, discountAmount, affiliateId, status: "PAID", paidAt: new Date() },
+        update: { amount: chargeAmount, originalAmount, discountAmount, affiliateId, status: "PAID", paidAt: new Date() },
       }),
       prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
     ]);
+    if (affiliateId) await recordAffiliateConversion(payment.id);
     return { redirectUrl: `${baseUrl}/member` };
   }
 
   // Buat invoice baru
   const invoice = await createInvoice({
     externalId: `ACADEMY-${reg.id}`,
-    amount: program.certPrice,
+    amount: chargeAmount,
     payerEmail: reg.email,
-    description: `Paket Sertifikat — ${program.title} (${reg.name})`,
+    description: affiliateResult
+      ? `Paket Sertifikat — ${program.title} (${reg.name}) (Affiliate: ${affiliateResult.affiliate.code})`
+      : `Paket Sertifikat — ${program.title} (${reg.name})`,
     successRedirectUrl: `${baseUrl}/member`,
   });
 
@@ -545,12 +559,18 @@ export async function initiateCertificateCheckout(registrationId: string) {
     where: { registrationId: reg.id },
     create: {
       registrationId: reg.id,
-      amount: program.certPrice,
+      amount: chargeAmount,
+      originalAmount,
+      discountAmount,
+      affiliateId,
       xenditInvoiceId: invoice.id,
       invoiceUrl: invoice.invoice_url,
     },
     update: {
-      amount: program.certPrice,
+      amount: chargeAmount,
+      originalAmount,
+      discountAmount,
+      affiliateId,
       xenditInvoiceId: invoice.id,
       invoiceUrl: invoice.invoice_url,
       status: "PENDING",

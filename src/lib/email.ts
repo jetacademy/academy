@@ -256,6 +256,57 @@ export function getInvoiceFailedEmailHtml(params: {
   `;
 }
 
+export function getAffiliateInviteEmailHtml(name: string, dashboardUrl: string): string {
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
+      <h2 style="color: #232176; margin-top: 0;">Anda Diundang Menjadi Affiliate! 🤝</h2>
+      <p>Halo ${escapeHtml(name)}, tim kami ingin mengajak Anda bergabung sebagai <strong>Affiliate Jetschool Academy</strong>.</p>
+      <p>Dapatkan komisi setiap ada pendaftaran lewat link referral Anda, dan pembeli yang memakai kode Anda juga mendapat harga lebih murah.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${dashboardUrl}" style="background: #232176; color: #ffffff; padding: 12px 28px; border-radius: 99px; text-decoration: none; font-weight: bold; display: inline-block;">Terima Undangan</a>
+      </div>
+      <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
+      <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; ${new Date().getFullYear()}. Semua hak dilindungi.</p>
+    </div>
+  `;
+}
+
+export function getAffiliateWithdrawalEmailHtml(params: {
+  name: string;
+  amountLabel: string;
+  status: "completed" | "rejected";
+  reason?: string;
+  dashboardUrl: string;
+}): string {
+  const isDone = params.status === "completed";
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
+      <h2 style="color: ${isDone ? "#232176" : "#dc2626"}; margin-top: 0;">${isDone ? "Penarikan Komisi Berhasil ✅" : "Penarikan Komisi Ditolak ❌"}</h2>
+      <p>Halo ${escapeHtml(params.name)}, pengajuan penarikan komisi Anda sebesar <strong>${escapeHtml(params.amountLabel)}</strong> ${isDone ? "telah berhasil dicairkan." : "belum bisa kami proses."}</p>
+      ${!isDone && params.reason ? `<p><strong>Alasan:</strong> ${escapeHtml(params.reason)}</p>` : ""}
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${params.dashboardUrl}" style="background: #232176; color: #ffffff; padding: 12px 28px; border-radius: 99px; text-decoration: none; font-weight: bold; display: inline-block;">Buka Dashboard Affiliate</a>
+      </div>
+      <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
+      <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; ${new Date().getFullYear()}. Semua hak dilindungi.</p>
+    </div>
+  `;
+}
+
+export function getTicketReplyEmailHtml(params: { name: string; subject: string; ticketUrl: string }): string {
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">
+      <h2 style="color: #232176; margin-top: 0;">Ada Balasan Baru untuk Tiket Anda 💬</h2>
+      <p>Halo ${escapeHtml(params.name)}, tiket Anda "<strong>${escapeHtml(params.subject)}</strong>" mendapat balasan baru dari tim kami.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${params.ticketUrl}" style="background: #232176; color: #ffffff; padding: 12px 28px; border-radius: 99px; text-decoration: none; font-weight: bold; display: inline-block;">Lihat Balasan</a>
+      </div>
+      <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 30px 0;"/>
+      <p style="font-size: 0.8em; color: #9c99a3; text-align: center;">Jetschool Academy &copy; ${new Date().getFullYear()}. Semua hak dilindungi.</p>
+    </div>
+  `;
+}
+
 export function getWelcomeMemberEmailHtml(name: string, loginUrl: string): string {
   return `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; color: #17161a; background: #ffffff;">

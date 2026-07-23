@@ -78,6 +78,11 @@ export default async function MemberDashboardPage() {
   const memberInstitution = registrations[0]?.institution ?? "";
   const isSuperadmin = await isAdmin();
 
+  const memberUser = await prisma.user.findFirst({ where: { OR: [{ email: sessionVal }, { whatsapp: sessionVal }] }, select: { id: true } });
+  const affiliate = memberUser
+    ? await prisma.affiliate.findUnique({ where: { userId: memberUser.id }, select: { status: true } })
+    : null;
+
   return (
     <>
       <Navbar minimal ctaHref="/program" ctaLabel="Cari Pelatihan Baru" />
@@ -98,6 +103,34 @@ export default async function MemberDashboardPage() {
               </div>
               <Link href="/webadmin" className="btn btn-sm" style={{ background: "#fff", color: "var(--purple)", fontWeight: 700 }}>
                 Masuk Panel Admin ↗
+              </Link>
+            </div>
+          )}
+
+          {/* ── Banner Affiliate ── */}
+          {affiliate?.status === "PENDING" && (
+            <div className="member-admin-banner reveal in" style={{ background: "linear-gradient(135deg, #f7941d, #ff6b6b)" }}>
+              <div>
+                <h3 style={{ margin: 0, fontWeight: 800, color: "#fff" }}>🤝 Anda Diundang Jadi Affiliate!</h3>
+                <p style={{ margin: ".2rem 0 0 0", fontSize: ".85rem", opacity: 0.95 }}>
+                  Terima undangan untuk mulai promosikan program dan dapatkan komisi.
+                </p>
+              </div>
+              <Link href="/member/affiliate" className="btn btn-sm" style={{ background: "#fff", color: "#f7941d", fontWeight: 700 }}>
+                Lihat Undangan ↗
+              </Link>
+            </div>
+          )}
+          {affiliate?.status === "ACTIVE" && (
+            <div className="member-admin-banner reveal in">
+              <div>
+                <h3 style={{ margin: 0, fontWeight: 800, color: "#fff" }}>💰 Dashboard Affiliate Anda</h3>
+                <p style={{ margin: ".2rem 0 0 0", fontSize: ".85rem", opacity: 0.9 }}>
+                  Pantau komisi, link referral, dan penarikan dana Anda.
+                </p>
+              </div>
+              <Link href="/member/affiliate" className="btn btn-sm" style={{ background: "#fff", color: "var(--purple)", fontWeight: 700 }}>
+                Buka Dashboard Affiliate ↗
               </Link>
             </div>
           )}
@@ -346,9 +379,11 @@ export default async function MemberDashboardPage() {
                         </>
                       )}
 
-                      {/* ══ KASUS 5: EXPIRED ══ */}
+                      {/* ══ KASUS 5: EXPIRED — arahkan ke halaman program ini spesifik, bukan katalog umum,
+                          supaya form pendaftaran (yang sudah tidak dianggap "sudah terdaftar" lagi
+                          utk status EXPIRED) langsung tampil dan bisa memicu invoice Xendit baru ══ */}
                       {reg.status === "EXPIRED" && (
-                        <Link href="/program" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                        <Link href={`/program/${prog.slug}`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
                           Bayar Ulang
                         </Link>
                       )}

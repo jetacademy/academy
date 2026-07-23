@@ -56,6 +56,9 @@ export default function RefundButton({
         setPending(false);
         return;
       }
+      if (res.warning) {
+        window.alert(res.warning);
+      }
       setIsOpen(false);
       setPending(false);
       router.refresh();

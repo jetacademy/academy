@@ -118,7 +118,10 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
     }
 
     if (existingReg) {
-      isAlreadyRegistered = true;
+      // Samakan dengan gerbang "Kasus 3" di /api/register: webinar gratis (price 0) selalu dianggap
+      // sudah terdaftar, tapi program berbayar hanya dianggap terdaftar kalau BENAR sudah lunas
+      // (PAID/PASSED). Status EXPIRED/FAILED/CANCELLED/REFUNDED harus tetap bisa daftar ulang/bayar ulang.
+      isAlreadyRegistered = program.price === 0 || existingReg.status === "PAID" || existingReg.status === "PASSED";
     }
   }
 

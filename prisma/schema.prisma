@@ -122,25 +122,25 @@ model ProgramBatch {
 
 // Pendaftar webinar (leads dari iklan Meta)
 model Registration {
-  id          String             @id @default(cuid())
-  userId      String?
-  user        User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
-  name        String // nama lengkap — dipakai di sertifikat
-  whatsapp    String // format 08xxx, dinormalisasi ke 628xxx saat kirim WA
-  email       String
-  institution String? // asal lembaga / instansi
-  program     Program            @relation(fields: [programId], references: [id])
-  programId   String
-  batch       ProgramBatch?      @relation(fields: [batchId], references: [id], onDelete: SetNull)
-  batchId     String? // batch/angkatan yang dipilih peserta (null = program tanpa batch, pakai Program.scheduleAt)
-  status      RegistrationStatus @default(REGISTERED)
+  id           String             @id @default(cuid())
+  userId       String?
+  user         User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name         String // nama lengkap — dipakai di sertifikat
+  whatsapp     String // format 08xxx, dinormalisasi ke 628xxx saat kirim WA
+  email        String
+  institution  String? // asal lembaga / instansi
+  program      Program            @relation(fields: [programId], references: [id])
+  programId    String
+  batch        ProgramBatch?      @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  batchId      String? // batch/angkatan yang dipilih peserta (null = program tanpa batch, pakai Program.scheduleAt)
+  status       RegistrationStatus @default(REGISTERED)
   participants Json? // array string: nama peserta tambahan (multi-pendaftar 1 group WA/email)
-  payment     Payment?
-  attempts    TestAttempt[]
-  certificate Certificate?
-  completions Completion[]
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  payment      Payment?
+  attempts     TestAttempt[]
+  certificate  Certificate?
+  completions  Completion[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
   @@unique([whatsapp, programId]) // satu nomor WA = satu pendaftaran per program
   @@index([email])
@@ -167,26 +167,33 @@ enum RegistrationStatus {
 
 // Pembayaran paket sertifikat via Xendit Invoice
 model Payment {
-  id              String        @id @default(cuid())
-  registration    Registration  @relation(fields: [registrationId], references: [id])
-  registrationId  String        @unique
-  xenditInvoiceId String?       @unique // id invoice dari Xendit
-  invoiceUrl      String?       @db.Text // checkout URL Xendit
-  amount          Int
-  status          PaymentStatus @default(PENDING)
-  paidAt          DateTime?
-  originalAmount  Int? // harga sebelum diskon (null = tidak ada diskon dipakai)
-  discountAmount  Int           @default(0)
-  voucher         Voucher?      @relation(fields: [voucherId], references: [id], onDelete: SetNull)
-  voucherId       String?
-  refundedAt      DateTime?
-  refundAmount    Int? // jumlah dana yang dikembalikan (dicatat manual oleh admin)
-  refundReason    String?       @db.Text
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                  String               @id @default(cuid())
+  registration        Registration         @relation(fields: [registrationId], references: [id])
+  registrationId      String               @unique
+  xenditInvoiceId     String?              @unique // id invoice dari Xendit
+  invoiceUrl          String?              @db.Text // checkout URL Xendit
+  amount              Int
+  status              PaymentStatus        @default(PENDING)
+  paidAt              DateTime?
+  originalAmount      Int? // harga sebelum diskon (null = tidak ada diskon dipakai)
+  discountAmount      Int                  @default(0)
+  voucher             Voucher?             @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  voucherId           String?
+  refundedAt          DateTime?
+  refundAmount        Int? // jumlah dana yang dikembalikan (dicatat manual oleh admin)
+  refundReason        String?              @db.Text
+  // Affiliate yang mereferensikan transaksi ini (diisi saat checkout/registrasi jika kode/ref valid).
+  // AffiliateConversion baru DIBUAT saat status berubah jadi PAID — bukan di sini — supaya invoice
+  // yang tidak pernah lunas tidak meninggalkan jejak komisi palsu.
+  affiliate           Affiliate?           @relation(fields: [affiliateId], references: [id], onDelete: SetNull)
+  affiliateId         String?
+  affiliateConversion AffiliateConversion?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@index([status])
   @@index([voucherId])
+  @@index([affiliateId])
   @@map("payment")
 }
 
@@ -270,6 +277,17 @@ model Certificate {
 
   @@index([issuedAt])
   @@map("certificate")
+}
+
+// Sakelar global — satu baris (singleton, id tetap "singleton"). Dipakai utk menghentikan
+// sementara PENERBITAN sertifikat baru di seluruh situs (mis. sedang ada bug/lagi diuji),
+// tanpa mengubah kode. Sertifikat yang SUDAH terbit tidak terpengaruh.
+model SystemSetting {
+  id                  String   @id @default("singleton")
+  certIssuanceEnabled Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
+
+  @@map("systemsetting")
 }
 
 // Kelompok modul — jenjang teratas kurikulum (mis. "Bagian 1: Dasar-dasar")
@@ -384,6 +402,7 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   registrations Registration[]
+  affiliate     Affiliate?
 
   @@index([role]) // filter by role di halaman user management
   @@index([createdAt]) // sort terbaru di daftar user
@@ -402,6 +421,185 @@ model ApiKey {
 
   @@index([key])
   @@map("apikey")
+}
+
+// ============================================================
+// AFFILIATE — program afiliasi alumni: admin mengundang user
+// terpilih, tiap affiliate bisa punya komisi & diskon pelanggan
+// sendiri-sendiri, penarikan dana via Xendit Payout, dan tiket
+// dukungan dari affiliate/pengguna.
+// ============================================================
+
+enum AffiliateStatus {
+  PENDING // diundang admin, menunggu respons user
+  ACTIVE // diterima & aktif mempromosikan
+  SUSPENDED // dinonaktifkan sementara oleh admin (kode berhenti berfungsi)
+  REJECTED // user menolak undangan
+}
+
+enum ConversionStatus {
+  PENDING // transaksi tercatat, menunggu masa tahan (hold) sebelum bisa dicairkan
+  AVAILABLE // masa tahan lewat, bisa dicairkan
+  WITHDRAWN // sudah termasuk dalam penarikan yang selesai
+  VOIDED // dibatalkan (pembayaran induk direfund)
+}
+
+enum WithdrawalStatus {
+  REQUESTED // affiliate mengajukan penarikan
+  PROCESSING // admin sudah memicu payout Xendit, menunggu konfirmasi
+  COMPLETED // dana sudah diterima (dikonfirmasi Xendit atau manual oleh admin)
+  REJECTED // ditolak admin sebelum diproses
+  FAILED // payout Xendit gagal
+}
+
+enum TicketCategory {
+  KOMISI
+  PENARIKAN
+  AKUN
+  TEKNIS
+  LAINNYA
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketSenderRole {
+  USER
+  ADMIN
+}
+
+// Profil affiliate — satu per User. Dibuat admin saat mengirim "tombol penawaran";
+// baru aktif (bisa dipakai kodenya) setelah user menerima undangan.
+model Affiliate {
+  id                String                @id @default(cuid())
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String                @unique
+  code              String                @unique // kode referral custom, dipakai di /?ref=KODE
+  status            AffiliateStatus       @default(PENDING)
+  commissionType    VoucherType           @default(PERCENT) // basis komisi affiliate per transaksi
+  commissionValue   Int                   @default(10) // PERCENT: 1-100 | FIXED: nominal Rupiah
+  discountType      VoucherType           @default(PERCENT) // basis diskon utk pembeli yang pakai kode ini
+  discountValue     Int                   @default(0) // 0 = tidak ada diskon customer, hanya komisi
+  bankName          String?
+  bankAccountNumber String?
+  bankAccountName   String?
+  ewalletChannel    String? // kode channel Xendit Payout, mis. "ID_OVO", "ID_DANA"
+  ewalletNumber     String?
+  clickCount        Int                   @default(0) // hitungan kunjungan lewat link referral (analitik kasar)
+  invitedAt         DateTime              @default(now())
+  invitedBy         String? // nama/email admin yang mengundang
+  respondedAt       DateTime?
+  adminNote         String?               @db.Text
+  conversions       AffiliateConversion[]
+  withdrawals       AffiliateWithdrawal[]
+  tickets           Ticket[]
+  payments          Payment[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  @@index([status])
+  @@map("affiliate")
+}
+
+// Catatan komisi per transaksi (ledger) — satu baris per Payment yang memakai kode affiliate.
+model AffiliateConversion {
+  id                     String           @id @default(cuid())
+  affiliate              Affiliate        @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  affiliateId            String
+  payment                Payment          @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  paymentId              String           @unique
+  registrationId         String
+  saleAmount             Int // nominal yang benar-benar dibayar customer (setelah diskon affiliate)
+  discountGiven          Int              @default(0) // potongan yang customer terima karena kode ini
+  commissionAmount       Int
+  commissionTypeSnapshot VoucherType // salinan tipe komisi affiliate saat transaksi terjadi
+  commissionRateSnapshot Int // salinan nilai komisi affiliate saat transaksi terjadi
+  status                 ConversionStatus @default(PENDING)
+  availableAt            DateTime? // kapan boleh dicairkan (createdAt + holdDays pengaturan)
+  voidedAt               DateTime?
+  voidReason             String?          @db.Text
+  createdAt              DateTime         @default(now())
+
+  @@index([affiliateId])
+  @@index([status])
+  @@index([affiliateId, status])
+  @@map("affiliateconversion")
+}
+
+// Pengajuan penarikan komisi affiliate — diproses admin via Xendit Payout.
+model AffiliateWithdrawal {
+  id                String           @id @default(cuid())
+  affiliate         Affiliate        @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  affiliateId       String
+  amount            Int
+  channelCode       String // kode channel Xendit Payout, mis. "ID_BCA", "ID_OVO"
+  accountNumber     String
+  accountHolderName String
+  status            WithdrawalStatus @default(REQUESTED)
+  xenditPayoutId    String?          @unique
+  xenditReferenceId String?          @unique
+  failureReason     String?          @db.Text
+  adminNote         String?          @db.Text
+  requestedAt       DateTime         @default(now())
+  processedAt       DateTime?
+  processedBy       String?
+
+  @@index([affiliateId])
+  @@index([status])
+  @@map("affiliatewithdrawal")
+}
+
+// Pengaturan global program affiliate — satu baris (singleton, id tetap "singleton").
+model AffiliateSettings {
+  id                     String      @id @default("singleton")
+  defaultCommissionType  VoucherType @default(PERCENT)
+  defaultCommissionValue Int         @default(10)
+  defaultDiscountType    VoucherType @default(PERCENT)
+  defaultDiscountValue   Int         @default(5)
+  minWithdrawal          Int         @default(100000) // nominal minimal sekali penarikan (Rp)
+  holdDays               Int         @default(7) // masa tahan komisi sebelum bisa dicairkan (buffer refund/fraud)
+  cookieDays             Int         @default(30) // masa berlaku atribusi ?ref= di cookie pengunjung
+  termsText              String?     @db.Text // syarat & ketentuan program affiliate, ditampilkan di dashboard member
+  updatedAt              DateTime    @updatedAt
+
+  @@map("affiliatesettings")
+}
+
+// Tiket dukungan — dari affiliate (soal komisi/penarikan) maupun pengguna umum.
+model Ticket {
+  id          String          @id @default(cuid())
+  affiliate   Affiliate?      @relation(fields: [affiliateId], references: [id], onDelete: SetNull)
+  affiliateId String?
+  name        String
+  email       String
+  whatsapp    String?
+  subject     String
+  category    TicketCategory  @default(LAINNYA)
+  status      TicketStatus    @default(OPEN)
+  messages    TicketMessage[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([affiliateId])
+  @@index([status])
+  @@map("ticket")
+}
+
+model TicketMessage {
+  id         String           @id @default(cuid())
+  ticket     Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId   String
+  senderRole TicketSenderRole
+  senderName String
+  message    String           @db.Text
+  createdAt  DateTime         @default(now())
+
+  @@index([ticketId])
+  @@map("ticketmessage")
 }
 
 // Artikel blog — konten SEO, tidak tampil di beranda, hanya lewat menu & /artikel.

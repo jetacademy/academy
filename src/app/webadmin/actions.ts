@@ -10,6 +10,8 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { sendWa, msgAccess, msgPaid, normalizeWa } from "@/lib/wa";
 import { formatJadwal, parseWIB } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml } from "@/lib/email";
+import { recordAffiliateConversion, voidAffiliateConversion } from "@/lib/affiliate";
+import { isCertIssuanceEnabled } from "@/lib/certificates";
 import { createBunnyVideo, getBunnyUploadAuth, deleteBunnyVideo } from "@/lib/bunny";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
@@ -539,7 +541,7 @@ export async function markPaid(formData: FormData) {
   if (!reg || !MARKPAID_ALLOWED.includes(reg.status)) return;
 
   const amount = reg.program.price > 0 ? reg.program.price : reg.program.certPrice;
-  await prisma.$transaction([
+  const [payment] = await prisma.$transaction([
     prisma.payment.upsert({
       where: { registrationId: reg.id },
       create: { registrationId: reg.id, amount, status: "PAID", paidAt: new Date() },
@@ -547,6 +549,7 @@ export async function markPaid(formData: FormData) {
     }),
     prisma.registration.update({ where: { id: reg.id }, data: { status: "PAID" } }),
   ]);
+  await recordAffiliateConversion(payment.id);
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
   const memberUrl = `${baseUrl}/member`;
@@ -649,6 +652,45 @@ export async function saveRegistration(formData: FormData) {
 }
 
 // ─── Upload & Sertifikat ─────────────────────────────────────────
+
+/**
+ * Hapus sertifikat yang sudah terbit (mis. terbit keliru sebelum acara selesai) —
+ * status pendaftaran dikembalikan ke PAID (kalau sudah pernah lunas) atau REGISTERED,
+ * supaya peserta bisa diproses ulang begitu syarat kelulusan benar-benar terpenuhi.
+ */
+export async function deleteCertificate(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+
+  const cert = await prisma.certificate.findUnique({
+    where: { id },
+    include: { registration: { include: { payment: true } } },
+  });
+  if (!cert) redirect("/webadmin/sertifikat?e=notfound");
+
+  const revertStatus = cert.registration.payment?.status === "PAID" ? "PAID" : "REGISTERED";
+
+  await prisma.$transaction([
+    prisma.certificate.delete({ where: { id } }),
+    prisma.registration.update({ where: { id: cert.registrationId }, data: { status: revertStatus } }),
+  ]);
+
+  revalidatePath("/webadmin/sertifikat");
+  revalidatePath("/webadmin/pendaftar");
+  redirect("/webadmin/sertifikat?ok=dihapus");
+}
+
+/** Sakelar global: nyalakan/matikan penerbitan sertifikat baru di seluruh situs. */
+export async function toggleCertIssuance() {
+  await requireAdmin();
+  const current = await isCertIssuanceEnabled();
+  await prisma.systemSetting.upsert({
+    where: { id: "singleton" },
+    create: { id: "singleton", certIssuanceEnabled: !current },
+    update: { certIssuanceEnabled: !current },
+  });
+  revalidatePath("/webadmin/sertifikat");
+}
 
 // ─── Video (Bunny.net Stream) ─────────────────────────────────────
 
@@ -913,7 +955,7 @@ export async function refundPayment(
   registrationId: string,
   amount: number,
   reason: string
-): Promise<{ ok?: true; error?: string }> {
+): Promise<{ ok?: true; error?: string; warning?: string }> {
   await requireAdmin();
 
   const reg = await prisma.registration.findUnique({
@@ -938,9 +980,14 @@ export async function refundPayment(
     prisma.registration.update({ where: { id: reg.id }, data: { status: "REFUNDED" } }),
   ]);
 
+  const voidResult = await voidAffiliateConversion(reg.payment.id, `Refund: ${trimmedReason}`);
+
   revalidatePath("/webadmin/pendaftar");
   revalidatePath("/webadmin");
-  return { ok: true };
+  revalidatePath("/webadmin/affiliate");
+  return voidResult.alreadyWithdrawn
+    ? { ok: true, warning: "Komisi affiliate untuk transaksi ini sudah terlanjur ditarik — perlu rekonsiliasi manual di halaman Affiliate." }
+    : { ok: true };
 }
 
 // ─── User Management ─────────────────────────────────────────────

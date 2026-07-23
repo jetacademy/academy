@@ -188,14 +188,17 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     if (!isPaid) return null;
     return (
       <div className="field">
-        <label htmlFor="fVoucher">Kode Voucher (opsional)</label>
+        <label htmlFor="fVoucher">Kode Voucher / Afiliasi (opsional)</label>
         <input
           id="fVoucher"
           type="text"
-          placeholder="cth: DISKON20"
+          placeholder="cth: DISKON20 atau kode affiliate"
           value={voucherVal}
           onChange={(e) => setVoucherVal(e.target.value)}
         />
+        <span style={{ fontSize: "0.76rem", color: "var(--ink-faint)", marginTop: "0.35rem", display: "block" }}>
+          Datang lewat link referral affiliate? Diskon Anda terdeteksi otomatis — kolom ini boleh dikosongkan.
+        </span>
       </div>
     );
   }
