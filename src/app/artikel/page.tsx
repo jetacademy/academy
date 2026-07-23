@@ -54,7 +54,7 @@ export default async function ArtikelListPage() {
             <div className="prg-grid">
               {articles.map((a) => (
                 <Link key={a.slug} href={`/artikel/${a.slug}`} className="prg-card" style={{ display: "flex", flexDirection: "column" }}>
-                  <div className={`prg-card-thumb ${a.coverImageUrl ? "prg-card-thumb-dynamic" : ""}`}>
+                  <div className={`prg-card-thumb ${a.coverImageUrl ? "prg-card-thumb-dynamic article-card-thumb" : ""}`}>
                     {a.coverImageUrl ? (
                       <Image src={a.coverImageUrl} alt={a.title} fill className="prg-card-thumb-img-dynamic" sizes="(max-width: 780px) 92vw, 46vw" />
                     ) : (
