@@ -117,13 +117,24 @@ export default async function AdminPendaftar({ searchParams }: {
                   <td data-label="Aksi">
                     <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
                       <Link href={`/webadmin/pendaftar/${r.id}`} className="btn btn-sm">Edit</Link>
-                      {["REGISTERED", "EXPIRED", "FAILED"].includes(r.status) && (
+                      {['REGISTERED', 'EXPIRED', 'FAILED'].includes(r.status) && (
                         <form action={markPaid}>
-                          <input type="hidden" name="id" value={r.id} />
-                          <button type="submit" className="btn btn-sm btn-yellow" title="Tandai lunas manual (transfer langsung) + kirim WA akses">
+                          <input type='hidden' name='id' value={r.id} />
+                          <button type='submit' className='btn btn-sm btn-yellow' title='Tandai lunas manual (transfer langsung) + kirim WA akses'>
                             Tandai Lunas
                           </button>
                         </form>
+                      )}
+                      {r.status === 'REGISTERED' && r.whatsapp && (
+                        <a
+                          href={'https://wa.me/' + r.whatsapp.replace(/^0+/, '62') + '?text=' + encodeURIComponent('Halo ' + r.name + ', mau ingetin pendaftaran Zero Human Company masih pending nih. Early bird Rp225rb — jangan sampai kelewat ya Kak 😊')}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='btn btn-sm btn-line'
+                          title='Ingatkan via WA'
+                        >
+                          Ingatkan
+                        </a>
                       )}
                       {["PAID", "PASSED"].includes(r.status) && r.payment?.status === "PAID" && (
                         <RefundButton
