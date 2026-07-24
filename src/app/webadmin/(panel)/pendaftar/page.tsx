@@ -31,7 +31,7 @@ export default async function AdminPendaftar({ searchParams }: {
   };
 
   const [programs, regs, totalCount, paidCount] = await Promise.all([
-    getPrograms(),
+    prisma.program.findMany({ orderBy: { title: "asc" }, take: 200, select: { id: true, title: true } }),
     prisma.registration.findMany({
       where,
       include: { program: true, payment: true, testAttempts: true },
