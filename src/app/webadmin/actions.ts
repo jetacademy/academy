@@ -38,7 +38,9 @@ export async function adminLogout() {
   await destroyAdminSession();
   try {
     const { cookies } = await import("next/headers");
-    (await cookies()).delete("jsa_member");
+    const jar = await cookies();
+    jar.delete("jsa_member");
+    jar.delete("jsa_member_ui");
   } catch {}
   redirect("/webadmin/login");
 }

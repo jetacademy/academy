@@ -16,6 +16,22 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AFFILIATE_REF_COOKIE } from "@/lib/affiliate";
 
+function repairUiCookie(request: NextRequest, response: NextResponse): NextResponse {
+  // Migrasi diam-diam untuk sesi lama yang dibuat sebelum jsa_member_ui ada:
+  // jsa_member (httpOnly, asli) sudah ada tapi cookie sinyal UI belum — tanpa
+  // ini, Navbar akan terus menganggap user belum login sampai logout/login ulang.
+  if (request.cookies.has("jsa_member") && !request.cookies.has("jsa_member_ui")) {
+    response.cookies.set("jsa_member_ui", "1", {
+      httpOnly: false,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+    });
+  }
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
@@ -84,7 +100,7 @@ export async function proxy(request: NextRequest) {
             .catch((err) => console.error("[proxy] gagal catat klik affiliate:", err));
         }
 
-        return response;
+        return repairUiCookie(request, response);
       }
     } catch (err) {
       // Kode tidak valid / DB error — jangan blokir navigasi pengunjung, lanjut seperti biasa.
@@ -92,7 +108,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return repairUiCookie(request, NextResponse.next());
 }
 
 export const config = {

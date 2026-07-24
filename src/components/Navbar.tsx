@@ -15,9 +15,13 @@ export default function Navbar({ minimal = false, ctaHref = "/program", ctaLabel
   ctaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
-  // Sync read — cegah re-render & hydration delay dari useEffect + setTimeout
+  // Sync read — cegah re-render & hydration delay dari useEffect + setTimeout.
+  // [FIX] jsa_member itu httpOnly (sengaja, demi keamanan) jadi TIDAK PERNAH
+  // kebaca lewat document.cookie — makanya dulu isLoggedIn selalu false walau
+  // user sudah login. jsa_member_ui adalah cookie pendamping non-httpOnly yang
+  // cuma berisi flag boolean, dipasang/dihapus bareng session asli.
   const [isLoggedIn] = useState(() =>
-    typeof document !== "undefined" && document.cookie.includes("jsa_member=")
+    typeof document !== "undefined" && document.cookie.includes("jsa_member_ui=")
   );
 
   return (

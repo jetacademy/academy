@@ -54,7 +54,13 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
   const [voucherVal, setVoucherVal] = useState("");
 
   const isPaid = price > 0;
-  const hasCompletedProfile = !!(whatsappVal.trim() && institutionVal.trim());
+  // [FIX] hasCompletedProfile harus dari data awal server, BUKAN dihitung ulang
+  // dari whatsappVal/institutionVal yang berubah live saat user mengetik —
+  // kalau ikut live, ketikan huruf pertama di Instansi (setelah WA terisi)
+  // langsung men-switch render dari mode edit ke mode konfirmasi read-only.
+  const [hasCompletedProfile, setHasCompletedProfile] = useState(
+    !!(memberProfile?.whatsapp?.trim() && memberProfile?.institution?.trim())
+  );
 
   if (isAlreadyRegistered) {
     return (
@@ -179,6 +185,7 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     setCredentialVal(undefined);
     setGoogleSelected(false);
     setIsEditing(false);
+    setHasCompletedProfile(false);
     try {
       await memberLogout();
     } catch (err) {
