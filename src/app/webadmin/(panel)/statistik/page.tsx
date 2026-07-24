@@ -10,6 +10,7 @@ interface ProgramStatsRaw {
   programId: string;
   total_regs: bigint;
   paid_regs: bigint;
+  voucher_regs: bigint;
   total_income: number | null;
   total_discount: number | null;
 }
@@ -22,6 +23,7 @@ interface ProgramWithStats {
   isActive: boolean;
   totalRegs: number;
   paid: number;
+  voucher: number;
   income: number;
   discount: number;
   avgIncome: number;
@@ -65,6 +67,8 @@ export default async function AdminStatistik() {
           COUNT(r.id)                                           AS total_regs,
           SUM(CASE WHEN r.status IN ('PAID','PASSED') THEN 1 ELSE 0 END)
                                                                 AS paid_regs,
+          SUM(CASE WHEN p.status = 'PAID' AND p.discountAmount > 0 THEN 1 ELSE 0 END)
+                                                                AS voucher_regs,
           SUM(CASE WHEN p.status = 'PAID' THEN p.amount ELSE 0 END)
                                                                 AS total_income,
           SUM(CASE WHEN p.status = 'PAID' THEN p.discountAmount ELSE 0 END)
@@ -86,12 +90,13 @@ export default async function AdminStatistik() {
   // Build per-program map
   const statsMap = new Map<
     string,
-    { total: number; paid: number; income: number; discount: number }
+    { total: number; paid: number; voucher: number; income: number; discount: number }
   >();
   for (const s of statsRaw) {
     statsMap.set(s.programId, {
       total: Number(s.total_regs),
       paid: Number(s.paid_regs),
+      voucher: Number(s.voucher_regs),
       income: Number(s.total_income ?? 0),
       discount: Number(s.total_discount ?? 0),
     });
