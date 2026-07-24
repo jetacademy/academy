@@ -91,6 +91,17 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
       }
     }
 
+    // Validasi: institution minimal 3 karakter
+    if (institutionVal.trim().length < 3) {
+      setError("Lembaga/Instansi minimal 3 karakter");
+      return;
+    }
+    // Validasi: WhatsApp minimal 10 digit
+    if (whatsappVal.trim().length < 10) {
+      setError("Nomor WhatsApp minimal 10 digit");
+      return;
+    }
+
     setState("loading");
     const participants = extraNames;
     const data: Record<string, unknown> = {

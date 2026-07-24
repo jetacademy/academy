@@ -35,6 +35,9 @@ export async function PUT(req: Request) {
     }
 
     const institution = (body.institution ?? "").trim().slice(0, 200);
+    if (institution && institution.length < 3) {
+      return NextResponse.json({ error: "Lembaga/Instansi minimal 3 karakter" }, { status: 400 });
+    }
 
     // Cari semua registrasi member berdasarkan session (email atau whatsapp)
     const registrations = await prisma.registration.findMany({

@@ -49,6 +49,9 @@ export async function POST(req: Request) {
   const email = (body.email ?? "").trim().toLowerCase();
   const programSlug = (body.programSlug ?? "").trim();
   const institution = (body.institution ?? "").trim().slice(0, 100).replace(/<[^>]*>/g, "");
+  if (institution && institution.length < 3) {
+    return NextResponse.json({ error: "Lembaga/Instansi minimal 3 karakter" }, { status: 400 });
+  }
   const batchIdInput = (body.batchId ?? "").trim();
   const credential = (body.credential ?? "").trim();
   const voucherCode = (body.voucherCode ?? "").trim();
