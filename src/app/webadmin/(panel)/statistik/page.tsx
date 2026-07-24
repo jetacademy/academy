@@ -106,6 +106,7 @@ export default async function AdminStatistik() {
     const s = statsMap.get(p.id) ?? {
       total: 0,
       paid: 0,
+      voucher: 0,
       income: 0,
       discount: 0,
     };
@@ -113,6 +114,7 @@ export default async function AdminStatistik() {
       ...p,
       totalRegs: s.total,
       paid: s.paid,
+      voucher: s.voucher,
       income: s.income,
       discount: s.discount,
       avgIncome: s.paid > 0 ? Math.round(s.income / s.paid) : 0,
