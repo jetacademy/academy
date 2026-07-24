@@ -40,12 +40,13 @@ export default function Navbar({ minimal = false, ctaHref = "/program", ctaLabel
             <Link href="/#cara">Cara Kerja</Link>
             <Link href="/artikel">Artikel</Link>
             <Link href="/daftar">Daftar</Link>
+            <Link href="/member/login">Masuk</Link>
             <Link href="/#faq">FAQ</Link>
           </nav>
         )}
 
         <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: ".8rem" }}>
-          {(isLoggedIn || !minimal) && (
+          {isLoggedIn ? (
             <Link
               href="/member"
               title="Dashboard Peserta"
@@ -75,6 +76,10 @@ export default function Navbar({ minimal = false, ctaHref = "/program", ctaLabel
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
+            </Link>
+          ) : !minimal && (
+            <Link href="/member/login" className="btn btn-line btn-sm" style={{ fontSize: ".85rem" }}>
+              Masuk
             </Link>
           )}
 
