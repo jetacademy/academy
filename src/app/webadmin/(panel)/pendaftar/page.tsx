@@ -30,16 +30,17 @@ export default async function AdminPendaftar({ searchParams }: {
     ...(status ? { status: status as "REGISTERED" | "PAID" | "PASSED" | "EXPIRED" | "FAILED" | "CANCELLED" | "REFUNDED" } : {}),
   };
 
-  const [programs, regs, totalCount] = await Promise.all([
-    prisma.program.findMany({ orderBy: { title: "asc" }, take: 200, select: { id: true, title: true } }),
+  const [programs, regs, totalCount, paidCount] = await Promise.all([
+    getPrograms(),
     prisma.registration.findMany({
       where,
+      include: { program: true, payment: true, testAttempts: true },
       orderBy: { createdAt: "desc" },
-      skip,
+      skip: (currentPage - 1) * limit,
       take: limit,
-      include: { program: true, payment: { include: { voucher: { select: { code: true } } } }, certificate: true },
     }),
     prisma.registration.count({ where }),
+    prisma.registration.count({ where: { ...where, status: "PAID" } }),
   ]);
 
   const totalPages = Math.ceil(totalCount / limit);
@@ -47,7 +48,7 @@ export default async function AdminPendaftar({ searchParams }: {
   return (
     <>
       <div className="adm-head">
-        <h1>Pendaftar <span style={{ color: "var(--ink-faint)", fontSize: "1rem" }}>({totalCount} total)</span></h1>
+        <h1>Pendaftar <span style={{ color: "var(--ink-faint)", fontSize: "1rem" }}>({paidCount} lunas dari {totalCount} total)</span></h1>
         <Link href="/webadmin/pendaftar/new" className="btn btn-yellow btn-sm">+ Pendaftar Baru</Link>
       </div>
 
