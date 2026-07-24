@@ -284,6 +284,7 @@ export default async function AdminStatistik() {
               <th>Pendaftar</th>
               <th>Penghasilan</th>
               <th>Diskon</th>
+              <th>Voucher</th>
               <th>Rata-rata</th>
               <th>Status</th>
             </tr>
@@ -313,6 +314,13 @@ export default async function AdminStatistik() {
                 <td data-label="Diskon">
                   {p.discount > 0 ? (
                     <span style={{ color: "var(--red)" }}>−{rupiah(p.discount)}</span>
+                  ) : (
+                    <span className="muted">—</span>
+                  )}
+                </td>
+                <td data-label="Voucher">
+                  {p.voucher > 0 ? (
+                    <span>{p.voucher} orang</span>
                   ) : (
                     <span className="muted">—</span>
                   )}
