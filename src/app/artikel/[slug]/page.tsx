@@ -93,7 +93,7 @@ export default async function ArtikelDetailPage({ params }: { params: Promise<{ 
         </div>
       </section>
 
-      {article.coverImageUrl && (
+      {article.coverImageUrl && !article.content.includes('<img') && (
         <section className="section" style={{ paddingTop: "1rem", paddingBottom: "1rem" }}>
           <div className="container" style={{ maxWidth: "44rem" }}>
             <div style={{ position: "relative", aspectRatio: "16/9", borderRadius: "var(--r-md)", overflow: "hidden", boxShadow: "var(--shadow)" }}>
