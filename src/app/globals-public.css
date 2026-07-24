@@ -832,8 +832,7 @@
 .prg-card-thumb-img-dynamic {
   width: 100% !important;
   height: auto !important;
-  position: relative !important;
-  object-fit: contain !important;
+  object-fit: cover !important;
   display: block;
 }
 /* Artikel thumbnail — konsisten 16:9 */
