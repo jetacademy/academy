@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getMemberSession } from "@/lib/member-auth";
 import { getAffiliateBalance, getAffiliateSettings } from "@/lib/affiliate";
+import { getPrograms } from "@/lib/programs";
 import { PAYOUT_CHANNELS } from "@/lib/xendit";
 import { respondToAffiliateInvite } from "../affiliate-actions";
 import Navbar from "@/components/Navbar";
@@ -10,6 +11,11 @@ import Footer from "@/components/Footer";
 import AffiliateDashboardClient from "@/components/AffiliateDashboardClient";
 
 export const dynamic = "force-dynamic";
+
+// Konsisten dengan konstruksi SITE_URL di src/app/program/[slug]/page.tsx
+const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL?.includes("localhost")
+  ? process.env.NEXT_PUBLIC_BASE_URL
+  : "https://academy.jetschool.id";
 
 function rupiah(n: number): string {
   return "Rp " + n.toLocaleString("id-ID");
@@ -23,7 +29,7 @@ export default async function MemberAffiliatePage() {
   if (!user) redirect("/member");
 
   const affiliate = await prisma.affiliate.findUnique({ where: { userId: user.id } });
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = SITE_URL ?? "http://localhost:3000";
 
   return (
     <>
@@ -127,7 +133,7 @@ async function ActiveDashboard({
   ewalletNumber: string | null;
   baseUrl: string;
 }) {
-  const [balance, settings, withdrawals] = await Promise.all([
+  const [balance, settings, withdrawals, { programs }] = await Promise.all([
     getAffiliateBalance(affiliateId),
     getAffiliateSettings(),
     prisma.affiliateWithdrawal.findMany({
@@ -135,6 +141,7 @@ async function ActiveDashboard({
       orderBy: { requestedAt: "desc" },
       take: 20,
     }),
+    getPrograms(),
   ]);
 
   const commissionLabel = commissionType === "PERCENT" ? `${commissionValue}%` : rupiah(commissionValue);
@@ -159,6 +166,8 @@ async function ActiveDashboard({
         accountNumber: w.accountNumber,
       }))}
       referralUrl={`${baseUrl}/?ref=${code}`}
+      baseUrl={baseUrl}
+      programs={programs.map((p) => ({ slug: p.slug, title: p.title, type: p.type }))}
     />
   );
 }

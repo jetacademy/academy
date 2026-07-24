@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { updateMyAffiliateCode, updateMyPayoutInfo, requestWithdrawal } from "@/app/member/affiliate-actions";
+import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 
 type PayoutChannel = { code: string; label: string; group: "Bank" | "E-Wallet" };
+
+type ShareableProgram = { slug: string; title: string; type: ProgramType };
 
 type WithdrawalItem = {
   id: string;
@@ -37,6 +40,8 @@ export default function AffiliateDashboardClient({
   currentPayout,
   withdrawals,
   referralUrl,
+  baseUrl,
+  programs,
 }: {
   code: string;
   commissionLabel: string;
@@ -48,12 +53,15 @@ export default function AffiliateDashboardClient({
   currentPayout: { bankName: string | null; bankAccountNumber: string | null; bankAccountName: string | null; ewalletChannel: string | null; ewalletNumber: string | null };
   withdrawals: WithdrawalItem[];
   referralUrl: string;
+  baseUrl: string;
+  programs: ShareableProgram[];
 }) {
   const [codeVal, setCodeVal] = useState(code);
   const [codeMsg, setCodeMsg] = useState<{ ok?: boolean; text: string } | null>(null);
   const [codePending, setCodePending] = useState(false);
 
   const [copied, setCopied] = useState(false);
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   const defaultChannel = currentPayout.ewalletChannel || currentPayout.bankName || payoutChannels[0]?.code || "";
   const defaultAccountNumber = currentPayout.ewalletNumber || currentPayout.bankAccountNumber || "";
@@ -74,6 +82,16 @@ export default function AffiliateDashboardClient({
       await navigator.clipboard.writeText(referralUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // abaikan — browser lama tanpa Clipboard API
+    }
+  }
+
+  async function handleCopyProgram(slug: string, url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedSlug(slug);
+      setTimeout(() => setCopiedSlug((cur) => (cur === slug ? null : cur)), 2000);
     } catch {
       // abaikan — browser lama tanpa Clipboard API
     }
@@ -173,6 +191,32 @@ export default function AffiliateDashboardClient({
           <button type="submit" className="btn btn-sm" disabled={codePending}>{codePending ? "Menyimpan..." : "Simpan Kode"}</button>
         </form>
         {codeMsg && <p className={codeMsg.ok ? "form-success" : "form-error"} style={{ marginTop: "0.5rem" }}>{codeMsg.text}</p>}
+      </div>
+
+      {/* Bagikan program */}
+      <div className="member-program-card reveal in" style={{ display: "block" }}>
+        <h3 style={{ marginTop: 0 }}>Bagikan Program</h3>
+        <p className="sub">Salin link menuju halaman program tertentu — kode referral Anda sudah otomatis tertanam di dalamnya.</p>
+        {programs.length === 0 ? (
+          <p className="sub" style={{ marginTop: "0.8rem" }}>Belum ada program aktif untuk dibagikan.</p>
+        ) : (
+          <div style={{ display: "grid", gap: "0.6rem", marginTop: "0.8rem" }}>
+            {programs.map((p) => {
+              const url = `${baseUrl}/program/${p.slug}?ref=${code}`;
+              return (
+                <div key={p.slug} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0", borderBottom: "1px solid var(--line)" }}>
+                  <div style={{ minWidth: "12rem" }}>
+                    <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{p.title}</div>
+                    <div className="sub" style={{ fontSize: "0.75rem" }}>{TYPE_LABEL[p.type]}</div>
+                  </div>
+                  <button type="button" className="btn btn-sm btn-purple" onClick={() => handleCopyProgram(p.slug, url)}>
+                    {copiedSlug === p.slug ? "Tersalin!" : "Salin Link"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Info pencairan + penarikan */}
