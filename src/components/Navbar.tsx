@@ -77,7 +77,7 @@ export default function Navbar({ minimal = false, ctaHref = "/program", ctaLabel
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
             </Link>
-          ) : !minimal && (
+          ) : (
             <Link href="/member/login" className="btn btn-line btn-sm" style={{ fontSize: ".85rem" }}>
               Masuk
             </Link>
