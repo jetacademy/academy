@@ -34,7 +34,7 @@ export default async function AdminPendaftar({ searchParams }: {
     prisma.program.findMany({ orderBy: { title: "asc" }, take: 200, select: { id: true, title: true } }),
     prisma.registration.findMany({
       where,
-      include: { program: true, payment: true },
+      include: { program: true, payment: { include: { voucher: true } } },
       orderBy: { createdAt: "desc" },
       skip: (currentPage - 1) * limit,
       take: limit,
