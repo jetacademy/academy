@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 interface Props {
   /** ISO timestamp: kapan bonus/sertifikat direncanakan tersedia (event end = scheduleAt + 3h) */
@@ -43,10 +43,13 @@ function TimeBox({ value, label }: { value: string; label: string }) {
 export default function BonusCountdown({ eventEndIso, eventEnded }: Props) {
   const [time, setTime] = useState({ h: 0, m: 0, s: 0 });
   const [isDone, setIsDone] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},  // no subscription
+    () => true,      // client snapshot
+    () => false,     // server snapshot (SSR)
+  );
 
   useEffect(() => {
-    setMounted(true);
     function tick() {
       const diff = Math.max(0, new Date(eventEndIso).getTime() - Date.now());
       if (diff === 0 && !isDone) setIsDone(true);
