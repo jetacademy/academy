@@ -67,9 +67,10 @@ export default async function AdminAffiliateList({
               <tr>
                 <th>Affiliate</th>
                 <th>Kode</th>
-                <th>Komisi</th>
-                <th>Diskon Customer</th>
+                <th>Klik</th>
                 <th>Konversi</th>
+                <th>Rate</th>
+                <th>Komisi</th>
                 <th>Total Komisi</th>
                 <th>Status</th>
                 <th>Aksi</th>
@@ -83,6 +84,13 @@ export default async function AdminAffiliateList({
                     <div className="muted" style={{ fontSize: "0.78rem" }}>{a.user.email}</div>
                   </td>
                   <td data-label="Kode" style={{ fontWeight: 700, fontFamily: "monospace" }}>{a.code}</td>
+                  <td data-label="Klik">{a.clickCount}</td>
+                  <td data-label="Konversi">{a._count.conversions}</td>
+                  <td data-label="Rate">
+                    {a.clickCount > 0
+                      ? ((a._count.conversions / a.clickCount) * 100).toFixed(1) + "%"
+                      : <span className="muted">—</span>}
+                  </td>
                   <td data-label="Komisi" className="muted">
                     {a.commissionType === "PERCENT" ? `${a.commissionValue}%` : rupiah(a.commissionValue)}
                   </td>
