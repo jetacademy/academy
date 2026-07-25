@@ -132,7 +132,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const isZeroHuman = program.slug === "zero-human-company";
   const jadwal = formatJadwal(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
-  const earlyBirdDeadline = new Date(program.scheduleAt.getTime() - 4 * 86400000).toISOString();
+  const earlyBirdDeadline = new Date(program.scheduleAt.getTime() - 2 * 86400000).toISOString();
 
 
   const faqItems = isAiForTeachers
@@ -606,7 +606,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     <span className="eb-badge-dot" />
                     🔥 Early Bird
                   </span>
-                  <span className="eb-deadline">⏰ Sampai H-4 sebelum workshop</span>
+                  <span className="eb-deadline">⏰ Sampai H-2 sebelum workshop</span>
                 </div>
                 <div className="eb-price-row">
                   <span className="eb-price">Rp 225.000</span>
