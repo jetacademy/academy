@@ -170,7 +170,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         },
         {
           q: "Ada garansi uang kembali nggak?",
-          a: "Ada. 100% uang kembali jika workshop nggak sesuai deskripsi. Kami percaya sama kualitas — kamu juga harus percaya sebelum bayar.",
+          a: "Untuk info garansi resmi, cek website atau tanya admin ya Kak.",
         },
         {
           q: "Sertifikat termasuk di harga Rp225rb?",
@@ -178,7 +178,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         },
         {
           q: "Apa yang harus saya siapkan?",
-          a: "Laptop/komputer (minimal 8GB RAM, Mac/Windows/Linux) untuk install & jalanin Agent, koneksi internet stabil 5 Mbps, dan nomor WA aktif buat connect Agent.",
+          a: "Laptop/komputer untuk install & jalanin Agent, koneksi internet stabil 5 Mbps, dan nomor WA aktif buat connect Agent.",
         },
       ]
     : [
@@ -652,7 +652,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", maxWidth: "40rem", marginInline: "auto" }}>
                   {[
-                    { icon: "💻", title: "Laptop/Komputer", desc: "Minimal 8GB RAM — untuk menginstall & menjalankan Agent. Mac/Windows/Linux." },
+                    { icon: "💻", title: "Laptop/Komputer", desc: "Untuk menginstall & menjalankan Agent. Mac/Windows/Linux." },
                     { icon: "📶", title: "Internet Stabil", desc: "Koneksi minimal 5 Mbps untuk mengikuti sesi live Zoom." },
                     { icon: "📱", title: "WhatsApp Aktif", desc: "Nomor WA untuk menghubungkan Agent — bisa nomor bisnis atau pribadi." },
                   ].map((item, i) => (
