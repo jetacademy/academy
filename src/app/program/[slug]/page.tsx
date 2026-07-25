@@ -563,6 +563,24 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             </div>
           </section>
 
+          {/* Section 0.3: STOP BERLANGGANAN — BIKIN SENDIRI */}
+          <section className="section" style={{ paddingBottom: "3.5rem" }}>
+            <div className="container">
+              <div className="bento" style={{ padding: "clamp(2rem, 5vw, 3rem)", textAlign: "center", background: "linear-gradient(135deg, rgba(108,92,231,0.03) 0%, rgba(46,204,113,0.03) 100%)", border: "2px solid var(--purple)", borderRadius: "20px" }}>
+                <span style={{ fontSize: "2.5rem", display: "block", marginBottom: "0.5rem" }}>⛔</span>
+                <h2 style={{ fontSize: "clamp(1.6rem, 4vw, 2.4rem)", fontWeight: 900, letterSpacing: "-0.03em", margin: "0.5rem 0" }}>
+                  STOP Borong Langganan Agent AI
+                </h2>
+                <p style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.4rem)", fontWeight: 700, color: "var(--purple)", margin: "0.5rem 0 1rem" }}>
+                  Mulai Bikin Sendiri Agent AI yang Pas Buat Bisnis Kamu
+                </p>
+                <p style={{ maxWidth: "30rem", marginInline: "auto", color: "var(--ink-soft)", fontSize: "1rem", lineHeight: 1.6 }}>
+                  Lebih murah. Lebih fleksibel. Dan yang paling penting — Agent itu <strong>100% punya kamu</strong>. Bukan sewa, bukan langganan. Kamu yang kendalikan penuh.
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* Section 0.5: TESTIMONI REAL */}
           <section className="section" style={{ paddingBottom: "3.5rem" }}>
             <div className="container">
