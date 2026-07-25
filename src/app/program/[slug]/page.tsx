@@ -578,7 +578,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 ].map((t, i) => (
                   <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)", display: "flex", flexDirection: "column", gap: "0.8rem" }}>
                     <div style={{ fontSize: "0.9rem", color: "#f59e0b", letterSpacing: "2px" }}>{'★'.repeat(t.stars)}</div>
-                    <p style={{ fontSize: "0.9rem", lineHeight: 1.6, color: "var(--ink-soft)", fontStyle: "italic", margin: 0 }}>"{t.text}"</p>
+                    <p style={{ fontSize: "0.9rem", lineHeight: 1.6, color: "var(--ink-soft)", fontStyle: "italic", margin: 0 }}>&ldquo;{t.text}&rdquo;</p>
                     <div style={{ borderTop: "1px solid var(--border)", paddingTop: "0.8rem", marginTop: "auto" }}>
                       <b style={{ fontSize: "0.9rem" }}>{t.name}</b>
                       <p style={{ fontSize: "0.78rem", color: "var(--ink-faint)", margin: 0 }}>{t.role}</p>
@@ -747,7 +747,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                   </div>
                 </div>
                 <p style={{ fontSize: "0.72rem", color: "var(--ink-faint)", textAlign: "center", marginTop: "1rem", lineHeight: 1.5 }}>
-                  Sumber: State Council China — "AI+" Initiative (Agustus 2025) · Second Talent (2026) · Fortune Business Insights / Roland Berger (2025)
+                  Sumber: State Council China — &ldquo;AI+&rdquo; Initiative (Agustus 2025) · Second Talent (2026) · Fortune Business Insights / Roland Berger (2025)
                 </p>
               </div>
             </div>
