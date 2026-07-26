@@ -70,7 +70,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const isZeroHuman = program.slug === "zero-human-company";
   const jadwal = formatJadwal(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
-  const earlyBirdDeadline = new Date(program.scheduleAt.getTime() - 4 * 86400000).toISOString();
+  const earlyBirdDeadline = new Date(program.scheduleAt.getTime() - 2 * 86400000).toISOString();
 
 
   const faqItems = isAiForTeachers
@@ -108,7 +108,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         },
         {
           q: "Ada garansi uang kembali nggak?",
-          a: "Ada. 100% uang kembali jika workshop nggak sesuai deskripsi. Kami percaya sama kualitas — kamu juga harus percaya sebelum bayar.",
+          a: "Untuk info garansi resmi, cek website atau tanya admin ya Kak.",
         },
         {
           q: "Sertifikat termasuk di harga Rp225rb?",
@@ -116,7 +116,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         },
         {
           q: "Apa yang harus saya siapkan?",
-          a: "Laptop/komputer (minimal 8GB RAM, Mac/Windows/Linux) untuk install & jalanin Agent, koneksi internet stabil 5 Mbps, dan nomor WA aktif buat connect Agent.",
+          a: "Laptop/komputer untuk install & jalanin Agent, koneksi internet stabil 5 Mbps, dan nomor WA aktif buat connect Agent.",
         },
       ]
     : [
@@ -497,6 +497,24 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             </div>
           </section>
 
+          {/* Section 0.3: STOP BERLANGGANAN — BIKIN SENDIRI */}
+          <section className="section" style={{ paddingBottom: "3.5rem" }}>
+            <div className="container">
+              <div className="bento" style={{ padding: "clamp(2rem, 5vw, 3rem)", textAlign: "center", background: "linear-gradient(135deg, rgba(108,92,231,0.03) 0%, rgba(46,204,113,0.03) 100%)", border: "2px solid var(--purple)", borderRadius: "20px" }}>
+                <span style={{ fontSize: "2.5rem", display: "block", marginBottom: "0.5rem" }}>⛔</span>
+                <h2 style={{ fontSize: "clamp(1.6rem, 4vw, 2.4rem)", fontWeight: 900, letterSpacing: "-0.03em", margin: "0.5rem 0" }}>
+                  STOP Borong Langganan Agent AI
+                </h2>
+                <p style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.4rem)", fontWeight: 700, color: "var(--purple)", margin: "0.5rem 0 1rem" }}>
+                  Mulai Bikin Sendiri Agent AI yang Pas Buat Bisnis Kamu
+                </p>
+                <p style={{ maxWidth: "30rem", marginInline: "auto", color: "var(--ink-soft)", fontSize: "1rem", lineHeight: 1.6 }}>
+                  Lebih murah. Lebih fleksibel. Dan yang paling penting — Agent itu <strong>100% punya kamu</strong>. Bukan sewa, bukan langganan. Kamu yang kendalikan penuh.
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* Section 0.5: TESTIMONI REAL */}
           <section className="section" style={{ paddingBottom: "3.5rem" }}>
             <div className="container">
@@ -540,7 +558,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     <span className="eb-badge-dot" />
                     🔥 Early Bird
                   </span>
-                  <span className="eb-deadline">⏰ Sampai H-4 sebelum workshop</span>
+                  <span className="eb-deadline">⏰ Sampai H-2 sebelum workshop</span>
                 </div>
                 <div className="eb-price-row">
                   <span className="eb-price">Rp 225.000</span>
@@ -586,7 +604,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", maxWidth: "40rem", marginInline: "auto" }}>
                   {[
-                    { icon: "💻", title: "Laptop/Komputer", desc: "Minimal 8GB RAM — untuk menginstall & menjalankan Agent. Mac/Windows/Linux." },
+                    { icon: "💻", title: "Laptop/Komputer", desc: "Untuk menginstall & menjalankan Agent. Mac/Windows/Linux." },
                     { icon: "📶", title: "Internet Stabil", desc: "Koneksi minimal 5 Mbps untuk mengikuti sesi live Zoom." },
                     { icon: "📱", title: "WhatsApp Aktif", desc: "Nomor WA untuk menghubungkan Agent — bisa nomor bisnis atau pribadi." },
                   ].map((item, i) => (

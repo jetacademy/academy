@@ -165,7 +165,7 @@ export async function POST(req: Request) {
       const sessionDate = batchId
         ? (await prisma.programBatch.findUnique({ where: { id: batchId } }))?.scheduleAt ?? program.scheduleAt
         : program.scheduleAt;
-      const earlyBirdDeadline = new Date(sessionDate.getTime() - 4 * 24 * 60 * 60 * 1000);
+      const earlyBirdDeadline = new Date(sessionDate.getTime() - 2 * 24 * 60 * 60 * 1000);
       unitPrice = new Date() <= earlyBirdDeadline ? EARLY_BIRD_PRICE : FULL_PRICE;
     }
 
