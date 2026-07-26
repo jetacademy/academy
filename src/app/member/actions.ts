@@ -248,6 +248,55 @@ export async function memberLogout() {
   await destroyMemberSession();
 }
 
+/**
+ * Dipanggil dari client (RegisterForm) SETELAH halaman program dirender —
+ * bukan lagi bagian dari SSR halaman itu sendiri. Halaman /program/[slug]
+ * kini di-ISR (cache), jadi personalisasi (prefill profil + cek sudah
+ * terdaftar) dipindah ke sini supaya trafik iklan yang mayoritas anonim
+ * tidak menahan proses Node per kunjungan.
+ */
+export async function getProgramRegistrationStatusAction(programId: string): Promise<{
+  isAlreadyRegistered: boolean;
+  memberProfile: { name: string; email: string; whatsapp: string; institution: string | null } | null;
+}> {
+  const sessionVal = await getMemberSession();
+  if (!sessionVal) return { isAlreadyRegistered: false, memberProfile: null };
+
+  const [user, lastReg, existingReg, program] = await Promise.all([
+    prisma.user.findFirst({
+      where: { OR: [{ email: sessionVal }, { whatsapp: sessionVal }] },
+      select: { name: true, email: true, whatsapp: true },
+    }),
+    prisma.registration.findFirst({
+      where: { OR: [{ email: sessionVal }, { whatsapp: sessionVal }] },
+      select: { name: true, email: true, whatsapp: true, institution: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.registration.findFirst({
+      where: { programId, OR: [{ email: sessionVal }, { whatsapp: sessionVal }] },
+    }),
+    prisma.program.findUnique({ where: { id: programId }, select: { price: true } }),
+  ]);
+
+  let memberProfile = null;
+  if (user) {
+    memberProfile = {
+      name: user.name || lastReg?.name || "",
+      email: user.email || lastReg?.email || "",
+      whatsapp: user.whatsapp || lastReg?.whatsapp || "",
+      institution: lastReg?.institution || "",
+    };
+  } else if (lastReg) {
+    memberProfile = { name: lastReg.name, email: lastReg.email, whatsapp: lastReg.whatsapp, institution: lastReg.institution };
+  }
+
+  // Samakan dengan gerbang "Kasus 3" di /api/register: webinar gratis (price 0)
+  // selalu dianggap sudah terdaftar, program berbayar hanya kalau BENAR lunas.
+  const isAlreadyRegistered = !!existingReg && (program?.price === 0 || existingReg.status === "PAID" || existingReg.status === "PASSED");
+
+  return { isAlreadyRegistered, memberProfile };
+}
+
 /** Ambil registrasi + validasi bahwa sesi member saat ini adalah pemiliknya */
 async function getOwnedRegistration(registrationId: string) {
   const sessionVal = await getMemberSession();

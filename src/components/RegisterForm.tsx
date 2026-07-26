@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Icon from "@/components/Icon";
 import GoogleAuthModal from "@/components/GoogleAuthModal";
 import { useRouter } from "next/navigation";
-import { memberLogout } from "@/app/member/actions";
+import { memberLogout, getProgramRegistrationStatusAction } from "@/app/member/actions";
 import { formatJadwal } from "@/lib/format";
 import Link from "next/link";
 
@@ -12,30 +12,25 @@ declare global {
   interface Window { fbq?: (...args: unknown[]) => void }
 }
 
-export default function RegisterForm({ programSlug, programTitle, jadwal, price, priceLabel, memberProfile, batches, isAlreadyRegistered }: {
+export default function RegisterForm({ programId, programSlug, programTitle, jadwal, price, priceLabel, batches }: {
+  programId: string;
   programSlug: string;
   programTitle: string;
   jadwal: string;
   price: number; // 0 = gratis
   priceLabel: string;
-  memberProfile?: {
-    name: string;
-    email: string;
-    whatsapp: string;
-    institution: string | null;
-  } | null;
   batches?: { id: string; scheduleAt: string; seatsLeft: number | null }[];
-  isAlreadyRegistered?: boolean;
 }) {
   const [state, setState] = useState<"idle" | "loading" | "done">("idle");
   const [error, setError] = useState("");
   const [result, setResult] = useState<{ name: string; paid?: boolean; free?: boolean; invoiceUrl?: string; waGroupLink?: string | null; lmsLink?: string | null } | null>(null);
   const [googleOpen, setGoogleOpen] = useState(false);
-  const [googleSelected, setGoogleSelected] = useState(!!memberProfile);
+  const [googleSelected, setGoogleSelected] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
 
-  const [nameVal, setNameVal] = useState(memberProfile?.name ?? "");
+  const [isAlreadyRegistered, setIsAlreadyRegistered] = useState(false);
+  const [nameVal, setNameVal] = useState("");
 
   // Filter auto-fill bug: phone number terselip di field nama
   const safeName = (v: string) => {
@@ -44,23 +39,40 @@ export default function RegisterForm({ programSlug, programTitle, jadwal, price,
     if (/^P\d{6,}/.test(clean)) return clean.replace(/^P/, "");
     return clean;
   };
-  const [emailVal, setEmailVal] = useState(memberProfile?.email ?? "");
-  const [whatsappVal, setWhatsappVal] = useState(memberProfile?.whatsapp ?? "");
-  const [institutionVal, setInstitutionVal] = useState(memberProfile?.institution ?? "");
+  const [emailVal, setEmailVal] = useState("");
+  const [whatsappVal, setWhatsappVal] = useState("");
+  const [institutionVal, setInstitutionVal] = useState("");
   const [credentialVal, setCredentialVal] = useState<string | undefined>(undefined);
   const [batchId, setBatchId] = useState<string | undefined>(batches?.[0]?.id);
   const [jumlahPeserta, setJumlahPeserta] = useState(1);
   const [additionalNames, setAdditionalNames] = useState<string[]>([]);
   const [voucherVal, setVoucherVal] = useState("");
+  const [hasCompletedProfile, setHasCompletedProfile] = useState(false);
 
   const isPaid = price > 0;
-  // [FIX] hasCompletedProfile harus dari data awal server, BUKAN dihitung ulang
-  // dari whatsappVal/institutionVal yang berubah live saat user mengetik —
-  // kalau ikut live, ketikan huruf pertama di Instansi (setelah WA terisi)
-  // langsung men-switch render dari mode edit ke mode konfirmasi read-only.
-  const [hasCompletedProfile, setHasCompletedProfile] = useState(
-    !!(memberProfile?.whatsapp?.trim() && memberProfile?.institution?.trim())
-  );
+
+  // Halaman /program/[slug] di-cache (ISR) demi hemat resource server, jadi
+  // status login/profil member TIDAK dibaca saat SSR — dicek di sini saja,
+  // dan cuma kalau cookie sinyal login (jsa_member_ui, non-httpOnly) ada.
+  // Mayoritas pengunjung dari iklan anonim, jadi ini skip fetch sama sekali.
+  useEffect(() => {
+    if (!document.cookie.includes("jsa_member_ui=")) return;
+    let cancelled = false;
+    getProgramRegistrationStatusAction(programId).then((res) => {
+      if (cancelled) return;
+      setIsAlreadyRegistered(res.isAlreadyRegistered);
+      const p = res.memberProfile;
+      if (p) {
+        setGoogleSelected(true);
+        setNameVal(p.name ?? "");
+        setEmailVal(p.email ?? "");
+        setWhatsappVal(p.whatsapp ?? "");
+        setInstitutionVal(p.institution ?? "");
+        setHasCompletedProfile(!!(p.whatsapp?.trim() && p.institution?.trim()));
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [programId]);
 
   if (isAlreadyRegistered) {
     return (

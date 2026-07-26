@@ -14,15 +14,13 @@ import { getProgramBySlug } from "@/lib/programs";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 import Image from "next/image";
 import { formatJadwal, formatHari, formatJam, rupiah } from "@/lib/format";
-import { getMemberSession } from "@/lib/member-auth";
-import { prisma } from "@/lib/prisma";
 
-// Catatan: halaman ini membaca sesi member (cookie) untuk mengisi otomatis
-// form pendaftaran, jadi Next selalu merender secara dinamis per-permintaan —
-// `revalidate` di sini tidak berlaku efektif (tidak ada shell statis untuk
-// di-ISR). Jangan tambahkan header Cache-Control publik untuk rute ini di
-// next.config.ts karena HTML-nya bisa memuat data pribadi member (nama,
-// email, WhatsApp, instansi).
+// Halaman ini di-ISR (cache 5 menit) — personalisasi member (prefill profil,
+// cek sudah terdaftar) TIDAK lagi dibaca di sini saat SSR, dipindah ke
+// client-side (RegisterForm, lewat getProgramRegistrationStatusAction) supaya
+// HTML yang di-cache tidak pernah memuat data pribadi member dan trafik iklan
+// (mayoritas anonim) tidak menahan proses Node per kunjungan.
+export const revalidate = 300;
 
 const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL?.includes("localhost")
   ? process.env.NEXT_PUBLIC_BASE_URL
@@ -64,66 +62,6 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const { program } = await getProgramBySlug(slug);
   if (!program) notFound();
-
-  const sessionVal = await getMemberSession();
-  let memberProfile = null;
-  let isAlreadyRegistered = false;
-  if (sessionVal) {
-    // Parallel queries untuk profil member & cek registrasi
-    const [user, lastReg, existingReg] = await Promise.all([
-      prisma.user.findFirst({
-        where: {
-          OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
-        },
-        select: {
-          name: true,
-          email: true,
-          whatsapp: true,
-        },
-      }),
-      prisma.registration.findFirst({
-        where: {
-          OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
-        },
-        select: {
-          name: true,
-          email: true,
-          whatsapp: true,
-          institution: true,
-        },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.registration.findFirst({
-        where: {
-          programId: program.id,
-          OR: [{ email: sessionVal }, { whatsapp: sessionVal }],
-        },
-      }),
-    ]);
-
-    if (user) {
-      memberProfile = {
-        name: user.name || lastReg?.name || "",
-        email: user.email || lastReg?.email || "",
-        whatsapp: user.whatsapp || lastReg?.whatsapp || "",
-        institution: lastReg?.institution || "",
-      };
-    } else if (lastReg) {
-      memberProfile = {
-        name: lastReg.name,
-        email: lastReg.email,
-        whatsapp: lastReg.whatsapp,
-        institution: lastReg.institution,
-      };
-    }
-
-    if (existingReg) {
-      // Samakan dengan gerbang "Kasus 3" di /api/register: webinar gratis (price 0) selalu dianggap
-      // sudah terdaftar, tapi program berbayar hanya dianggap terdaftar kalau BENAR sudah lunas
-      // (PAID/PASSED). Status EXPIRED/FAILED/CANCELLED/REFUNDED harus tetap bisa daftar ulang/bayar ulang.
-      isAlreadyRegistered = program.price === 0 || existingReg.status === "PAID" || existingReg.status === "PASSED";
-    }
-  }
 
   const isFree = program.price === 0;
   const hasBlocks = !!(program.contentBlocks && program.contentBlocks.length > 0);
@@ -255,7 +193,9 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
       {/* Navigasi minimal: logo + satu tombol. */}
-      <Navbar minimal ctaHref={isAlreadyRegistered ? "/member" : "#daftar"} ctaLabel={isAlreadyRegistered ? "Buka Dashboard" : (isFree ? "Daftar Gratis" : "Daftar")} />
+      {/* CTA statis (shell di-cache) — anggota yang sudah terdaftar akan diarahkan
+          ke dashboard oleh RegisterForm sendiri setelah scroll ke #daftar. */}
+      <Navbar minimal ctaHref="#daftar" ctaLabel={isFree ? "Daftar Gratis" : "Daftar"} />
 
       {/* ===== HERO ===== */}
       <section className="hero">
@@ -318,15 +258,9 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               </div>
             )}
             <div className="prg-cta-col">
-              {isAlreadyRegistered ? (
-                <Link href="/member" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", textAlign: "center" }}>
-                  Buka Kelas di Dashboard
-                </Link>
-              ) : (
-                <a href="#daftar" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", textAlign: "center" }}>
-                  {isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`}
-                </a>
-              )}
+              <a href="#daftar" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", textAlign: "center" }}>
+                {isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`}
+              </a>
               {!isFree && program.priceOld && (
                 <span className="prg-hero-strike" style={{ color: "var(--ink-soft)", textDecoration: "line-through", display: "block", textAlign: "center", marginTop: "0.2rem" }}>
                   {rupiah(program.priceOld)}
@@ -856,13 +790,12 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 </p>
               </div>
               <RegisterForm
+                programId={program.id}
                 programSlug={program.slug}
                 programTitle={program.title}
                 jadwal={jadwal}
                 price={program.price}
                 priceLabel={priceLabel}
-                memberProfile={memberProfile}
-                isAlreadyRegistered={isAlreadyRegistered}
                 batches={program.batches?.map((b) => ({ id: b.id, scheduleAt: b.scheduleAt.toISOString(), seatsLeft: b.seatsLeft }))}
               />
             </div>
@@ -931,11 +864,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       {/* Bar CTA lengket di mobile */}
       <div className="sticky-cta">
         <div><b>{priceLabel}</b><small>{formatHari(program.scheduleAt)}, {formatJam(program.scheduleAt)}</small></div>
-        {isAlreadyRegistered ? (
-          <Link href="/member" className="btn btn-lime">Buka Kelas</Link>
-        ) : (
-          <a href="#daftar" className="btn btn-lime">{isFree ? "Daftar Gratis" : "Daftar"}</a>
-        )}
+        <a href="#daftar" className="btn btn-lime">{isFree ? "Daftar Gratis" : "Daftar"}</a>
       </div>
 
       <WaFloat text={`Halo, saya ingin bertanya mengenai program ${program.title}`} />
