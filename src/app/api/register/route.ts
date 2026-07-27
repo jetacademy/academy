@@ -140,19 +140,7 @@ export async function POST(req: Request) {
       const batch = await prisma.programBatch.findFirst({ where: { id: batchIdInput, programId: program.id, isActive: true } });
       if (!batch) return NextResponse.json({ error: "Jadwal batch tidak valid. Silakan pilih ulang." }, { status: 400 });
 
-      // [FIX C5] Validasi seatsLeft batch terhadap total peserta (multi-pendaftar)
-      if (batch.seatsLeft !== null && batch.seatsLeft !== undefined) {
-        const regCount = await prisma.registration.count({
-          where: { batchId: batch.id, programId: program.id },
-        });
-        if (regCount + participantCount > batch.seatsLeft) {
-          const remaining = batch.seatsLeft - regCount;
-          return NextResponse.json({
-            error: `Maaf, kursus untuk batch ini tidak mencukupi. Sisa kursi: ${remaining}, peserta yang didaftarkan: ${participantCount}.`,
-          }, { status: 400 });
-        }
-      }
-
+      // [FIX C5] Kursus tidak ada batas kursi — seatsLeft diabaikan
       batchId = batch.id;
     }
 
