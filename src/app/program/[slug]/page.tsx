@@ -608,9 +608,9 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             <div className="container">
               <div className="section-head center" style={{ marginBottom: "1.5rem" }}>
                 <span className="type-tag type-mentoring" style={{ marginBottom: "0.8rem", background: "rgba(108, 92, 231, 0.08)", color: "var(--purple)" }}>Cocok Untuk Siapa</span>
-                <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)" }}>Pilih Kategori Anda — Ada 6 Agent yang Siap Membantu</h2>
+                <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)" }}>Siapa Aja Bisa. Semua Dapet 6 Agent</h2>
                 <p style={{ maxWidth: "30rem", marginInline: "auto", color: "var(--ink-soft)", fontSize: "0.9rem" }}>
-                  Setiap target punya kebutuhan berbeda — dan 6 Agent kami sudah siap menanganinya. Bandingkan biayanya dengan gaji karyawan.
+                  Pilih kategori kamu — 6 Agent langsung menyesuaikan. No coding, no ribet.
                 </p>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: "1.2rem" }}>
