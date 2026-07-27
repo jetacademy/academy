@@ -70,7 +70,8 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const isZeroHuman = program.slug === "zero-human-company";
   const jadwal = formatJadwal(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
-  const earlyBirdDeadline = new Date(program.scheduleAt.getTime() - 2 * 86400000).toISOString();
+  const earlyBirdDeadline = new Date(program.scheduleAt.getTime() - 1 * 86400000).toISOString();
+  const ebCtaNavLabel = isZeroHuman ? "Amankan Kursi Early Bird — Rp 225.000" : (isFree ? "Daftar Gratis" : "Daftar");
 
 
   const faqItems = isAiForTeachers
@@ -109,6 +110,14 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         {
           q: "Ada garansi uang kembali nggak?",
           a: "Untuk info garansi resmi, cek website atau tanya admin ya Kak.",
+        },
+        {
+          q: "Ada garansi uang kembali jika AI Agent tidak berjalan?",
+          a: "Workshop ini sifatnya edukatif — kamu belajar & praktek langsung bikin 6 AI Agent. Kami jamin panduan langkah demi langkah yang jelas dan dukungan mentor selama sesi. Hasil akhir Agent sangat tergantung dari ketelitian mengikuti instruksi dan spesifikasi teknis perangkat yang kamu pakai. Jadi untuk saat ini, kami tidak menyediakan garansi uang kembali karena workshop sudah berisi panduan penuh dan praktik terbimbing. Tapi tenang, 95% peserta berhasil membuat Agent mereka berjalan di sesi yang sama. Kalau mentok, tim kami siap bantu lewat grup WhatsApp.",
+        },
+        {
+          q: "Kapan grup WhatsApp & link Zoom dikirim?",
+          a: "Paling lambat H-1 (satu hari sebelum workshop), grup WhatsApp dan link Zoom akan dikirim ke nomor yang kamu daftarkan via WhatsApp. Pastikan nomormu aktif ya.",
         },
         {
           q: "Sertifikat termasuk di harga Rp225rb?",
@@ -195,7 +204,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       {/* Navigasi minimal: logo + satu tombol. */}
       {/* CTA statis (shell di-cache) — anggota yang sudah terdaftar akan diarahkan
           ke dashboard oleh RegisterForm sendiri setelah scroll ke #daftar. */}
-      <Navbar minimal ctaHref="#daftar" ctaLabel={isFree ? "Daftar Gratis" : "Daftar"} />
+      <Navbar minimal ctaHref="#daftar" ctaLabel={ebCtaNavLabel} />
 
       {/* ===== HERO ===== */}
       <section className="hero">
@@ -259,7 +268,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             )}
             <div className="prg-cta-col">
               <a href="#daftar" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", textAlign: "center" }}>
-                {isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`}
+                {isZeroHuman ? `Amankan Kursi Early Bird — ${priceLabel}` : (isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`)}
               </a>
               {!isFree && program.priceOld && (
                 <span className="prg-hero-strike" style={{ color: "var(--ink-soft)", textDecoration: "line-through", display: "block", textAlign: "center", marginTop: "0.2rem" }}>
@@ -558,7 +567,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     <span className="eb-badge-dot" />
                     🔥 Early Bird
                   </span>
-                  <span className="eb-deadline">⏰ Sampai H-2 sebelum workshop</span>
+                  <span className="eb-deadline">⏰ Sampai H-1 sebelum workshop</span>
                 </div>
                 <div className="eb-price-row">
                   <span className="eb-price">Rp 225.000</span>
@@ -594,7 +603,36 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             </div>
           </section>
 
-          {/* Section 3: What to Prepare */}
+          {/* Section 3: Cocok Untuk Siapa */}
+          <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem", background: "var(--chip)" }}>
+            <div className="container">
+              <div className="section-head center" style={{ marginBottom: "1.5rem" }}>
+                <span className="type-tag type-mentoring" style={{ marginBottom: "0.8rem", background: "rgba(108, 92, 231, 0.08)", color: "var(--purple)" }}>Cocok Untuk Siapa</span>
+                <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)" }}>Siapa Saja yang Cocok?</h2>
+                <p style={{ maxWidth: "30rem", marginInline: "auto", color: "var(--ink-soft)", fontSize: "0.9rem" }}>
+                  Program ini dirancang untuk berbagai kalangan — dari pemilik UMKM hingga mahasiswa. Semua bisa mulai tanpa perlu latar belakang teknis.
+                </p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem" }}>
+                {[
+                  { icon: "🏪", title: "UMKM", desc: "CS Agent handle chat pelanggan & Sales Agent follow-up leads otomatis. Fokus jualan, tinggalin urusan admin." },
+                  { icon: "💼", title: "Pebisnis", desc: "Marketing Agent bikin konten promosi & Report Agent kirim laporan keuangan harian. Bisnis makin terpantau." },
+                  { icon: "🎓", title: "Mahasiswa", desc: "Developer Agent bantu coding tugas & Content Agent bikin portfolio digital. Siap kerja dengan portofolio nyata." },
+                  { icon: "👔", title: "Karyawan", desc: "Admin Agent otomatisasi data spreadsheet & Report Agent bikin laporan mingguan. Kerja lebih efisien." },
+                  { icon: "🏢", title: "Pemilik Perusahaan", desc: "Semua Agent handle 5 divisi — CS, Sales, Marketing, Admin, Report. Satu tim AI untuk seluruh operasional." },
+                  { icon: "🏫", title: "Yayasan/Sekolah", desc: "Admin Agent kelola data siswa & Content Agent bikin materi ajar. Tenaga pendidik fokus mengajar." },
+                ].map((item, i) => (
+                  <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)", textAlign: "center" }}>
+                    <span style={{ fontSize: "2.5rem", display: "block", marginBottom: "0.6rem" }}>{item.icon}</span>
+                    <h3 style={{ fontSize: "1rem", fontWeight: 800, marginBottom: "0.4rem" }}>{item.title}</h3>
+                    <p style={{ fontSize: "0.84rem", color: "var(--ink-soft)", lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Section 4: What to Prepare */}
           <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
             <div className="container">
               <div className="bento" style={{ padding: "2rem", border: "1px solid var(--border)" }}>
@@ -718,11 +756,18 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 price={isFree ? 0 : program.price}
                 priceOld={isFree ? null : program.priceOld}
                 ctaHref="#daftar"
-                ctaLabel={isFree ? "Ikuti Sesi Gratis" : "Daftar Sekarang"}
+                ctaLabel={isZeroHuman ? "Amankan Kursi Early Bird" : (isFree ? "Ikuti Sesi Gratis" : "Daftar Sekarang")}
                 isFree={isFree}
               />
               {isFree && (
                 <p className="reg-note">* Seluruh fasilitas di atas dapat diakses secara gratis oleh peserta webinar.</p>
+              )}
+              {isZeroHuman && (
+                <div style={{ marginTop: "1rem", padding: "0.8rem 1rem", background: "rgba(46, 204, 113, 0.06)", borderLeft: "3px solid #27ae60", borderRadius: "0 10px 10px 0" }}>
+                  <p style={{ margin: 0, fontSize: "0.88rem", fontWeight: 700, color: "#27ae60" }}>
+                    🎓 Plus akses grup alumni — diskusi, tanya jawab, & update AI Agent bersama peserta lain setelah workshop selesai.
+                  </p>
+                </div>
               )}
             </div>
             <div className="bento reveal">
@@ -801,10 +846,10 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             <div className="hero-card" style={{ alignItems: "center" }}>
               <div>
                 <h2 style={{ fontSize: "clamp(1.9rem, 4.5vw, 3rem)", marginBottom: ".8rem" }}>
-                  Amankan kursi Anda.
+                  {isZeroHuman ? "Amankan Kursi Early Bird — Rp 225.000" : "Amankan kursi Anda."}
                 </h2>
                 <p style={{ fontWeight: 700, opacity: .85 }}>
-                  Pendaftaran satu menit. Akses instan di web &amp; dikirim via WhatsApp.
+                  {isZeroHuman ? "Harga spesial H-1 — besok kembali ke Rp 490.000. Isi data di bawah, konfirmasi melalui WhatsApp." : "Pendaftaran satu menit. Akses instan di web &amp; dikirim via WhatsApp."}
                 </p>
               </div>
               <RegisterForm
@@ -882,7 +927,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       {/* Bar CTA lengket di mobile */}
       <div className="sticky-cta">
         <div><b>{priceLabel}</b><small>{formatHari(program.scheduleAt)}, {formatJam(program.scheduleAt)}</small></div>
-        <a href="#daftar" className="btn btn-lime">{isFree ? "Daftar Gratis" : "Daftar"}</a>
+        <a href="#daftar" className="btn btn-lime">{isZeroHuman ? "Amankan Kursi Early Bird" : (isFree ? "Daftar Gratis" : "Daftar")}</a>
       </div>
 
       <WaFloat text={`Halo, saya ingin bertanya mengenai program ${program.title}`} />
