@@ -71,7 +71,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const jadwal = formatJadwal(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
   const earlyBirdDeadline = new Date(program.scheduleAt.getTime() - 1 * 86400000).toISOString();
-  const ebCtaNavLabel = isZeroHuman ? "Amankan Kursi Early Bird — Rp 225.000" : (isFree ? "Daftar Gratis" : "Daftar");
+  const ebCtaNavLabel = isZeroHuman ? "Early Bird — Rp 225.000" : (isFree ? "Daftar Gratis" : "Daftar");
 
 
   const faqItems = isAiForTeachers
@@ -268,7 +268,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             )}
             <div className="prg-cta-col">
               <a href="#daftar" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", textAlign: "center" }}>
-                {isZeroHuman ? `Amankan Kursi Early Bird — ${priceLabel}` : (isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`)}
+                {isZeroHuman ? `Early Bird — Rp 225.000` : (isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`)}
               </a>
               {!isFree && program.priceOld && (
                 <span className="prg-hero-strike" style={{ color: "var(--ink-soft)", textDecoration: "line-through", display: "block", textAlign: "center", marginTop: "0.2rem" }}>
@@ -910,7 +910,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 price={isFree ? 0 : program.price}
                 priceOld={isFree ? null : program.priceOld}
                 ctaHref="#daftar"
-                ctaLabel={isZeroHuman ? "Amankan Kursi Early Bird" : (isFree ? "Ikuti Sesi Gratis" : "Daftar Sekarang")}
+                ctaLabel={isZeroHuman ? "Early Bird — Rp 225.000" : (isFree ? "Ikuti Sesi Gratis" : "Daftar Sekarang")}
                 isFree={isFree}
               />
               {isFree && (
@@ -1000,7 +1000,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             <div className="hero-card" style={{ alignItems: "center" }}>
               <div>
                 <h2 style={{ fontSize: "clamp(1.9rem, 4.5vw, 3rem)", marginBottom: ".8rem" }}>
-                  {isZeroHuman ? "Amankan Kursi Early Bird — Rp 225.000" : "Amankan kursi Anda."}
+                  {isZeroHuman ? "Early Bird — Rp 225.000" : "Amankan kursi Anda."}
                 </h2>
                 <p style={{ fontWeight: 700, opacity: .85 }}>
                   {isZeroHuman ? "Harga spesial H-1 — besok kembali ke Rp 490.000. Isi data di bawah, konfirmasi melalui WhatsApp." : "Pendaftaran satu menit. Akses instan di web &amp; dikirim via WhatsApp."}
@@ -1081,7 +1081,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       {/* Bar CTA lengket di mobile */}
       <div className="sticky-cta">
         <div><b>{priceLabel}</b><small>{formatHari(program.scheduleAt)}, {formatJam(program.scheduleAt)}</small></div>
-        <a href="#daftar" className="btn btn-lime">{isZeroHuman ? "Amankan Kursi Early Bird" : (isFree ? "Daftar Gratis" : "Daftar")}</a>
+        <a href="#daftar" className="btn btn-lime">{isZeroHuman ? "Early Bird — Rp 225.000" : (isFree ? "Daftar Gratis" : "Daftar")}</a>
       </div>
 
       <WaFloat text={`Halo, saya ingin bertanya mengenai program ${program.title}`} />
