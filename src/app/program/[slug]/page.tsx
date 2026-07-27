@@ -628,8 +628,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     simulasi: "Sehari: 50 chat pelanggan + 20 order masuk + 5 follow-up. Dengan 6 Agent: semua auto. Kamu tinggal buka WA, cek laporan.",
                     benefit: "Fokus jualan, bukan urus admin. Pelanggan dibalas detik itu juga — tanpa kamu pegang HP.",
                     contoh: "Toko online — CS Agent handle semua chat pelanggan, Admin Agent catat stok, Report Agent kirim rekap penjualan tiap pagi.",
-                    hemat: "6 × Rp3,5jt = Rp21jt/bln",
-                  },
+                                      },
                   {
                     icon: "💼", title: "Pebisnis",
                     agents: [
@@ -643,8 +642,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     simulasi: "Sehari: rapat marketing, review laporan, kejar leads. Dengan 6 Agent: kampanye auto, laporan pagi, leads terfollow-up. Kamu tinggal ambil keputusan.",
                     benefit: "Bisnis berkembang tanpa kamu capek ngurusin operasional harian — scaling tanpa drama.",
                     contoh: "Bisnis jasa — Marketing Agent automasi iklan, Report Agent kirim laporan keuangan tiap pagi ke WA, Admin Agent atur jadwal tim.",
-                    hemat: "6 × Rp5jt = Rp30jt/bln",
-                  },
+                                      },
                   {
                     icon: "🎓", title: "Mahasiswa",
                     agents: [
@@ -658,8 +656,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     simulasi: "Seminggu: 3 deadline tugas + 2 bab skripsi + 5 chat klien freelance. Dengan 6 Agent: riset auto, coding dibantu, side hustle tetap jalan.",
                     benefit: "Lulus tepat waktu + punya penghasilan sampingan. Skripsi selesai, dompet tetap isi.",
                     contoh: "Skripsi & side hustle — Content Agent bantu draft bab, Developer Agent benerin bug coding tugas, Marketing Agent promosi jasa les online.",
-                    hemat: "6 × Rp1jt = Rp6jt/bln",
-                  },
+                                      },
                   {
                     icon: "👔", title: "Karyawan",
                     agents: [
@@ -673,8 +670,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     simulasi: "Sehari: 4 spreadsheet + 2 laporan + 1 presentasi. Dengan 6 Agent: semua auto, kamu tinggal review & kirim.",
                     benefit: "Naik kinerja, dapat pujian atasan, pulang tepat waktu. Kerja efisien = karir naik.",
                     contoh: "Kantor — Admin Agent otomatis rekap data spreadsheet, Report Agent kirim laporan ke atasan tiap minggu, Content Agent draft presentasi.",
-                    hemat: "6 × Rp4jt = Rp24jt/bln",
-                  },
+                                      },
                   {
                     icon: "🏢", title: "Pemilik Perusahaan",
                     agents: [
@@ -688,8 +684,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     simulasi: "Sehari: 5 divisi, 1.000+ chat pelanggan, meeting operasional. Dengan 6 Agent: semua divisi terpantau realtime via WA. Kamu cukup lihat dashboard.",
                     benefit: "Growth tanpa tambah karyawan. Operasional jalan 24 jam tanpa SPV — Anda cukup ambil keputusan strategis.",
                     contoh: "Multi-divisi — CS Agent handle ribuan chat pelanggan, Marketing Agent jadwalkan campaign semua brand, Report Agent ringkas semua KPI ke WA.",
-                    hemat: "Rp15jt",
-                  },
+                                      },
                   {
                     icon: "🏫", title: "Yayasan/Sekolah",
                     agents: [
@@ -703,8 +698,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     simulasi: "Sehari: 500 data siswa + 20 wali murid nanyain nilai + guru butuh materi ajar. Dengan 6 Agent: data otomatis, wali terbalas, materi siap.",
                     benefit: "Guru fokus ngajar, yayasan hemat biaya administrasi. PPDB berjalan otomatis — jumlah siswa naik terus.",
                     contoh: "Sekolah — Admin Agent kelola database siswa, Content Agent bantu guru bikin materi ajar, CS Agent kirim pengumuman ke group WA wali murid.",
-                    hemat: "6 × Rp3jt = Rp18jt/bln",
-                  },
+                                      },
                 ].map((item, i) => (
                   <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)", display: "flex", flexDirection: "column", gap: "1rem" }}>
                     {/* Header */}
@@ -751,7 +745,6 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                         <span style={{ fontSize: "1rem" }}>👤</span> vs Karyawan
                       </span>
                       <span style={{ fontSize: "1rem", fontWeight: 800, color: "var(--green, #27ae60)" }}>
-                        Hemat {item.hemat}
                         <span style={{ fontSize: "0.72rem", fontWeight: 500, color: "var(--ink-faint)", marginLeft: "0.3rem" }}>/bulan</span>
                       </span>
                     </div>
