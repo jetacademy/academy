@@ -625,6 +625,8 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                       "Admin Agent — catat stok & kelola pesanan",
                       "Report Agent — laporan penjualan harian",
                     ],
+                    simulasi: "Sehari: 50 chat pelanggan + 20 order masuk + 5 follow-up. Dengan 6 Agent: semua auto. Kamu tinggal buka WA, cek laporan.",
+                    benefit: "Fokus jualan, bukan urus admin. Pelanggan dibalas detik itu juga — tanpa kamu pegang HP.",
                     contoh: "Toko online — CS Agent handle semua chat pelanggan, Admin Agent catat stok, Report Agent kirim rekap penjualan tiap pagi.",
                     hemat: "6 × Rp3,5jt = Rp21jt/bln",
                   },
@@ -638,6 +640,8 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                       "Admin Agent — operasional & jadwal meeting",
                       "Report Agent — laporan keuangan harian",
                     ],
+                    simulasi: "Sehari: rapat marketing, review laporan, kejar leads. Dengan 6 Agent: kampanye auto, laporan pagi, leads terfollow-up. Kamu tinggal ambil keputusan.",
+                    benefit: "Bisnis berkembang tanpa kamu capek ngurusin operasional harian — scaling tanpa drama.",
                     contoh: "Bisnis jasa — Marketing Agent automasi iklan, Report Agent kirim laporan keuangan tiap pagi ke WA, Admin Agent atur jadwal tim.",
                     hemat: "6 × Rp5jt = Rp30jt/bln",
                   },
@@ -651,6 +655,8 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                       "Report Agent — progress skripsi & proyek",
                       "CS Agent — follow-up klien freelance",
                     ],
+                    simulasi: "Seminggu: 3 deadline tugas + 2 bab skripsi + 5 chat klien freelance. Dengan 6 Agent: riset auto, coding dibantu, side hustle tetap jalan.",
+                    benefit: "Lulus tepat waktu + punya penghasilan sampingan. Skripsi selesai, dompet tetap isi.",
                     contoh: "Skripsi & side hustle — Content Agent bantu draft bab, Developer Agent benerin bug coding tugas, Marketing Agent promosi jasa les online.",
                     hemat: "6 × Rp1jt = Rp6jt/bln",
                   },
@@ -664,6 +670,8 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                       "CS Agent — follow-up meeting & stakeholder",
                       "Sales Agent — follow-up prospek kerja sama",
                     ],
+                    simulasi: "Sehari: 4 spreadsheet + 2 laporan + 1 presentasi. Dengan 6 Agent: semua auto, kamu tinggal review & kirim.",
+                    benefit: "Naik kinerja, dapat pujian atasan, pulang tepat waktu. Kerja efisien = karir naik.",
                     contoh: "Kantor — Admin Agent otomatis rekap data spreadsheet, Report Agent kirim laporan ke atasan tiap minggu, Content Agent draft presentasi.",
                     hemat: "6 × Rp4jt = Rp24jt/bln",
                   },
@@ -677,6 +685,8 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                       "Admin Agent — operasional perusahaan",
                       "Report Agent — dashboard performa semua divisi",
                     ],
+                    simulasi: "Sehari: 5 divisi, 1.000+ chat pelanggan, meeting operasional. Dengan 6 Agent: semua divisi terpantau realtime via WA. Kamu cukup lihat dashboard.",
+                    benefit: "Growth tanpa tambah karyawan. Operasional jalan 24 jam tanpa SPV — Anda cukup ambil keputusan strategis.",
                     contoh: "Multi-divisi — CS Agent handle ribuan chat pelanggan, Marketing Agent jadwalkan campaign semua brand, Report Agent ringkas semua KPI ke WA.",
                     hemat: "Rp15jt",
                   },
@@ -690,6 +700,8 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                       "Marketing Agent — promosi PPDB online",
                       "Sales Agent — follow-up calon siswa baru",
                     ],
+                    simulasi: "Sehari: 500 data siswa + 20 wali murid nanyain nilai + guru butuh materi ajar. Dengan 6 Agent: data otomatis, wali terbalas, materi siap.",
+                    benefit: "Guru fokus ngajar, yayasan hemat biaya administrasi. PPDB berjalan otomatis — jumlah siswa naik terus.",
                     contoh: "Sekolah — Admin Agent kelola database siswa, Content Agent bantu guru bikin materi ajar, CS Agent kirim pengumuman ke group WA wali murid.",
                     hemat: "6 × Rp3jt = Rp18jt/bln",
                   },
@@ -714,6 +726,20 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                       </ul>
                     </div>
 
+                    {/* Simulasi — Sehari Sebelum vs Sesudah */}
+                    {item.simulasi && (
+                      <div style={{ background: "rgba(108, 92, 231, 0.06)", borderRadius: "var(--r-sm)", padding: "0.7rem 0.9rem", fontSize: "0.8rem", color: "var(--ink-soft)", lineHeight: 1.5 }}>
+                        <span style={{ fontWeight: 700, color: "var(--purple)" }}>⚡ Simulasi:</span> {item.simulasi}
+                      </div>
+                    )}
+
+                    {/* Benefit — Apa yang Didapat */}
+                    {item.benefit && (
+                      <div style={{ background: "rgba(39, 174, 96, 0.07)", borderRadius: "var(--r-sm)", padding: "0.7rem 0.9rem", fontSize: "0.82rem", color: "var(--ink)", lineHeight: 1.5, border: "1px solid rgba(39, 174, 96, 0.15)" }}>
+                        <span style={{ fontWeight: 700, color: "var(--green, #27ae60)" }}>✅ Benefit:</span> {item.benefit}
+                      </div>
+                    )}
+
                     {/* Contoh Penerapan */}
                     <div style={{ background: "var(--chip)", borderRadius: "var(--r-sm)", padding: "0.7rem 0.9rem", fontSize: "0.8rem", color: "var(--ink-soft)", lineHeight: 1.5 }}>
                       <span style={{ fontWeight: 700, color: "var(--ink)" }}>💡 Contoh:</span> {item.contoh}
@@ -731,6 +757,70 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Section 2.5: Salary Comparison - 6 Karyawan vs 6 Agent */}
+          <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
+            <div className="container">
+              <div className="bento" style={{ padding: "2rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)" }}>
+                {/* Hook */}
+                <div className="section-head center" style={{ marginBottom: "1.5rem" }}>
+                  <span className="type-tag type-webinar" style={{ marginBottom: "0.8rem", background: "rgba(155, 89, 182, 0.08)", color: "var(--purple)" }}>Perbandingan Biaya</span>
+                  <h2 style={{ fontSize: "clamp(1.3rem, 2.8vw, 1.8rem)", lineHeight: 1.3 }}>
+                    Hire 6 Karyawan? Siapkan <span style={{ color: "var(--red, #e74c3c)" }}>Rp29jt per Bulan</span>.
+                    <br />
+                    Atau 6 AI Agent? <span style={{ color: "var(--green, #27ae60)" }}>Rp225rb Sekali.</span> 🚀
+                  </h2>
+                </div>
+
+                {/* Table */}
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem", minWidth: "420px" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "2px solid var(--border)" }}>
+                        <th style={{ textAlign: "left", padding: "0.7rem 0.8rem", fontWeight: 700, color: "var(--ink)" }}>Posisi</th>
+                        <th style={{ textAlign: "center", padding: "0.7rem 0.8rem", fontWeight: 700, color: "var(--red, #e74c3c)" }}>Gaji/bln (Rp)</th>
+                        <th style={{ textAlign: "center", padding: "0.7rem 0.8rem", fontWeight: 700, color: "var(--green, #27ae60)" }}>Agent (sekali Rp225rb)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { posisi: "Marketing", gaji: "5jt", agent: "Marketing Agent ✅" },
+                        { posisi: "Programmer", gaji: "7jt", agent: "Developer Agent ✅" },
+                        { posisi: "CS", gaji: "4jt", agent: "CS Agent ✅" },
+                        { posisi: "Admin", gaji: "4jt", agent: "Admin Agent ✅" },
+                        { posisi: "Content Writer", gaji: "4jt", agent: "Content Agent ✅" },
+                        { posisi: "Sales", gaji: "5jt", agent: "Sales Agent ✅" },
+                      ].map((row, i) => (
+                        <tr key={i} style={{ borderBottom: "1px solid var(--border)", background: i % 2 === 0 ? "transparent" : "var(--chip, #f5f5f5)" }}>
+                          <td style={{ padding: "0.7rem 0.8rem", fontWeight: 600, color: "var(--ink)" }}>{row.posisi}</td>
+                          <td style={{ textAlign: "center", padding: "0.7rem 0.8rem", fontWeight: 700, color: "var(--red, #e74c3c)" }}>Rp{row.gaji}</td>
+                          <td style={{ textAlign: "center", padding: "0.7rem 0.8rem", color: "var(--green, #27ae60)", fontWeight: 600 }}>{row.agent}</td>
+                        </tr>
+                      ))}
+                      {/* Total row */}
+                      <tr style={{ background: "rgba(39, 174, 96, 0.06)", borderTop: "2px solid var(--green, #27ae60)" }}>
+                        <td style={{ padding: "0.9rem 0.8rem", fontWeight: 800, fontSize: "1rem", color: "var(--ink)" }}>TOTAL/bln</td>
+                        <td style={{ textAlign: "center", padding: "0.9rem 0.8rem", fontWeight: 900, fontSize: "1.2rem", color: "var(--red, #e74c3c)" }}>Rp29jt</td>
+                        <td style={{ textAlign: "center", padding: "0.9rem 0.8rem", fontWeight: 800, fontSize: "1rem", color: "var(--green, #27ae60)" }}>
+                          Rp225rb <span style={{ fontSize: "0.72rem", fontWeight: 500, color: "var(--ink-faint)" }}>SEKALI</span> 🚀
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Savings highlight */}
+                <div style={{ marginTop: "1.2rem", textAlign: "center", padding: "0.8rem 1rem", background: "rgba(39, 174, 96, 0.06)", borderRadius: "var(--r-sm)", border: "1px solid rgba(39, 174, 96, 0.15)" }}>
+                  <span style={{ fontSize: "1rem", fontWeight: 800, color: "var(--green, #27ae60)" }}>
+                    💰 Hemat <span style={{ fontSize: "1.3rem" }}>Rp28,775jt</span> per bulan!
+                    <span style={{ display: "block", fontSize: "0.78rem", fontWeight: 500, color: "var(--ink-faint)", marginTop: "0.2rem" }}>
+                      Setara 128× lebih murah — dan Agent bekerja 24/7 tanpa lembur 🚀
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
           </section>
