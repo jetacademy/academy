@@ -146,20 +146,19 @@ export async function checkCertEligibility(
     };
   }
 
-  if (program.type === "WEBINAR") {
-    const reg = await prisma.registration.findUnique({
-      where: { id: registrationId },
-      select: { batch: { select: { scheduleAt: true } } },
-    });
-    const sessionAt = reg?.batch?.scheduleAt ?? program.scheduleAt;
-    const availableAt = new Date(sessionAt.getTime() + CERT_CLAIM_DELAY_MS);
-    if (new Date() < availableAt) {
-      return {
-        eligible: false,
-        availableAt,
-        reason: `Klaim sertifikat untuk sesi ini baru bisa dilakukan mulai ${formatJadwal(availableAt)} (1×24 jam setelah sesi berakhir).`,
-      };
-    }
+  // Program dengan jadwal — sertifikat baru terbit setelah acara (1×24 jam)
+  const reg = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    select: { batch: { select: { scheduleAt: true } } },
+  });
+  const sessionAt = reg?.batch?.scheduleAt ?? program.scheduleAt;
+  const availableAt = new Date(sessionAt.getTime() + CERT_CLAIM_DELAY_MS);
+  if (new Date() < availableAt) {
+    return {
+      eligible: false,
+      availableAt,
+      reason: `Sertifikat baru bisa diklaim mulai ${formatJadwal(availableAt)} (1×24 jam setelah sesi berakhir).`,
+    };
   }
 
   const totalLessons = await prisma.lesson.count({ where: { module: { programId: program.id } } });
