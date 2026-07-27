@@ -700,53 +700,21 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                     contoh: "Sekolah — Admin Agent kelola database siswa, Content Agent bantu guru bikin materi ajar, CS Agent kirim pengumuman ke group WA wali murid.",
                                       },
                 ].map((item, i) => (
-                  <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)", display: "flex", flexDirection: "column", gap: "1rem" }}>
-                    {/* Header */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
-                      <span style={{ fontSize: "2.2rem", flexShrink: 0 }}>{item.icon}</span>
-                      <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0 }}>{item.title}</h3>
-                    </div>
-
-                    {/* 6 Agent bullets */}
-                    <div>
-                      <p style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--purple)", margin: "0 0 0.4rem 0", textTransform: "uppercase", letterSpacing: "0.5px" }}>🤖 6 Agent</p>
-                      <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.82rem", color: "var(--ink-soft)", lineHeight: 1.8, listStyle: "none" }}>
-                        {item.agents.map((a, j) => (
-                          <li key={j} style={{ position: "relative", paddingLeft: "0.6rem" }}>
-                            <span style={{ position: "absolute", left: "-1rem", color: "var(--purple)" }}>▸</span>
-                            {a}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Simulasi — Sehari Sebelum vs Sesudah */}
-                    {item.simulasi && (
-                      <div style={{ background: "rgba(108, 92, 231, 0.06)", borderRadius: "var(--r-sm)", padding: "0.7rem 0.9rem", fontSize: "0.8rem", color: "var(--ink-soft)", lineHeight: 1.5 }}>
-                        <span style={{ fontWeight: 700, color: "var(--purple)" }}>⚡ Simulasi:</span> {item.simulasi}
+                  <div key={i} style={{ background: "var(--white)", borderRadius: "var(--r-md)", padding: "1.2rem", border: "1px solid var(--border)", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                      <span style={{ fontSize: "1.8rem", flexShrink: 0 }}>{item.icon}</span>
+                      <div>
+                        <b style={{ fontSize: "1rem", margin: 0 }}>{item.title}</b>
+                        <span style={{ fontSize: "0.7rem", color: "var(--purple)", fontWeight: 700 }}>🤖 6 Agent</span>
                       </div>
-                    )}
-
-                    {/* Benefit — Apa yang Didapat */}
-                    {item.benefit && (
-                      <div style={{ background: "rgba(39, 174, 96, 0.07)", borderRadius: "var(--r-sm)", padding: "0.7rem 0.9rem", fontSize: "0.82rem", color: "var(--ink)", lineHeight: 1.5, border: "1px solid rgba(39, 174, 96, 0.15)" }}>
-                        <span style={{ fontWeight: 700, color: "var(--green, #27ae60)" }}>✅ Benefit:</span> {item.benefit}
-                      </div>
-                    )}
-
-                    {/* Contoh Penerapan */}
-                    <div style={{ background: "var(--chip)", borderRadius: "var(--r-sm)", padding: "0.7rem 0.9rem", fontSize: "0.8rem", color: "var(--ink-soft)", lineHeight: 1.5 }}>
-                      <span style={{ fontWeight: 700, color: "var(--ink)" }}>💡 Contoh:</span> {item.contoh}
                     </div>
-
-                    {/* Cost comparison */}
-                    <div style={{ marginTop: "auto", borderTop: "1px solid var(--border)", paddingTop: "0.8rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: "0.82rem", color: "var(--ink-soft)" }}>
-                        <span style={{ fontSize: "1rem" }}>👤</span> vs Karyawan
-                      </span>
-                      <span style={{ fontSize: "1rem", fontWeight: 800, color: "var(--green, #27ae60)" }}>
-                        <span style={{ fontSize: "0.72rem", fontWeight: 500, color: "var(--ink-faint)", marginLeft: "0.3rem" }}>/bulan</span>
-                      </span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem" }}>
+                      {item.agents.map((a, j) => (
+                        <span key={j} style={{ fontSize: "0.72rem", background: "var(--chip)", padding: "0.2rem 0.6rem", borderRadius: "6px", color: "var(--ink-soft)" }}>{a}</span>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: "0.78rem", color: "var(--ink-soft)", lineHeight: 1.4 }}>
+                      ✅ {item.simulasi}
                     </div>
                   </div>
                 ))}
