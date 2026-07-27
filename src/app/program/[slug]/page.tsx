@@ -603,29 +603,132 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             </div>
           </section>
 
-          {/* Section 3: Cocok Untuk Siapa */}
+          {/* Section 3: Cocok Untuk Siapa — 6 Kartu Target */}
           <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem", background: "var(--chip)" }}>
             <div className="container">
               <div className="section-head center" style={{ marginBottom: "1.5rem" }}>
                 <span className="type-tag type-mentoring" style={{ marginBottom: "0.8rem", background: "rgba(108, 92, 231, 0.08)", color: "var(--purple)" }}>Cocok Untuk Siapa</span>
-                <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)" }}>Siapa Saja yang Cocok?</h2>
+                <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)" }}>Pilih Kategori Anda — Ada 6 Agent yang Siap Membantu</h2>
                 <p style={{ maxWidth: "30rem", marginInline: "auto", color: "var(--ink-soft)", fontSize: "0.9rem" }}>
-                  Program ini dirancang untuk berbagai kalangan — dari pemilik UMKM hingga mahasiswa. Semua bisa mulai tanpa perlu latar belakang teknis.
+                  Setiap target punya kebutuhan berbeda — dan 6 Agent kami sudah siap menanganinya. Bandingkan biayanya dengan gaji karyawan.
                 </p>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: "1.2rem" }}>
                 {[
-                  { icon: "🏪", title: "UMKM", desc: "CS Agent handle chat pelanggan & Sales Agent follow-up leads otomatis. Fokus jualan, tinggalin urusan admin." },
-                  { icon: "💼", title: "Pebisnis", desc: "Marketing Agent bikin konten promosi & Report Agent kirim laporan keuangan harian. Bisnis makin terpantau." },
-                  { icon: "🎓", title: "Mahasiswa", desc: "Developer Agent bantu coding tugas & Content Agent bikin portfolio digital. Siap kerja dengan portofolio nyata." },
-                  { icon: "👔", title: "Karyawan", desc: "Admin Agent otomatisasi data spreadsheet & Report Agent bikin laporan mingguan. Kerja lebih efisien." },
-                  { icon: "🏢", title: "Pemilik Perusahaan", desc: "Semua Agent handle 5 divisi — CS, Sales, Marketing, Admin, Report. Satu tim AI untuk seluruh operasional." },
-                  { icon: "🏫", title: "Yayasan/Sekolah", desc: "Admin Agent kelola data siswa & Content Agent bikin materi ajar. Tenaga pendidik fokus mengajar." },
+                  {
+                    icon: "🏪", title: "UMKM",
+                    agents: [
+                      "CS Agent — balas chat & order 24 jam",
+                      "Sales Agent — follow-up leads otomatis",
+                      "Marketing Agent — promosi & diskon terjadwal",
+                      "Content Agent — deskripsi produk & katalog",
+                      "Admin Agent — catat stok & kelola pesanan",
+                      "Report Agent — laporan penjualan harian",
+                    ],
+                    contoh: "Toko online — CS Agent handle semua chat pelanggan, Admin Agent catat stok, Report Agent kirim rekap penjualan tiap pagi.",
+                    hemat: "6 × Rp3,5jt = Rp21jt/bln",
+                  },
+                  {
+                    icon: "💼", title: "Pebisnis",
+                    agents: [
+                      "Marketing Agent — kampanye brand & iklan",
+                      "Sales Agent — closing leads & pipeline",
+                      "Content Agent — konten branding & proposal",
+                      "CS Agent — komunikasi klien profesional",
+                      "Admin Agent — operasional & jadwal meeting",
+                      "Report Agent — laporan keuangan harian",
+                    ],
+                    contoh: "Bisnis jasa — Marketing Agent automasi iklan, Report Agent kirim laporan keuangan tiap pagi ke WA, Admin Agent atur jadwal tim.",
+                    hemat: "6 × Rp5jt = Rp30jt/bln",
+                  },
+                  {
+                    icon: "🎓", title: "Mahasiswa",
+                    agents: [
+                      "Content Agent — bantu riset & tulis makalah",
+                      "Developer Agent — debugging & coding tugas",
+                      "Admin Agent — atur jadwal kuliah & deadline",
+                      "Marketing Agent — promosi side hustle online",
+                      "Report Agent — progress skripsi & proyek",
+                      "CS Agent — follow-up klien freelance",
+                    ],
+                    contoh: "Skripsi & side hustle — Content Agent bantu draft bab, Developer Agent benerin bug coding tugas, Marketing Agent promosi jasa les online.",
+                    hemat: "6 × Rp1jt = Rp6jt/bln",
+                  },
+                  {
+                    icon: "👔", title: "Karyawan",
+                    agents: [
+                      "Admin Agent — otomatisasi spreadsheet & data",
+                      "Report Agent — bikin laporan mingguan otomatis",
+                      "Content Agent — drafting email & presentasi",
+                      "Marketing Agent — proposal internal & promosi",
+                      "CS Agent — follow-up meeting & stakeholder",
+                      "Sales Agent — follow-up prospek kerja sama",
+                    ],
+                    contoh: "Kantor — Admin Agent otomatis rekap data spreadsheet, Report Agent kirim laporan ke atasan tiap minggu, Content Agent draft presentasi.",
+                    hemat: "6 × Rp4jt = Rp24jt/bln",
+                  },
+                  {
+                    icon: "🏢", title: "Pemilik Perusahaan",
+                    agents: [
+                      "CS Agent — handle layanan pelanggan 5 divisi",
+                      "Sales Agent — pipeline sales korporasi",
+                      "Marketing Agent — kampanye lintas divisi",
+                      "Content Agent — konten brand & press release",
+                      "Admin Agent — operasional perusahaan",
+                      "Report Agent — dashboard performa semua divisi",
+                    ],
+                    contoh: "Multi-divisi — CS Agent handle ribuan chat pelanggan, Marketing Agent jadwalkan campaign semua brand, Report Agent ringkas semua KPI ke WA.",
+                    hemat: "Rp15jt",
+                  },
+                  {
+                    icon: "🏫", title: "Yayasan/Sekolah",
+                    agents: [
+                      "Admin Agent — kelola data siswa & guru",
+                      "Content Agent — bikin materi ajar & kurikulum",
+                      "CS Agent — komunikasi wali murid otomatis",
+                      "Report Agent — laporan akademik & kehadiran",
+                      "Marketing Agent — promosi PPDB online",
+                      "Sales Agent — follow-up calon siswa baru",
+                    ],
+                    contoh: "Sekolah — Admin Agent kelola database siswa, Content Agent bantu guru bikin materi ajar, CS Agent kirim pengumuman ke group WA wali murid.",
+                    hemat: "6 × Rp3jt = Rp18jt/bln",
+                  },
                 ].map((item, i) => (
-                  <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)", textAlign: "center" }}>
-                    <span style={{ fontSize: "2.5rem", display: "block", marginBottom: "0.6rem" }}>{item.icon}</span>
-                    <h3 style={{ fontSize: "1rem", fontWeight: 800, marginBottom: "0.4rem" }}>{item.title}</h3>
-                    <p style={{ fontSize: "0.84rem", color: "var(--ink-soft)", lineHeight: 1.5, margin: 0 }}>{item.desc}</p>
+                  <div key={i} className="bento" style={{ padding: "1.5rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    {/* Header */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
+                      <span style={{ fontSize: "2.2rem", flexShrink: 0 }}>{item.icon}</span>
+                      <h3 style={{ fontSize: "1.05rem", fontWeight: 800, margin: 0 }}>{item.title}</h3>
+                    </div>
+
+                    {/* 6 Agent bullets */}
+                    <div>
+                      <p style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--purple)", margin: "0 0 0.4rem 0", textTransform: "uppercase", letterSpacing: "0.5px" }}>🤖 6 Agent</p>
+                      <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.82rem", color: "var(--ink-soft)", lineHeight: 1.8, listStyle: "none" }}>
+                        {item.agents.map((a, j) => (
+                          <li key={j} style={{ position: "relative", paddingLeft: "0.6rem" }}>
+                            <span style={{ position: "absolute", left: "-1rem", color: "var(--purple)" }}>▸</span>
+                            {a}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Contoh Penerapan */}
+                    <div style={{ background: "var(--chip)", borderRadius: "var(--r-sm)", padding: "0.7rem 0.9rem", fontSize: "0.8rem", color: "var(--ink-soft)", lineHeight: 1.5 }}>
+                      <span style={{ fontWeight: 700, color: "var(--ink)" }}>💡 Contoh:</span> {item.contoh}
+                    </div>
+
+                    {/* Cost comparison */}
+                    <div style={{ marginTop: "auto", borderTop: "1px solid var(--border)", paddingTop: "0.8rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "0.82rem", color: "var(--ink-soft)" }}>
+                        <span style={{ fontSize: "1rem" }}>👤</span> vs Karyawan
+                      </span>
+                      <span style={{ fontSize: "1rem", fontWeight: 800, color: "var(--green, #27ae60)" }}>
+                        Hemat {item.hemat}
+                        <span style={{ fontSize: "0.72rem", fontWeight: 500, color: "var(--ink-faint)", marginLeft: "0.3rem" }}>/bulan</span>
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
