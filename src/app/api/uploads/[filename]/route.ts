@@ -4,7 +4,7 @@ import { join } from "path";
 import { existsSync } from "fs";
 
 // Upload ke folder persisten di luar project (biar nggak ilang saat rebuild)
-const UPLOADS_DIR = process.env.UPLOADS_DIR ?? join(process.env.HOME || "/tmp", "jetschool-uploads");
+const UPLOADS_DIR = process.env.UPLOADS_DIR ?? "/home/u766786763/jetschool-uploads";
 
 const MIME_MAP: Record<string, string> = {
   png: "image/png",
