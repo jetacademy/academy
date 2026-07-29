@@ -205,8 +205,8 @@ export default async function MemberDashboardPage() {
                 const hasExternalLms = !!prog.lmsLink;
 
                 // Gerbang admin: apakah klaim sertifikat sudah dibuka?
-                // Baca dari certClaimMap (raw SQL) — tidak dari prog untuk hindari Prisma cache issue
-                const claimIsOpen = certClaimMap.get(prog.id) ?? false;
+                // NONAKTIF — sertifikat akan dikirim manual via dashboard
+                const claimIsOpen = false;
 
                 // Lunas certPrice? (webinar gratis: cek status reg atau certPrice=0)
                 const certPaid =
