@@ -136,6 +136,17 @@ export default async function AdminPendaftar({ searchParams }: {
                           Ingatkan
                         </a>
                       )}
+                      {r.status === 'REGISTERED' && r.whatsapp && r.payment?.invoiceUrl && (
+                        <a
+                          href={'https://wa.me/' + r.whatsapp.replace(/^0+/, '62') + '?text=' + encodeURIComponent('Halo ' + r.name + ', ini link pembayaran kamu Kak 👇\n' + r.payment.invoiceUrl + '\n\nEarly bird Rp225rb — jangan sampai kelewat ya 😊')}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='btn btn-sm btn-lime'
+                          title='Kirim ulang invoice Xendit via WA'
+                        >
+                          Invoice
+                        </a>
+                      )}
                       {["PAID", "PASSED"].includes(r.status) && r.payment?.status === "PAID" && (
                         <RefundButton
                           registrationId={r.id}
