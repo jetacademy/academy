@@ -375,13 +375,16 @@ export default async function LmsPage({
                     background: "var(--white)"
                   }}>
                     <iframe
-                      src={currentLesson.fileUrl}
+                      src={`${currentLesson.fileUrl}#view=FitH`}
                       style={{ width: "100%", height: "70vh", border: 0, display: "block" }}
                       title={currentLesson.title}
                     />
-                    <div style={{ padding: ".7rem 1rem", borderTop: "1px solid var(--border)", textAlign: "right" }}>
-                      <a href={currentLesson.fileUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-line">
-                        Buka / Unduh PDF
+                    <div style={{ padding: ".7rem 1rem", borderTop: "1px solid var(--border)", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+                      <a href={currentLesson.fileUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-line" style={{ fontSize: ".78rem" }}>
+                        📖 Buka di Tab Baru
+                      </a>
+                      <a href={currentLesson.fileUrl} download className="btn btn-sm btn-purple" style={{ fontSize: ".78rem" }}>
+                        ⬇️ Download PDF
                       </a>
                     </div>
                   </div>
