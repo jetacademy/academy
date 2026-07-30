@@ -170,14 +170,42 @@ export default function AffiliateDashboardClient({
         </div>
       </div>
 
-      {/* Link referral */}
+      {/* Link referral PER PROGRAM */}
       <div className="member-program-card reveal in" style={{ display: "block" }}>
-        <h3 style={{ marginTop: 0 }}>Link &amp; Kode Referral Anda</h3>
+        <h3 style={{ marginTop: 0 }}>Link Per Program 🔥</h3>
+        <p className="sub">Setiap program punya link sendiri. Kode referral otomatis tertanam — tinggal copas ke iklan.</p>
+        {programs.length === 0 ? (
+          <p className="sub" style={{ marginTop: "0.8rem" }}>Belum ada program aktif untuk dibagikan.</p>
+        ) : (
+          <div style={{ display: "grid", gap: "0.8rem", marginTop: "0.8rem" }}>
+            {programs.map((p) => {
+              const url = `${baseUrl}/program/${p.slug}?ref=${code}`;
+              return (
+                <div key={p.slug} style={{ background: "var(--chip)", borderRadius: "12px", padding: "0.8rem 1rem", border: "1px solid var(--border)" }}>
+                  <div style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: "0.3rem" }}>{p.title}</div>
+                  <div className="sub" style={{ fontSize: "0.75rem", marginBottom: "0.5rem" }}>{TYPE_LABEL[p.type]}</div>
+                  <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
+                    <code style={{ background: "var(--white)", padding: "0.4rem 0.6rem", borderRadius: "8px", fontSize: "0.78rem", wordBreak: "break-all", flex: 1, border: "1px solid var(--border)" }}>{url}</code>
+                    <button type="button" className="btn btn-sm btn-purple" onClick={() => handleCopyProgram(p.slug, url)}>{copiedSlug === p.slug ? "Tersalin!" : "Salin"}</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Link referral umum + kode */}
+      <div className="member-program-card reveal in" style={{ display: "block" }}>
+        <h3 style={{ marginTop: 0 }}>Link Umum &amp; Kode Referral</h3>
         <p className="sub">Komisi Anda: <strong>{commissionLabel}</strong> per transaksi. Pembeli yang pakai link/kode ini dapat potongan: <strong>{discountLabel}</strong>.</p>
         <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center", margin: "0.8rem 0" }}>
           <code style={{ background: "var(--chip)", padding: "0.5rem 0.8rem", borderRadius: "8px", fontSize: "0.85rem", wordBreak: "break-all" }}>{referralUrl}</code>
           <button type="button" className="btn btn-sm btn-purple" onClick={handleCopy}>{copied ? "Tersalin!" : "Salin Link"}</button>
         </div>
+
+        <h4 style={{ margin: "1rem 0 0.3rem", fontSize: "0.9rem" }}>Kode: <code style={{ fontSize: "1rem", fontWeight: 800, color: "var(--purple)" }}>{code}</code></h4>
+        <p className="sub" style={{ fontSize: "0.75rem" }}>Kode bisa dipakai manual di kolom voucher saat checkout.</p>
 
         <form onSubmit={handleSaveCode} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "flex-end", marginTop: "1rem" }}>
           <div className="field" style={{ margin: 0 }}>
@@ -192,33 +220,6 @@ export default function AffiliateDashboardClient({
         </form>
         {codeMsg && <p className={codeMsg.ok ? "form-success" : "form-error"} style={{ marginTop: "0.5rem" }}>{codeMsg.text}</p>}
       </div>
-
-      {/* Bagikan program */}
-      <div className="member-program-card reveal in" style={{ display: "block" }}>
-        <h3 style={{ marginTop: 0 }}>Bagikan Program</h3>
-        <p className="sub">Salin link menuju halaman program tertentu — kode referral Anda sudah otomatis tertanam di dalamnya.</p>
-        {programs.length === 0 ? (
-          <p className="sub" style={{ marginTop: "0.8rem" }}>Belum ada program aktif untuk dibagikan.</p>
-        ) : (
-          <div style={{ display: "grid", gap: "0.6rem", marginTop: "0.8rem" }}>
-            {programs.map((p) => {
-              const url = `${baseUrl}/program/${p.slug}?ref=${code}`;
-              return (
-                <div key={p.slug} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", padding: "0.6rem 0", borderBottom: "1px solid var(--line)" }}>
-                  <div style={{ minWidth: "12rem" }}>
-                    <div style={{ fontWeight: 700, fontSize: "0.9rem" }}>{p.title}</div>
-                    <div className="sub" style={{ fontSize: "0.75rem" }}>{TYPE_LABEL[p.type]}</div>
-                  </div>
-                  <button type="button" className="btn btn-sm btn-purple" onClick={() => handleCopyProgram(p.slug, url)}>
-                    {copiedSlug === p.slug ? "Tersalin!" : "Salin Link"}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
       {/* Info pencairan + penarikan */}
       <div className="member-program-card reveal in" style={{ display: "block" }}>
         <h3 style={{ marginTop: 0 }}>Tujuan Pencairan</h3>
