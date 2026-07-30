@@ -1186,12 +1186,16 @@ export async function sendBroadcast(formData: FormData) {
   if (messageType === "custom" && !customMessage) redirect("/webadmin/broadcast?e=pesan");
 
   // ── Cari penerima ─────────────────────────────────────
-  const where: any = { status: { in: ["PAID", "PASSED", "REGISTERED"] }, whatsapp: { not: null } };
-  if (batchId) where.batchId = batchId;
-  else if (programId) where.programId = programId;
+  const statusFilter = { in: ["PAID", "PASSED", "REGISTERED"] as const };
+  const recipientWhere: { status: typeof statusFilter; whatsapp: { not: null }; programId?: string; batchId?: string } = {
+    status: statusFilter,
+    whatsapp: { not: null },
+  };
+  if (batchId) recipientWhere.batchId = batchId;
+  else if (programId) recipientWhere.programId = programId;
 
   const registrations = await prisma.registration.findMany({
-    where,
+    where: recipientWhere,
     select: { id: true, name: true, whatsapp: true, program: { select: { title: true, zoomLink: true, waGroupLink: true } } },
   });
 
