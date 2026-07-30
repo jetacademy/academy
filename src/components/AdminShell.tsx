@@ -93,6 +93,11 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v3a2 2 0 002 2H5m4-7h8a2 2 0 012 2v3a2 2 0 01-2 2m-8-7v14m0 0H7a2 2 0 01-2-2v-3a2 2 0 012-2h2m8 7h2a2 2 0 002-2v-3a2 2 0 00-2-2h-2m0-7v14M9 9h.01M9 15h.01" />
           </svg>
         )
+      },
+      {
+        href: "/webadmin/broadcast",
+        label: "Broadcast",
+        icon: <span style={{ fontSize: 20, lineHeight: 1 }}>📢</span>
       }
     ]
   },
