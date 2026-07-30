@@ -69,6 +69,13 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const isAiForTeachers = program.slug === "ai-for-teachers";
   const isZeroHuman = program.slug === "zero-human-company";
   const jadwal = formatJadwal(program.scheduleAt);
+
+  // Prioritaskan batch aktif mendatang untuk jadwal display
+  const nextBatch = program.batches?.[0];
+  const displayScheduleAt = nextBatch?.scheduleAt ?? program.scheduleAt;
+  const displayJadwal = nextBatch ? formatJadwal(nextBatch.scheduleAt) : jadwal;
+  const displayHari = nextBatch ? formatHari(nextBatch.scheduleAt) : formatHari(program.scheduleAt);
+  const displayJam = nextBatch ? formatJam(nextBatch.scheduleAt) : formatJam(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
   const ebCtaNavLabel = isZeroHuman ? "Rp 225.000 — Sekali" : (isFree ? "Daftar Gratis" : "Daftar");
 
@@ -276,7 +283,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               <div className="prg-cta-meta-list" style={{ marginTop: "0.5rem" }}>
                 <div className="cta-meta-item">
                   <Icon name="calendar" size={14} />
-                  <span>{formatHari(program.scheduleAt)}, {formatJam(program.scheduleAt)}</span>
+                  <span>{displayHari}, {formatJam(program.scheduleAt)}</span>
                 </div>
                 <div className="cta-meta-item">
                   <Icon name="award" size={14} />
@@ -1068,7 +1075,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
 
       {/* Bar CTA lengket di mobile */}
       <div className="sticky-cta">
-        <div><b>{priceLabel}</b><small>{formatHari(program.scheduleAt)}, {formatJam(program.scheduleAt)}</small></div>
+        <div><b>{priceLabel}</b><small>{displayHari}, {formatJam(program.scheduleAt)}</small></div>
         <a href="#daftar" className="btn btn-lime">{isZeroHuman ? "Rp 225.000 — Sekali" : (isFree ? "Daftar Gratis" : "Daftar")}</a>
       </div>
 
