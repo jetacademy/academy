@@ -401,8 +401,8 @@ export default async function AdminStatistik() {
                     </a>
                   </td>
                   <td data-label="Batch">
-                    <span className="badge" style={{ background: new Date(b.batchSchedule) > new Date() ? "rgba(46, 204, 113, 0.15)" : "var(--chip)", color: new Date(b.batchSchedule) > new Date() ? "#27ae60" : "var(--ink-soft)", fontWeight: 700 }}>
-                      {new Date(b.batchSchedule) > new Date() ? "🟢 Aktif" : "✅ Selesai"}
+                    <span className="badge" style={{ background: (b.batchSchedule ? new Date(b.batchSchedule) : new Date(0)) > new Date() ? "rgba(46, 204, 113, 0.15)" : "var(--chip)", color: (b.batchSchedule ? new Date(b.batchSchedule) : new Date(0)) > new Date() ? "#27ae60" : "var(--ink-soft)", fontWeight: 700 }}>
+                      {(b.batchSchedule ? new Date(b.batchSchedule) : new Date(0)) > new Date() ? "🟢 Aktif" : "✅ Selesai"}
                     </span>
                     <span style={{ fontSize: "0.78rem", color: "var(--ink-faint)", marginLeft: "0.4rem" }}>
                       {(() => {
