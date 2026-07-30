@@ -176,7 +176,6 @@ export default function MediaPicker({
 
             {!loading && !error && (
               <MediaGrid
-                programId={programId}
                 media={media}
                 selectable
                 onSelect={handleSelect}
