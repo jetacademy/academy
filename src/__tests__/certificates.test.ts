@@ -67,6 +67,8 @@ const { mockPrisma, mockPrismaTx, makeCertificate, makeRegistration } = vi.hoist
         certKind: 'ACHIEVEMENT' as const,
         maxTestAttempts: 0,
         isActive: true,
+        certClaimOpen: false,
+        certPublished: true,
         isFeatured: false,
         certBgUrl: null,
         certConfig: null,
@@ -201,14 +203,14 @@ describe('issueCertificate', () => {
     const result = await issueCertificate('reg-1');
 
     // Number should match format JS-XXX-YYYY-BXXX-XXXXX
-    expect(result.number).toMatch(/^JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}$/);
-    expect(result.url).toMatch(/^http:\/\/localhost:3000\/sertifikat\/JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}$/);
+    expect(result.number).toMatch(/^JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}-[0-9A-F]{4}$/);
+    expect(result.url).toMatch(/^http:\/\/localhost:3000\/sertifikat\/JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}-[0-9A-F]{4}$/);
 
     // Should create certificate with the random number directly
     expect(mockPrismaTx.certificate.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         registrationId: 'reg-1',
-        number: expect.stringMatching(/^JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}$/),
+        number: expect.stringMatching(/^JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}-[0-9A-F]{4}$/),
       }),
     });
     // Should NOT do a second update (number set at create time)
@@ -233,7 +235,7 @@ describe('issueCertificate', () => {
     vi.mocked(sendWa).mockRejectedValueOnce(new Error('WA down'));
 
     const result = await issueCertificate('reg-1');
-    expect(result.number).toMatch(/^JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}$/);
+    expect(result.number).toMatch(/^JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}-[0-9A-F]{4}$/);
     expect(sendWa).toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith(
       expect.stringContaining('Gagal kirim WA'),
@@ -252,7 +254,7 @@ describe('issueCertificate', () => {
     mockPrismaTx.registration.update.mockResolvedValue({ ...reg, status: 'PASSED' });
 
     const result = await issueCertificate('reg-1');
-    expect(result.url).toMatch(/^https:\/\/academy\.jetschool\.id\/sertifikat\/JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}$/);
+    expect(result.url).toMatch(/^https:\/\/academy\.jetschool\.id\/sertifikat\/JS-[A-Z]{3}-2026-B[0-9]{3}-[0-9]{5}-[0-9A-F]{4}$/);
   });
 });
 
@@ -263,6 +265,46 @@ describe('checkCertEligibility', () => {
 
   const LONG_AGO = new Date('2020-01-01T00:00:00.000Z');
 
+  it('blocks issuance when the program has not been published by admin yet, even if fully completed', async () => {
+    const result = await checkCertEligibility('reg-1', {
+      id: 'prog-1',
+      type: 'KELAS',
+      scheduleAt: LONG_AGO,
+      completionCriteria: 'ALL_LESSONS',
+      certPublished: false,
+    });
+
+    expect(result.eligible).toBe(false);
+    expect(result.reason).toContain('belum dipublikasikan admin');
+    // Gerbang publish diperiksa lebih dulu — tak perlu sampai query lain
+    expect(mockPrisma.registration.findUnique).not.toHaveBeenCalled();
+    expect(mockPrisma.lesson.count).not.toHaveBeenCalled();
+  });
+
+  it('applies the batch module filter when computing lesson completion for a batched registration', async () => {
+    mockPrisma.registration.findUnique.mockResolvedValue({ batchId: 'batch-1', batch: { scheduleAt: LONG_AGO } });
+    mockPrisma.lesson.count.mockResolvedValue(2);
+    mockPrisma.completion.count.mockResolvedValue(2);
+
+    const result = await checkCertEligibility('reg-1', {
+      id: 'prog-1',
+      type: 'KELAS',
+      scheduleAt: LONG_AGO,
+      completionCriteria: 'ALL_LESSONS',
+      certPublished: true,
+    });
+
+    expect(result).toEqual({ eligible: true });
+    const expectedModuleWhere = {
+      programId: 'prog-1',
+      OR: [{ batchLinks: { none: {} } }, { batchLinks: { some: { batchId: 'batch-1' } } }],
+    };
+    expect(mockPrisma.lesson.count).toHaveBeenCalledWith({ where: { module: expectedModuleWhere } });
+    expect(mockPrisma.completion.count).toHaveBeenCalledWith({
+      where: { registrationId: 'reg-1', lesson: { module: expectedModuleWhere } },
+    });
+  });
+
   it('returns eligible if program has no lessons (empty curriculum)', async () => {
     mockPrisma.lesson.count.mockResolvedValue(0);
 
@@ -271,6 +313,7 @@ describe('checkCertEligibility', () => {
       type: 'KELAS',
       scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_LESSONS',
+      certPublished: true,
     });
 
     expect(result).toEqual({ eligible: true });
@@ -288,6 +331,7 @@ describe('checkCertEligibility', () => {
       type: 'KELAS',
       scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_LESSONS',
+      certPublished: true,
     });
 
     expect(result).toEqual({ eligible: true });
@@ -302,6 +346,7 @@ describe('checkCertEligibility', () => {
       type: 'KELAS',
       scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_LESSONS',
+      certPublished: true,
     });
 
     expect(result).toMatchObject({ eligible: false });
@@ -320,6 +365,7 @@ describe('checkCertEligibility', () => {
       type: 'KELAS',
       scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_QUIZZES',
+      certPublished: true,
     });
 
     expect(result).toEqual({ eligible: true });
@@ -336,6 +382,7 @@ describe('checkCertEligibility', () => {
       type: 'KELAS',
       scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_QUIZZES',
+      certPublished: true,
     });
 
     expect(result).toMatchObject({ eligible: false });
@@ -359,6 +406,7 @@ describe('checkCertEligibility', () => {
       type: 'KELAS',
       scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_QUIZZES',
+      certPublished: true,
     });
 
     expect(result).toEqual({ eligible: true });
@@ -378,6 +426,7 @@ describe('checkCertEligibility', () => {
       type: 'KELAS',
       scheduleAt: LONG_AGO,
       completionCriteria: 'ALL_QUIZZES',
+      certPublished: true,
     });
 
     expect(result).toMatchObject({ eligible: false });
@@ -395,6 +444,7 @@ describe('checkCertEligibility', () => {
         type: 'WEBINAR',
         scheduleAt: oneHourAgo,
         completionCriteria: 'ALL_LESSONS',
+        certPublished: true,
       });
 
       expect(result.eligible).toBe(false);
@@ -414,6 +464,7 @@ describe('checkCertEligibility', () => {
         type: 'WEBINAR',
         scheduleAt: twoDaysAgo,
         completionCriteria: 'ALL_LESSONS',
+        certPublished: true,
       });
 
       expect(result).toEqual({ eligible: true });
@@ -430,6 +481,7 @@ describe('checkCertEligibility', () => {
         type: 'WEBINAR',
         scheduleAt: LONG_AGO,
         completionCriteria: 'ALL_LESSONS',
+        certPublished: true,
       });
 
       expect(result.eligible).toBe(false);
@@ -446,6 +498,7 @@ describe('checkCertEligibility', () => {
         type: 'WEBINAR',
         scheduleAt: twoDaysAgo,
         completionCriteria: 'ALL_LESSONS',
+        certPublished: true,
       });
 
       expect(result).toMatchObject({ eligible: false });
@@ -453,6 +506,7 @@ describe('checkCertEligibility', () => {
     });
 
     it('does not apply the time gate to non-WEBINAR program types', async () => {
+      mockPrisma.registration.findUnique.mockResolvedValue({ batchId: null, batch: null });
       mockPrisma.lesson.count.mockResolvedValue(0);
       const inTheFuture = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -461,10 +515,10 @@ describe('checkCertEligibility', () => {
         type: 'BOOTCAMP',
         scheduleAt: inTheFuture, // non-WEBINAR tak pernah dicek terhadap scheduleAt
         completionCriteria: 'ALL_LESSONS',
+        certPublished: true,
       });
 
       expect(result).toEqual({ eligible: true });
-      expect(mockPrisma.registration.findUnique).not.toHaveBeenCalled();
     });
   });
 });

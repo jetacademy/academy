@@ -11,7 +11,7 @@ import { sendWa, msgAccess, msgPaid, normalizeWa } from "@/lib/wa";
 import { formatJadwal, parseWIB } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml } from "@/lib/email";
 import { recordAffiliateConversion, voidAffiliateConversion } from "@/lib/affiliate";
-import { isCertIssuanceEnabled } from "@/lib/certificates";
+import { isCertIssuanceEnabled, issueCertificate, checkCertEligibility } from "@/lib/certificates";
 import { createBunnyVideo, getBunnyUploadAuth, deleteBunnyVideo } from "@/lib/bunny";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
@@ -635,6 +635,17 @@ export async function saveRegistration(formData: FormData) {
       regId = created.id;
     }
 
+    // Admin menandai lulus manual → terbitkan sertifikat langsung (bukan cuma ubah status),
+    // supaya "PASSED" selalu konsisten dengan sertifikat yang benar-benar ada. Tetap taat pada
+    // kedua gerbang keamanan (sakelar situs-wide + publish per-program) — kalau salah satu masih
+    // tertutup, sertifikat akan menyusul otomatis lewat backfill saat admin publish program ini.
+    if (status === "PASSED") {
+      const program = await prisma.program.findUnique({ where: { id: programId }, select: { certPublished: true } });
+      if (program?.certPublished && (await isCertIssuanceEnabled())) {
+        await issueCertificate(regId).catch((err) => console.error("[saveRegistration] Gagal menerbitkan sertifikat:", err));
+      }
+    }
+
     // Pastikan ada User record agar peserta bisa login member
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ email }, { whatsapp }] },
@@ -708,6 +719,46 @@ export async function toggleCertIssuance() {
     update: { certIssuanceEnabled: !current },
   });
   revalidatePath("/webadmin/sertifikat");
+}
+
+/**
+ * Gerbang rilis sertifikat PER PROGRAM. Sebelum ini di-publish, sertifikat program TIDAK PERNAH
+ * auto-terbit ke peserta — walau syarat kelulusan LMS-nya sudah 100% — supaya admin bisa uji
+ * desain sertifikat (tab "Sertifikat" di halaman program) dengan tenang sebelum peserta melihatnya.
+ * Begitu admin publish (false → true), langsung backfill: peserta yang SUDAH eligible atau sudah
+ * ditandai admin "PASSED" secara manual sebelumnya, langsung diterbitkan sertifikatnya — tidak perlu
+ * menunggu mereka membuka LMS lagi.
+ */
+export async function toggleCertPublish(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const program = await prisma.program.findUnique({ where: { id } });
+  if (!program) redirect("/webadmin/program");
+
+  const nextPublished = !program.certPublished;
+  await prisma.program.update({ where: { id }, data: { certPublished: nextPublished } });
+
+  let issuedCount = 0;
+  if (nextPublished && (await isCertIssuanceEnabled())) {
+    const updatedProgram = { ...program, certPublished: true };
+    const candidates = await prisma.registration.findMany({
+      where: { programId: id, certificate: null },
+      select: { id: true, status: true },
+    });
+    for (const reg of candidates) {
+      // Sudah ditandai admin "PASSED" manual → terbitkan langsung (tidak perlu cek ulang syarat LMS,
+      // itu sudah jadi keputusan admin sebelumnya). Selain itu → cek syarat kelulusan LMS seperti biasa.
+      const shouldIssue = reg.status === "PASSED" || (await checkCertEligibility(reg.id, updatedProgram)).eligible;
+      if (shouldIssue) {
+        await issueCertificate(reg.id).catch((err) => console.error("[toggleCertPublish] Gagal menerbitkan sertifikat:", err));
+        issuedCount++;
+      }
+    }
+  }
+
+  revalidatePath(`/webadmin/program/${id}/cert`);
+  revalidatePath("/webadmin/sertifikat");
+  redirect(`/webadmin/program/${id}/cert?ok=${nextPublished ? "published" : "unpublished"}&issued=${issuedCount}`);
 }
 
 // ─── Video (Bunny.net Stream) ─────────────────────────────────────

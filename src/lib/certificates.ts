@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { randomBytes } from "crypto";
 import { sendWa, msgCertificate } from "@/lib/wa";
 import { sendEmail, getCertEmailHtml } from "@/lib/email";
 import { formatJadwal } from "@/lib/format";
@@ -20,10 +22,21 @@ export async function isCertIssuanceEnabled(): Promise<boolean> {
   }
 }
 
+function isUniqueConstraintError(err: unknown): boolean {
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
+}
+
+/** 4 karakter hex acak — menutup celah enumerasi nomor sertifikat sekuensial. */
+function randomSuffix(): string {
+  return randomBytes(2).toString("hex").toUpperCase();
+}
+
 /**
- * Terbitkan sertifikat dengan nomor random (JSA-<tahun>-<8 hex>),
- * set status PASSED, lalu kirim notifikasi WA + email (best-effort).
- * Idempoten: jika sertifikat sudah ada, kembalikan yang lama.
+ * Terbitkan sertifikat, set status PASSED, lalu kirim notifikasi WA + email (best-effort).
+ * Idempoten: jika sertifikat sudah ada, kembalikan yang lama. Aman dari race condition —
+ * jika dua request paralel (mis. dua tab) memicu penerbitan bersamaan, salah satu akan
+ * gagal karena unique constraint dan kita fallback membaca sertifikat yang sudah dibuat
+ * request lainnya alih-alih melempar error ke peserta.
  */
 export async function issueCertificate(registrationId: string): Promise<{ number: string; url: string }> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
@@ -61,7 +74,6 @@ export async function issueCertificate(registrationId: string): Promise<{ number
     batchNumStr = String(previousBatchesCount + 1).padStart(3, "0");
   }
 
-  let sequence = 1;
   const existingCount = await prisma.certificate.count({
     where: {
       registration: {
@@ -70,30 +82,35 @@ export async function issueCertificate(registrationId: string): Promise<{ number
       },
     },
   });
-  sequence = existingCount + 1;
+  const baseSequence = existingCount + 1;
 
-  let number = `JS-${progCode}-${year}-B${batchNumStr}-${String(sequence).padStart(5, "0")}`;
-
-  let isUnique = false;
-  let attempts = 0;
-  while (!isUnique && attempts < 10) {
-    const dupe = await prisma.certificate.findUnique({ where: { number } });
-    if (!dupe) {
-      isUnique = true;
-    } else {
-      sequence++;
-      number = `JS-${progCode}-${year}-B${batchNumStr}-${String(sequence).padStart(5, "0")}`;
-      attempts++;
+  // Percobaan berulang dengan tambahan acak — cegah race condition di nomor DAN di registrationId
+  // (dua request paralel yang menyelesaikan materi terakhir bersamaan tidak akan saling melempar error).
+  let cert: { number: string } | null = null;
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < 10 && !cert; attempt++) {
+    const number = `JS-${progCode}-${year}-B${batchNumStr}-${String(baseSequence + attempt).padStart(5, "0")}-${randomSuffix()}`;
+    try {
+      cert = await prisma.$transaction(async (tx) => {
+        const created = await tx.certificate.create({
+          data: { registrationId: reg.id, number },
+        });
+        await tx.registration.update({ where: { id: reg.id }, data: { status: "PASSED" } });
+        return created;
+      });
+    } catch (err) {
+      lastErr = err;
+      if (!isUniqueConstraintError(err)) throw err;
+      // number bentrok (sangat kecil kemungkinan) ATAU registrationId sudah terisi oleh
+      // request paralel lain — cek yang mana sebelum retry.
+      const already = await prisma.certificate.findUnique({ where: { registrationId: reg.id } });
+      if (already) {
+        return { number: already.number, url: `${baseUrl}/sertifikat/${already.number}` };
+      }
+      // bukan konflik registrationId → konflik nomor, coba lagi dengan suffix baru
     }
   }
-
-  const cert = await prisma.$transaction(async (tx) => {
-    const created = await tx.certificate.create({
-      data: { registrationId: reg.id, number },
-    });
-    await tx.registration.update({ where: { id: reg.id }, data: { status: "PASSED" } });
-    return created;
-  });
+  if (!cert) throw lastErr instanceof Error ? lastErr : new Error("Gagal menerbitkan sertifikat setelah beberapa percobaan.");
 
   const certUrl = `${baseUrl}/sertifikat/${cert.number}`;
 
@@ -110,34 +127,60 @@ export async function issueCertificate(registrationId: string): Promise<{ number
   return { number: cert.number, url: certUrl };
 }
 
-/** Apakah seluruh materi LMS program sudah diselesaikan peserta? */
-export async function hasCompletedAllLessons(registrationId: string, programId: string): Promise<{ done: boolean; total: number; completed: number }> {
+/** Filter modul sesuai batch peserta — modul tanpa tautan batch dianggap berlaku untuk semua batch.
+ *  Sama persis dengan filter yang dipakai halaman LMS (member/lms/[registrationId]/page.tsx) —
+ *  HARUS tetap disinkronkan, supaya progress yang ditampilkan ke peserta (100%) selalu konsisten
+ *  dengan syarat yang dipakai untuk menerbitkan sertifikat.
+ */
+function batchModuleWhere(batchId?: string | null) {
+  return batchId
+    ? { OR: [{ batchLinks: { none: {} } }, { batchLinks: { some: { batchId } } }] }
+    : {};
+}
+
+/** Apakah seluruh materi LMS program (dalam lingkup batch peserta) sudah diselesaikan? */
+export async function hasCompletedAllLessons(
+  registrationId: string,
+  programId: string,
+  batchId?: string | null
+): Promise<{ done: boolean; total: number; completed: number }> {
+  const moduleWhere = { programId, ...batchModuleWhere(batchId) };
   const [total, completed] = await Promise.all([
-    prisma.lesson.count({ where: { module: { programId } } }),
-    prisma.completion.count({ where: { registrationId, lesson: { module: { programId } } } }),
+    prisma.lesson.count({ where: { module: moduleWhere } }),
+    prisma.completion.count({ where: { registrationId, lesson: { module: moduleWhere } } }),
   ]);
   return { done: total > 0 && completed >= total, total, completed };
 }
 
-/** Apakah seluruh kuis dalam kurikulum sudah lulus? (kuis selesai = lulus) */
-export async function hasPassedAllQuizzes(registrationId: string, programId: string): Promise<{ done: boolean; total: number; completed: number }> {
+/** Apakah seluruh kuis dalam kurikulum (lingkup batch peserta) sudah lulus? (kuis selesai = lulus) */
+export async function hasPassedAllQuizzes(
+  registrationId: string,
+  programId: string,
+  batchId?: string | null
+): Promise<{ done: boolean; total: number; completed: number }> {
+  const moduleWhere = { programId, ...batchModuleWhere(batchId) };
   const [total, completed] = await Promise.all([
-    prisma.lesson.count({ where: { type: "QUIZ", module: { programId } } }),
-    prisma.completion.count({ where: { registrationId, lesson: { type: "QUIZ", module: { programId } } } }),
+    prisma.lesson.count({ where: { type: "QUIZ", module: moduleWhere } }),
+    prisma.completion.count({ where: { registrationId, lesson: { type: "QUIZ", module: moduleWhere } } }),
   ]);
   return { done: total > 0 && completed >= total, total, completed };
 }
 
 /**
  * Cek kelayakan sertifikat sesuai kriteria program.
+ * Gerbang publish: `program.certPublished` harus true — admin sengaja menahan penerbitan
+ * sampai desain sertifikat diuji di /webadmin/program/[id]/cert, supaya tidak ada sertifikat
+ * salah/belum final yang keburu terkirim ke peserta.
  * Program WEBINAR: klaim baru terbuka 1×24 jam setelah jadwal sesi (batch bila ada,
  * kalau tidak pakai jadwal program) — cegah klaim sebelum sesi selesai/dimulai.
  * Program tanpa materi sama sekali → layak setelah lewat jeda itu (kalau bukan webinar,
  * langsung layak). Program dengan materi/kuis tetap harus lulus itu di atasnya.
+ * Perhitungan materi/kuis batch-aware: mengikuti modul yang benar-benar berlaku untuk
+ * batch peserta (sama seperti yang ditampilkan di layar LMS-nya).
  */
 export async function checkCertEligibility(
   registrationId: string,
-  program: { id: string; type: string; scheduleAt: Date; completionCriteria: "ALL_LESSONS" | "ALL_QUIZZES" }
+  program: { id: string; type: string; scheduleAt: Date; completionCriteria: "ALL_LESSONS" | "ALL_QUIZZES"; certPublished: boolean }
 ): Promise<{ eligible: boolean; reason?: string; availableAt?: Date }> {
   if (!(await isCertIssuanceEnabled())) {
     return {
@@ -146,29 +189,40 @@ export async function checkCertEligibility(
     };
   }
 
-  // Program dengan jadwal — sertifikat baru terbit setelah acara (1×24 jam)
-  const reg = await prisma.registration.findUnique({
-    where: { id: registrationId },
-    select: { batch: { select: { scheduleAt: true } } },
-  });
-  const sessionAt = reg?.batch?.scheduleAt ?? program.scheduleAt;
-  const availableAt = new Date(sessionAt.getTime() + CERT_CLAIM_DELAY_MS);
-  if (new Date() < availableAt) {
+  if (!program.certPublished) {
     return {
       eligible: false,
-      availableAt,
-      reason: `Sertifikat baru bisa diklaim mulai ${formatJadwal(availableAt)} (1×24 jam setelah sesi berakhir).`,
+      reason: "Sertifikat program ini belum dipublikasikan admin ke peserta. Hubungi admin jika ini seharusnya sudah aktif.",
     };
   }
 
-  const totalLessons = await prisma.lesson.count({ where: { module: { programId: program.id } } });
+  const reg = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    select: { batchId: true, batch: { select: { scheduleAt: true } } },
+  });
+
+  // WEBINAR saja — sertifikat baru terbit 1×24 jam setelah acara berakhir (bukan tipe lain).
+  if (program.type === "WEBINAR") {
+    const sessionAt = reg?.batch?.scheduleAt ?? program.scheduleAt;
+    const availableAt = new Date(sessionAt.getTime() + CERT_CLAIM_DELAY_MS);
+    if (new Date() < availableAt) {
+      return {
+        eligible: false,
+        availableAt,
+        reason: `Sertifikat baru bisa diklaim mulai ${formatJadwal(availableAt)} (1×24 jam setelah sesi berakhir).`,
+      };
+    }
+  }
+
+  const batchId = reg?.batchId ?? null;
+  const totalLessons = await prisma.lesson.count({ where: { module: { programId: program.id, ...batchModuleWhere(batchId) } } });
   if (totalLessons === 0) return { eligible: true };
 
   if (program.completionCriteria === "ALL_QUIZZES") {
-    const quiz = await hasPassedAllQuizzes(registrationId, program.id);
+    const quiz = await hasPassedAllQuizzes(registrationId, program.id, batchId);
     if (quiz.total === 0) {
       // tidak ada kuis → jatuh ke penyelesaian materi
-      const les = await hasCompletedAllLessons(registrationId, program.id);
+      const les = await hasCompletedAllLessons(registrationId, program.id, batchId);
       return les.done
         ? { eligible: true }
         : { eligible: false, reason: `Selesaikan semua materi dulu (${les.completed}/${les.total}).` };
@@ -178,7 +232,7 @@ export async function checkCertEligibility(
       : { eligible: false, reason: `Lulusi semua tes dulu (${quiz.completed}/${quiz.total} tes lulus).` };
   }
 
-  const les = await hasCompletedAllLessons(registrationId, program.id);
+  const les = await hasCompletedAllLessons(registrationId, program.id, batchId);
   return les.done
     ? { eligible: true }
     : { eligible: false, reason: `Selesaikan semua materi dulu (${les.completed}/${les.total}).` };
