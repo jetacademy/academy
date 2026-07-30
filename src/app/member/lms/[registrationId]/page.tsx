@@ -301,7 +301,7 @@ export default async function LmsPage({
     <>
       <Navbar minimal ctaHref="/member" ctaLabel="Dashboard Saya" />
 
-      <div style={{ background: "var(--bg-panel)", minHeight: "90vh" }}>
+      <div className="lms-scope" style={{ background: "var(--bg-panel)", minHeight: "90vh" }}>
         {/* Sticky Header */}
         <div className="lms-header">
           <div style={{ flex: 1, minWidth: 0 }}>

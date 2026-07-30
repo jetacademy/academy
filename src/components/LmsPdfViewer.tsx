@@ -1,19 +1,19 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState, useCallback } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
+// Gunakan worker dari CDN (sesuai versi pdfjs-dist yang di-bundle react-pdf)
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 /**
- * LmsPdfViewer — PDF viewer yang mencegah download.
- *
- * Strategi:
- * 1. Gunakan Google Docs Viewer embed (tidak ada toolbar download browser).
- * 2. Jika URL adalah file lokal (bukan https), fallback ke native iframe + `#toolbar=0&navpanes=0`.
- * 3. Right-click pada kontainer dikunci (hanya efektif di luar iframe).
- * 4. Tidak ada link download yang ditampilkan.
- *
- * Props:
- *   fileUrl — URL publik ke file PDF
- *   title   — Judul materi (ditampilkan di header)
+ * LmsPdfViewer — PDF viewer menggunakan react-pdf (PDF.js).
+ * - Render tiap halaman sebagai <canvas> → tidak ada toolbar download browser
+ * - Tidak ada link download yang ditampilkan
+ * - Navigasi halaman (prev/next)
+ * - Konteks kanan diblokir pada kontainer
  */
 export default function LmsPdfViewer({
   fileUrl,
@@ -22,22 +22,38 @@ export default function LmsPdfViewer({
   fileUrl: string;
   title: string;
 }) {
-  const [loaded, setLoaded] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [containerWidth, setContainerWidth] = useState(700);
 
-  // Gunakan Google Docs Viewer hanya untuk URL https — dihitung sekali saat render
-  const useGdocs = (() => {
-    try {
-      return new URL(fileUrl).protocol === "https:";
-    } catch {
-      return false;
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) {
+      const ro = new ResizeObserver(([entry]) => {
+        setContainerWidth(Math.floor(entry.contentRect.width));
+      });
+      ro.observe(node);
     }
-  })();
+  }, []);
 
-  const embedSrc = useGdocs
-    ? `https://docs.google.com/viewer?embedded=true&url=${encodeURIComponent(fileUrl)}`
-    : `${fileUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    setNumPages(numPages);
+    setLoading(false);
+  }
 
+  function onDocumentLoadError() {
+    setLoading(false);
+    setError("Gagal memuat dokumen PDF. Silakan coba lagi.");
+  }
+
+  function prevPage() {
+    setPageNumber((p) => Math.max(1, p - 1));
+  }
+
+  function nextPage() {
+    setPageNumber((p) => Math.min(numPages, p + 1));
+  }
 
   function handleContextMenu(e: React.MouseEvent) {
     e.preventDefault();
@@ -47,6 +63,7 @@ export default function LmsPdfViewer({
     <div
       className="lms-pdf-wrapper"
       onContextMenu={handleContextMenu}
+      style={{ userSelect: "none" }}
     >
       {/* Header */}
       <div className="lms-pdf-header">
@@ -54,7 +71,7 @@ export default function LmsPdfViewer({
           <span>📄</span>
           <span
             style={{
-              maxWidth: "60vw",
+              maxWidth: "55vw",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -63,25 +80,20 @@ export default function LmsPdfViewer({
             {title}
           </span>
         </div>
-        <div className="lms-pdf-shield">
-          🔒 Hanya baca
-        </div>
+        <div className="lms-pdf-shield">🔒 Hanya baca</div>
       </div>
 
-      {/* Loading skeleton */}
-      {!loaded && (
+      {/* Loading state */}
+      {loading && (
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            top: 41, // header height
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            background: "var(--bg-panel)",
+            padding: "3rem 1rem",
             gap: "0.8rem",
-            zIndex: 1,
+            background: "var(--bg-panel)",
           }}
         >
           <div
@@ -100,21 +112,111 @@ export default function LmsPdfViewer({
         </div>
       )}
 
-      {/* iframe PDF */}
-      <div style={{ position: "relative" }}>
-        <iframe
-          ref={iframeRef}
-          src={embedSrc}
-          className="lms-pdf-frame"
-          title={title}
-          onLoad={() => setLoaded(true)}
-          allow="fullscreen"
-          // Mencegah download via attribute (beberapa browser menghormati ini)
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups-to-escape-sandbox allow-popups"
-        />
-        {/* Transparent overlay di pojok kanan bawah untuk menutup toolbar download */}
-        <div className="lms-pdf-overlay" />
+      {/* Error state */}
+      {error && (
+        <div
+          style={{
+            padding: "2rem",
+            textAlign: "center",
+            color: "var(--red, #e5484d)",
+            fontSize: "0.88rem",
+            fontWeight: 600,
+          }}
+        >
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* PDF Canvas Area */}
+      <div
+        ref={containerRef}
+        style={{
+          width: "100%",
+          overflowX: "auto",
+          overflowY: "auto",
+          maxHeight: "72vh",
+          background: "#525659",
+          display: loading || error ? "none" : "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "1rem 0",
+          gap: "0.75rem",
+        }}
+      >
+        <Document
+          file={fileUrl}
+          onLoadSuccess={onDocumentLoadSuccess}
+          onLoadError={onDocumentLoadError}
+          loading={null}
+          noData={null}
+        >
+          <Page
+            key={`page_${pageNumber}`}
+            pageNumber={pageNumber}
+            width={Math.min(containerWidth - 32, 900)}
+            renderTextLayer={false}
+            renderAnnotationLayer={false}
+            loading={null}
+          />
+        </Document>
       </div>
+
+      {/* Navigasi halaman */}
+      {!loading && !error && numPages > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.75rem",
+            padding: "0.65rem 1rem",
+            borderTop: "1px solid var(--border)",
+            background: "var(--bg-panel)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={prevPage}
+            disabled={pageNumber <= 1}
+            style={{
+              padding: "0.35rem 0.9rem",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              borderRadius: "var(--r-sm)",
+              border: "1.5px solid var(--border)",
+              background: pageNumber <= 1 ? "var(--chip)" : "var(--white)",
+              color: pageNumber <= 1 ? "var(--ink-faint)" : "var(--ink)",
+              cursor: pageNumber <= 1 ? "not-allowed" : "pointer",
+              transition: "all .15s",
+            }}
+          >
+            ← Sebelumnya
+          </button>
+
+          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--ink-soft)", minWidth: "5rem", textAlign: "center" }}>
+            {pageNumber} / {numPages}
+          </span>
+
+          <button
+            type="button"
+            onClick={nextPage}
+            disabled={pageNumber >= numPages}
+            style={{
+              padding: "0.35rem 0.9rem",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              borderRadius: "var(--r-sm)",
+              border: "1.5px solid var(--border)",
+              background: pageNumber >= numPages ? "var(--chip)" : "var(--purple)",
+              color: pageNumber >= numPages ? "var(--ink-faint)" : "#fff",
+              cursor: pageNumber >= numPages ? "not-allowed" : "pointer",
+              transition: "all .15s",
+            }}
+          >
+            Berikutnya →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
