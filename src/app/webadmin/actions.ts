@@ -1186,38 +1186,42 @@ export async function sendBroadcast(formData: FormData) {
   if (messageType === "custom" && !customMessage) redirect("/webadmin/broadcast?e=pesan");
 
   // ── Cari penerima ─────────────────────────────────────
-  const statusFilter = { in: ["PAID", "PASSED", "REGISTERED"] as const };
-  const recipientWhere: { status: typeof statusFilter; whatsapp: { not: null }; programId?: string; batchId?: string } = {
-    status: statusFilter,
-    whatsapp: { not: null },
-  };
-  if (batchId) recipientWhere.batchId = batchId;
-  else if (programId) recipientWhere.programId = programId;
-
-  const registrations = await prisma.registration.findMany({
-    where: recipientWhere,
-    select: { id: true, name: true, whatsapp: true, program: { select: { title: true, zoomLink: true, waGroupLink: true } } },
+  const regsRaw = await (prisma.registration as any).findMany({
+    where: {
+      status: { in: ["PAID", "PASSED", "REGISTERED"] },
+      ...(batchId ? { batchId } : {}),
+      ...(!batchId && programId ? { programId } : {}),
+    },
+    select: { id: true, name: true, whatsapp: true },
   });
 
+  // Filter yang WA-nya kosong
+  const validRegs = regsRaw.filter((r: any) => r.whatsapp);
+
   // ── Buat pesan ────────────────────────────────────────
+  // Ambil link Zoom/Grup dari program
+  const progData = programId
+    ? await prisma.program.findUnique({ where: { id: programId }, select: { zoomLink: true, waGroupLink: true } })
+    : null;
+
   let messageText = "";
   if (messageType === "custom") {
     messageText = customMessage;
   } else if (messageType === "zoom") {
-    const zoomLink = registrations[0]?.program?.zoomLink ?? "";
+    const zoomLink = progData?.zoomLink ?? "";
     messageText = `Halo {{name}},\n\nBerikut link Zoom untuk pelatihan:\n${zoomLink}\n\nPastikan sudah siap 15 menit sebelum acara. Terima kasih! 😊`;
   } else if (messageType === "grup") {
-    const grupLink = registrations[0]?.program?.waGroupLink ?? "";
+    const grupLink = progData?.waGroupLink ?? "";
     messageText = `Halo {{name}},\n\nBergabunglah ke grup WhatsApp peserta melalui link berikut:\n${grupLink}\n\nSilakan perkenalkan diri dan tanyakan jika ada yang perlu. Terima kasih! 😊`;
   }
 
   // ── Kirim broadcast (batch: 5 per group, jeda 3 detik antar group) ──
   let sent = 0, failed = 0;
   const batchSize = 5;
-  for (let i = 0; i < registrations.length; i += batchSize) {
-    const batch = registrations.slice(i, i + batchSize);
+  for (let i = 0; i < validRegs.length; i += batchSize) {
+    const batch = validRegs.slice(i, i + batchSize);
     const results = await Promise.allSettled(
-      batch.map(async (reg) => {
+      batch.map(async (reg: any) => {
         if (!reg.whatsapp) return false;
         const personalMsg = messageText.replace(/\{\{name\}\}/g, reg.name);
         return sendWa(reg.whatsapp, personalMsg);
@@ -1227,12 +1231,11 @@ export async function sendBroadcast(formData: FormData) {
       if (r.status === "fulfilled" && r.value) sent++;
       else failed++;
     }
-    // Jeda 3 detik antar batch — cukup untuk hindari blokir
-    if (i + batchSize < registrations.length) {
+    if (i + batchSize < validRegs.length) {
       await new Promise((r) => setTimeout(r, 3000));
     }
   }
 
-  const resultQuery = new URLSearchParams({ ok: "1", sent: String(sent), failed: String(failed), total: String(registrations.length) });
+  const resultQuery = new URLSearchParams({ ok: "1", sent: String(sent), failed: String(failed), total: String(validRegs.length) });
   redirect(`/webadmin/broadcast?${resultQuery.toString()}`);
 }
