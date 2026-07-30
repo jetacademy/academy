@@ -1175,6 +1175,7 @@ export async function deleteArticle(formData: FormData) {
 
 export async function sendBroadcast(formData: FormData) {
   await requireAdmin();
+  const session = await getAdminSession();
 
   const programId = optStr(formData, "programId");
   const batchId = optStr(formData, "batchId");
@@ -1185,44 +1186,43 @@ export async function sendBroadcast(formData: FormData) {
   if (!programId && !batchId) redirect("/webadmin/broadcast?e=target");
   if (messageType === "custom" && !customMessage) redirect("/webadmin/broadcast?e=pesan");
 
-  // Build auth cookie header from next/headers
-  let cookieHeader = "";
-  try {
-    const { cookies } = await import("next/headers");
-    const jar = await cookies();
-    const jsaAdmin = jar.get("jsa_admin");
-    if (jsaAdmin) {
-      cookieHeader = `jsa_admin=${jsaAdmin.value}`;
-    }
-  } catch {
-    // fallback: coba tanpa cookie (dev mode)
+  // ── Cari penerima ─────────────────────────────────────
+  const where: any = { status: { in: ["PAID", "PASSED"] } };
+  if (batchId) where.batchId = batchId;
+  else if (programId) where.programId = programId;
+
+  const registrations = await prisma.registration.findMany({
+    where,
+    select: { id: true, name: true, whatsapp: true, program: { select: { title: true, zoomLink: true, waGroupLink: true } } },
+  });
+
+  // ── Buat pesan ────────────────────────────────────────
+  let messageText = "";
+  if (messageType === "custom") {
+    messageText = customMessage;
+  } else if (messageType === "zoom") {
+    const zoomLink = registrations[0]?.program?.zoomLink ?? "";
+    messageText = `Halo {{name}},\n\nBerikut link Zoom untuk pelatihan:\n${zoomLink}\n\nPastikan sudah siap 15 menit sebelum acara. Terima kasih! 😊`;
+  } else if (messageType === "grup") {
+    const grupLink = registrations[0]?.program?.waGroupLink ?? "";
+    messageText = `Halo {{name}},\n\nBergabunglah ke grup WhatsApp peserta melalui link berikut:\n${grupLink}\n\nSilakan perkenalkan diri dan tanyakan jika ada yang perlu. Terima kasih! 😊`;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-
-  try {
-    const res = await fetch(`${baseUrl}/api/webadmin/broadcast`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-      body: JSON.stringify({ programId, batchId, messageType, customMessage: messageType === "custom" ? customMessage : undefined }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      const errorMsg = data?.error ?? "Gagal mengirim broadcast.";
-      redirect(`/webadmin/broadcast?e=${encodeURIComponent(errorMsg)}`);
+  // ── Kirim broadcast ───────────────────────────────────
+  let sent = 0, failed = 0;
+  for (const reg of registrations) {
+    if (!reg.whatsapp) { failed++; continue; }
+    const personalMsg = messageText.replace(/\{\{name\}\}/g, reg.name);
+    try {
+      const ok = await sendWa(reg.whatsapp, personalMsg);
+      if (ok) sent++; else failed++;
+    } catch { failed++; }
+    // Jeda 3-5 detik antar pengiriman
+    if (sent + failed < registrations.length) {
+      await new Promise((r) => setTimeout(r, 3000 + Math.random() * 2000));
     }
-
-    // Kirim dengan query params biar bisa ditampilkan hasilnya
-    const { sent, failed, total } = data as { sent: number; failed: number; total: number };
-    const resultQuery = new URLSearchParams({ ok: "1", sent: String(sent), failed: String(failed), total: String(total) });
-    redirect(`/webadmin/broadcast?${resultQuery.toString()}`);
-  } catch (err) {
-    console.error("[sendBroadcast] error:", err);
-    redirect("/webadmin/broadcast?e=Gagal mengirim broadcast. Coba lagi.");
   }
+
+  const resultQuery = new URLSearchParams({ ok: "1", sent: String(sent), failed: String(failed), total: String(registrations.length) });
+  redirect(`/webadmin/broadcast?${resultQuery.toString()}`);
 }
