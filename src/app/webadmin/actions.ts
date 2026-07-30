@@ -1261,7 +1261,8 @@ export async function sendBroadcast(formData: FormData) {
   if (onlyNew && programId) {
     const setting = await prisma.systemSetting.findUnique({ where: { id: "singleton" } });
     const key = `last_broadcast_${programId}`;
-    lastSentAt = (setting as any)?.[key] ? new Date((setting as any)[key]) : null;
+    const raw = setting as Record<string, unknown> | null;
+    lastSentAt = raw?.[key] ? new Date(raw[key] as string) : null;
   }
 
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/webadmin/broadcast`, {

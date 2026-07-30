@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     // ── Build where clause ──────────────────────────────────────
     const statusFilter = includeRegistered ? ["PAID", "PASSED", "REGISTERED"] : ["PAID", "PASSED"];
-    const where: any = {
+    const where: Record<string, unknown> = {
       status: { in: statusFilter },
     };
     if (batchId) {
