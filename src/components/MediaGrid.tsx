@@ -2,10 +2,10 @@ type MediaItem = {
   id: string;
   filename: string;
   url: string;
-  type: string;
-  mime: string | null;
-  size: number | null;
+  mimeType: string;
+  size: number;
   createdAt: Date;
+  type?: string;
 };
 
 export default function MediaGrid({
@@ -52,7 +52,7 @@ export default function MediaGrid({
               color: "var(--ink-soft)",
             }}
           >
-            {item.type === "PDF" ? "📄" : item.type === "IMAGE" ? "🖼️" : "🎬"}
+            {item.mimeType?.startsWith("pdf") ? "📄" : item.mimeType?.startsWith("image") ? "🖼️" : "🎬"}
           </div>
 
           {/* Info */}
