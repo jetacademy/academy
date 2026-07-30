@@ -6,11 +6,10 @@ export type BroadcastMessageType = "zoom" | "grup" | "custom";
 export type BroadcastResult = { sent: number; failed: number; total: number };
 
 export async function POST(req: Request) {
-  // Cek session admin via cookie
-  const { cookies } = await import("next/headers");
-  const jar = await cookies();
-  const jsaAdmin = jar.get("jsa_admin");
-  if (!jsaAdmin?.value) {
+  // Auth via internal secret header (dikirim dari server action)
+  const secret = req.headers.get("x-internal-secret");
+  const key = process.env.JETSCHOOL_API_KEY || "internal";
+  if (secret !== key) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

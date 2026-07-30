@@ -1185,21 +1185,17 @@ export async function sendBroadcast(formData: FormData) {
   if (!programId && !batchId) redirect("/webadmin/broadcast?e=target");
   if (messageType === "custom" && !customMessage) redirect("/webadmin/broadcast?e=pesan");
 
-  const authRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/webadmin/broadcast`, {
+  // ── Cari penerima lewat API internal ──
+  // Panggil API endpoint dengan header khusus (secret)
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/webadmin/broadcast`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-API-Key": process.env.JETSCHOOL_API_KEY || "",
-    },
+    headers: { "Content-Type": "application/json", "x-internal-secret": process.env.JETSCHOOL_API_KEY || "internal" },
     body: JSON.stringify({ programId, batchId, messageType, customMessage: messageType === "custom" ? customMessage : undefined }),
   });
 
-  if (!authRes.ok) {
-    const errData = await authRes.json().catch(() => ({ error: "Gagal" }));
-    redirect(`/webadmin/broadcast?e=${encodeURIComponent(errData.error || "Gagal")}`);
-  }
+  const data = await res.json();
+  if (!res.ok) redirect(`/webadmin/broadcast?e=${encodeURIComponent(data.error || "Gagal")}`);
 
-  const data = await authRes.json();
   const resultQuery = new URLSearchParams({ ok: "1", sent: String(data.sent), failed: String(data.failed), total: String(data.total) });
   redirect(`/webadmin/broadcast?${resultQuery.toString()}`);
 }
