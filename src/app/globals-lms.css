@@ -173,6 +173,105 @@
 .lms-mob-nav-toggle:hover { background: var(--purple-deep); }
 .lms-mob-nav-toggle svg { width: 0.9rem; height: 0.9rem; }
 
+/* ── Back to Dashboard Button ── */
+.lms-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--r-sm);
+  background: var(--chip);
+  border: 1px solid var(--border);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.lms-back-btn:hover {
+  background: var(--white);
+  color: var(--purple);
+  border-color: var(--purple);
+}
+.lms-back-btn svg { width: 0.9rem; height: 0.9rem; }
+
+.lms-header-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* ── Desktop Header Actions & Nav Group ── */
+.lms-header-desktop-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lms-header-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: var(--chip);
+  padding: 0.2rem;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+}
+
+.lms-hdr-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.lms-hdr-nav-btn:hover:not(.disabled) {
+  background: var(--white);
+  color: var(--purple);
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.lms-hdr-nav-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.lms-hdr-nav-btn svg { width: 0.85rem; height: 0.85rem; }
+
+/* ── Focus Mode Button ── */
+.lms-sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.lms-sidebar-toggle-btn:hover {
+  background: rgba(108,92,231,.08);
+  color: var(--purple);
+  border-color: var(--purple);
+}
+.lms-sidebar-toggle-btn.active {
+  background: var(--purple);
+  color: #fff;
+  border-color: var(--purple);
+}
+.lms-sidebar-toggle-btn svg { width: 0.95rem; height: 0.95rem; }
+
 /* ── Claim Banner ── */
 .lms-claim-banner {
   background: #E8F8EF;
@@ -193,11 +292,89 @@
   grid-template-columns: minmax(0, 1fr) 21rem;
   min-height: calc(100vh - 56px);
   align-items: start;
+  transition: grid-template-columns .25s ease;
+}
+
+/* Mode Fokus (Sidebar disembunyikan di Desktop) */
+.lms-split.sidebar-collapsed {
+  grid-template-columns: 1fr;
+}
+.lms-split.sidebar-collapsed .lms-sidebar-pane {
+  display: none;
+}
+.lms-split.sidebar-collapsed .lms-inner-container {
+  max-width: 62rem;
 }
 
 .lms-content-pane {
   padding: 1.75rem 2rem 6rem; /* bottom 6rem = ruang untuk bottom-nav mobile */
   overflow-y: auto;
+}
+
+/* ── Desktop Inline Navigation Footer Bar ── */
+.lms-desktop-nav-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  margin-top: 1.75rem;
+  max-width: 52rem;
+  margin-inline: auto;
+}
+.lms-split.sidebar-collapsed .lms-desktop-nav-bar {
+  max-width: 62rem;
+}
+
+.lms-desk-nav-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.85rem 1.1rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0,0,0,.03);
+}
+.lms-desk-nav-btn:hover:not(.disabled) {
+  border-color: var(--purple);
+  box-shadow: 0 6px 20px rgba(108,92,231,.12);
+  transform: translateY(-2px);
+}
+.lms-desk-nav-btn.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: var(--chip);
+}
+.lms-desk-nav-btn.next {
+  justify-content: flex-end;
+}
+.lms-desk-nav-arrow {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--purple);
+}
+.lms-desk-nav-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.lms-desk-nav-sub {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+}
+.lms-desk-nav-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .lms-sidebar-pane {
@@ -526,6 +703,13 @@
   .lms-content-pane {
     padding: 1rem 1rem 6rem; /* 6rem = space for bottom nav */
     position: static;
+  }
+
+  /* Sembunyikan elemen navigasi khusus desktop */
+  .lms-header-desktop-actions,
+  .lms-desktop-nav-bar,
+  .lms-back-text {
+    display: none !important;
   }
 
   /* Tampilkan toggle materi di header */

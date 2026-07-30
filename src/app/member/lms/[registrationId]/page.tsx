@@ -14,6 +14,7 @@ import LessonVideoPlayer from "@/components/LessonVideoPlayer";
 import LmsSidebar from "@/components/LmsSidebar";
 import LmsMobileNav from "@/components/LmsMobileNav";
 import LmsPdfViewer from "@/components/LmsPdfViewer";
+import LmsViewContainer from "@/components/LmsViewContainer";
 import { getEmbedUrl } from "@/lib/video";
 
 export const dynamic = "force-dynamic";
@@ -297,271 +298,314 @@ export default async function LmsPage({
   }));
   const completedLessonIdsArr = Array.from(completedLessonIds);
 
+  const prevLessonObj =
+    currentIndex > 0 && allLessons[currentIndex - 1]
+      ? { id: allLessons[currentIndex - 1].id, title: allLessons[currentIndex - 1].title }
+      : null;
+
+  const nextLessonObj = nextLesson
+    ? { id: nextLesson.id, title: nextLesson.title }
+    : null;
+
   return (
     <>
       <Navbar minimal ctaHref="/member" ctaLabel="Dashboard Saya" />
 
-      <div className="lms-scope" style={{ background: "var(--bg-panel)", minHeight: "90vh" }}>
-        {/* Sticky Header — compact single-row */}
-        <div className="lms-header">
-          {/* Judul */}
-          <div className="lms-header-title">
-            <span className="lms-header-label">LMS Interaktif</span>
-            <span className="lms-header-name">{program.title}</span>
-          </div>
-
-          {/* Progress pill — desktop only (hidden on mobile via CSS) */}
-          <div className="lms-header-progress">
-            <div className="lms-header-progress-bar">
-              <div className="lms-header-progress-fill" style={{ width: `${progressPercent}%` }} />
-            </div>
-            <span className="lms-header-progress-pct">{progressPercent}%</span>
-          </div>
-
-          {/* Tombol Materi — mobile only */}
-          <LmsMobileNav
-            sections={sidebarSections}
-            currentLessonId={currentLesson.id}
-            completedLessonIds={completedLessonIdsArr}
-            registrationId={registrationId}
-            completedCount={completedCount}
-            totalLessons={totalLessons}
-            progressPercent={progressPercent}
-            isAllDone={isAllDone}
-          />
+      {/* Banner klaim: syarat kelulusan sudah terpenuhi */}
+      {canClaim && !isAllDone && (
+        <div className="lms-claim-banner">
+          <span style={{ fontSize: ".88rem", fontWeight: 700, color: "#1d8a4e" }}>
+            Syarat kelulusan Anda sudah terpenuhi — sertifikat siap diklaim.
+          </span>
+          <ClaimCertButton registrationId={registrationId} />
         </div>
+      )}
 
-        {/* Banner klaim: syarat kelulusan sudah terpenuhi */}
-        {canClaim && !isAllDone && (
-          <div className="lms-claim-banner">
-            <span style={{ fontSize: ".88rem", fontWeight: 700, color: "#1d8a4e" }}>
-              Syarat kelulusan Anda sudah terpenuhi — sertifikat siap diklaim.
-            </span>
-            <ClaimCertButton registrationId={registrationId} />
-          </div>
-        )}
+      <LmsViewContainer
+        programTitle={program.title}
+        currentLessonTitle={currentLesson.title}
+        completedCount={completedCount}
+        totalLessons={totalLessons}
+        progressPercent={progressPercent}
+        prevLesson={prevLessonObj}
+        nextLesson={nextLessonObj}
+        registrationId={registrationId}
+        sidebarSections={sidebarSections}
+        currentLessonId={currentLesson.id}
+        completedLessonIdsArr={completedLessonIdsArr}
+        isAllDone={isAllDone}
+        currentIndex={currentIndex}
+        allLessonsCount={allLessons.length}
+      >
+        {isAllDone ? (
+          <div
+            style={{
+              background: "var(--white)",
+              borderRadius: "var(--r-md)",
+              boxShadow: "var(--shadow)",
+              padding: "4rem 2rem",
+              textAlign: "center",
+              maxWidth: "36rem",
+              margin: "2rem auto",
+            }}
+          >
+            <span style={{ fontSize: "4rem" }}>🏆</span>
+            <h2 style={{ marginTop: "1.5rem", fontWeight: 800 }}>
+              Selamat, Anda Telah Menyelesaikan Semua Materi!
+            </h2>
 
-        {/* Layout Utama split-pane */}
-        <div className="lms-split" style={{ alignItems: "start" }}>
-
-          {/* Sisi Kiri: Konten Materi */}
-          <div className="lms-content-pane">
-            {isAllDone ? (
-              <div style={{
-                background: "var(--white)",
-                borderRadius: "var(--r-md)",
-                boxShadow: "var(--shadow)",
-                padding: "4rem 2rem",
-                textAlign: "center",
-                maxWidth: "36rem",
-                margin: "2rem auto"
-              }}>
-                <span style={{ fontSize: "4rem" }}>🏆</span>
-                <h2 style={{ marginTop: "1.5rem", fontWeight: 800 }}>Selamat, Anda Telah Menyelesaikan Semua Materi!</h2>
-
-                {reg.certificate ? (
-                  <>
-                    <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem", lineHeight: 1.6, margin: "1rem 0 2rem" }}>
-                      Sertifikat Anda sudah terbit dengan nomor resmi. Unduh dan bagikan pencapaian Anda!
-                    </p>
-                    <Link href={`/sertifikat/${reg.certificate.number}`} className="btn btn-purple btn-lg">Unduh e-Sertifikat</Link>
-                  </>
-                ) : canClaim ? (
-                  <>
-                    {isFreeClaim ? (
-                      <div className="adm-alert ok" style={{ marginBottom: "1.5rem", textAlign: "left", padding: "1rem", borderRadius: "var(--r-sm)", border: "1px solid rgba(46, 204, 113, 0.2)", background: "rgba(46, 204, 113, 0.08)", color: "#27ae60" }}>
-                        <strong>Promo Terbatas:</strong> Anda berhak mengklaim e-sertifikat secara <strong>GRATIS</strong> (Hemat {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(program.certPrice)}) karena menyelesaikan semua syarat sebelum batas waktu H+5 ({new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(freeUntil)}).
-                      </div>
-                    ) : null}
-                    <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem", lineHeight: 1.6, margin: "1rem 0 2rem" }}>
-                      Seluruh syarat kelulusan {program.title} sudah terpenuhi. Klaim e-sertifikat resmi Anda sekarang.
-                    </p>
-                    <ClaimCertButton registrationId={registrationId} />
-                  </>
-                ) : !hasPaid && !hideCertUpsell ? (
-                  <>
-                    <div className="adm-alert warn" style={{ marginBottom: "1.5rem", textAlign: "left", padding: "1rem", borderRadius: "var(--r-sm)", border: "1px solid rgba(230, 126, 34, 0.2)", background: "rgba(230, 126, 34, 0.08)", color: "#d35400" }}>
-                      <strong>Batas Klaim Gratis Berakhir:</strong> Masa tenggang klaim sertifikat gratis (H+5) telah berakhir pada {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(freeUntil)}. Anda kini dialihkan ke paket sertifikat berbayar.
-                    </div>
-                    <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem", lineHeight: 1.6, margin: "1rem 0 2rem" }}>
-                      Selesaikan pembayaran paket sertifikat untuk menerbitkan e-sertifikat resmi Anda.
-                    </p>
-                    <div style={{ maxWidth: "24rem", margin: "0 auto" }}>
-                      <MemberPayCertButton registrationId={registrationId} certPrice={program.certPrice} className="btn btn-purple btn-lg btn-block" />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p style={{ color: "var(--ink-soft)", fontSize: "0.95rem", lineHeight: 1.6, margin: "1rem 0 2rem" }}>
-                      {"reason" in eligibility && eligibility.reason
-                        ? eligibility.reason
-                        : "Masih ada syarat kelulusan yang belum terpenuhi. Periksa kembali materi & tes Anda."}
-                    </p>
-                    {program.price === 0 && isWithinFreePeriod && !hideCertUpsell && (
-                      <p style={{ fontSize: "0.85rem", color: "var(--purple)", fontWeight: 700, marginTop: "-1rem", marginBottom: "2rem" }}>
-                        ⚡ Selesaikan seluruh materi/tes sekarang untuk mengklaim sertifikat GRATIS (Masa tenggang H+5).
-                      </p>
-                    )}
-                    <Link href="/member" className="btn btn-line btn-lg">Kembali ke Dashboard</Link>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="lms-inner-container">
-                {/* Embed Video */}
-                {currentLesson.type === "VIDEO" && embedUrl && (
-                  <LessonVideoPlayer src={embedUrl} title={currentLesson.title} />
-                )}
-
-                {/* Embed PDF — no download */}
-                {currentLesson.type === "PDF" && currentLesson.fileUrl && (
-                  <LmsPdfViewer
-                    fileUrl={currentLesson.fileUrl}
-                    title={currentLesson.title}
-                  />
-                )}
-
-                {/* Info & Konten Materi */}
-                <div className="lms-lesson-card">
-                  <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", marginBottom: "0.8rem", flexWrap: "wrap" }}>
-                    <span className="badge" style={{ background: "rgba(108, 92, 231, 0.1)", color: "var(--purple)" }}>
-                      {TYPE_LABEL[currentLesson.type] ?? currentLesson.type}
-                    </span>
-                    <span style={{ fontSize: "0.8rem", color: "var(--ink-faint)" }}>Durasi: {currentLesson.duration}</span>
-                    {isCompleted && <span className="badge g">✓ Selesai</span>}
+            {reg.certificate ? (
+              <>
+                <p
+                  style={{
+                    color: "var(--ink-soft)",
+                    fontSize: "0.95rem",
+                    lineHeight: 1.6,
+                    margin: "1rem 0 2rem",
+                  }}
+                >
+                  Sertifikat Anda sudah terbit dengan nomor resmi. Unduh dan bagikan pencapaian Anda!
+                </p>
+                <Link
+                  href={`/sertifikat/${reg.certificate.number}`}
+                  className="btn btn-purple btn-lg"
+                >
+                  Unduh e-Sertifikat
+                </Link>
+              </>
+            ) : canClaim ? (
+              <>
+                {isFreeClaim ? (
+                  <div
+                    className="adm-alert ok"
+                    style={{
+                      marginBottom: "1.5rem",
+                      textAlign: "left",
+                      padding: "1rem",
+                      borderRadius: "var(--r-sm)",
+                      border: "1px solid rgba(46, 204, 113, 0.2)",
+                      background: "rgba(46, 204, 113, 0.08)",
+                      color: "#27ae60",
+                    }}
+                  >
+                    <strong>Promo Terbatas:</strong> Anda berhak mengklaim e-sertifikat secara{" "}
+                    <strong>GRATIS</strong> (Hemat{" "}
+                    {new Intl.NumberFormat("id-ID", {
+                      style: "currency",
+                      currency: "IDR",
+                      maximumFractionDigits: 0,
+                    }).format(program.certPrice)}
+                    ) karena menyelesaikan semua syarat sebelum batas waktu H+5 (
+                    {new Intl.DateTimeFormat("id-ID", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      timeZone: "Asia/Jakarta",
+                    }).format(freeUntil)}
+                    ).
                   </div>
-
-                  <h2 style={{ fontSize: "1.6rem", fontWeight: 800, marginBottom: "1rem" }}>{currentLesson.title}</h2>
-
-                  {currentLesson.type === "QUIZ" ? (
-                    <LessonQuiz
-                      registrationId={registrationId}
-                      lessonId={currentLesson.id}
-                      passingScore={quizPassingScore}
-                      alreadyPassed={isCompleted}
-                      nextHref={nextHref}
-                      questions={currentLesson.questions.map((q): LessonQuizQuestion => ({
-                        id: q.id,
-                        text: q.text,
-                        options: [
-                          { key: "A", label: q.optionA },
-                          { key: "B", label: q.optionB },
-                          { key: "C", label: q.optionC },
-                          { key: "D", label: q.optionD },
-                        ],
-                      }))}
-                    />
-                  ) : (
-                    <>
-                      {currentLesson.content && (
-                        /<[a-z][\s\S]*>/i.test(currentLesson.content) ? (
-                          // konten dari rich text editor — sudah disanitasi di server saat disimpan
-                          <div
-                            className="rt-content"
-                            style={{ fontSize: "0.95rem", color: "var(--ink-soft)", marginBottom: "2.5rem" }}
-                            dangerouslySetInnerHTML={{ __html: currentLesson.content }}
-                          />
-                        ) : (
-                          <div style={{
-                            fontSize: "0.95rem",
-                            lineHeight: 1.7,
-                            color: "var(--ink-soft)",
-                            whiteSpace: "pre-wrap",
-                            marginBottom: "2.5rem"
-                          }}>
-                            {currentLesson.content}
-                          </div>
-                        )
-                      )}
-
-                      {/* Tombol Selesai */}
-                      <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--border)", paddingTop: "1.5rem" }}>
-                        <form action={handleMarkComplete}>
-                          <button type="submit" className="btn btn-purple btn-lg" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            {isCompleted ? "Lanjut Materi Berikutnya →" : "Tandai Selesai & Lanjutkan →"}
-                          </button>
-                        </form>
-                      </div>
-                    </>
-                  )}
+                ) : null}
+                <p
+                  style={{
+                    color: "var(--ink-soft)",
+                    fontSize: "0.95rem",
+                    lineHeight: 1.6,
+                    margin: "1rem 0 2rem",
+                  }}
+                >
+                  Seluruh syarat kelulusan {program.title} sudah terpenuhi. Klaim e-sertifikat resmi Anda sekarang.
+                </p>
+                <ClaimCertButton registrationId={registrationId} />
+              </>
+            ) : !hasPaid && !hideCertUpsell ? (
+              <>
+                <div
+                  className="adm-alert warn"
+                  style={{
+                    marginBottom: "1.5rem",
+                    textAlign: "left",
+                    padding: "1rem",
+                    borderRadius: "var(--r-sm)",
+                    border: "1px solid rgba(230, 126, 34, 0.2)",
+                    background: "rgba(230, 126, 34, 0.08)",
+                    color: "#d35400",
+                  }}
+                >
+                  <strong>Batas Klaim Gratis Berakhir:</strong> Masa tenggang klaim sertifikat gratis (H+5) telah berakhir pada{" "}
+                  {new Intl.DateTimeFormat("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                    timeZone: "Asia/Jakarta",
+                  }).format(freeUntil)}
+                  . Anda kini dialihkan ke paket sertifikat berbayar.
                 </div>
-              </div>
+                <p
+                  style={{
+                    color: "var(--ink-soft)",
+                    fontSize: "0.95rem",
+                    lineHeight: 1.6,
+                    margin: "1rem 0 2rem",
+                  }}
+                >
+                  Selesaikan pembayaran paket sertifikat untuk menerbitkan e-sertifikat resmi Anda.
+                </p>
+                <div style={{ maxWidth: "24rem", margin: "0 auto" }}>
+                  <MemberPayCertButton
+                    registrationId={registrationId}
+                    certPrice={program.certPrice}
+                    className="btn btn-purple btn-lg btn-block"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <p
+                  style={{
+                    color: "var(--ink-soft)",
+                    fontSize: "0.95rem",
+                    lineHeight: 1.6,
+                    margin: "1rem 0 2rem",
+                  }}
+                >
+                  {"reason" in eligibility && eligibility.reason
+                    ? eligibility.reason
+                    : "Masih ada syarat kelulusan yang belum terpenuhi. Periksa kembali materi & tes Anda."}
+                </p>
+                {program.price === 0 && isWithinFreePeriod && !hideCertUpsell && (
+                  <p
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--purple)",
+                      fontWeight: 700,
+                      marginTop: "-1rem",
+                      marginBottom: "2rem",
+                    }}
+                  >
+                    ⚡ Selesaikan seluruh materi/tes sekarang untuk mengklaim sertifikat GRATIS (Masa tenggang H+5).
+                  </p>
+                )}
+                <Link href="/member" className="btn btn-line btn-lg">
+                  Kembali ke Dashboard
+                </Link>
+              </>
             )}
           </div>
-
-          {/* Sisi Kanan: Kurikulum berjenjang (desktop) */}
-          <LmsSidebar
-            sections={sidebarSections}
-            currentLessonId={currentLesson.id}
-            completedLessonIds={completedLessonIdsArr}
-            registrationId={registrationId}
-            completedCount={completedCount}
-            totalLessons={totalLessons}
-            progressPercent={progressPercent}
-            isAllDone={isAllDone}
-          />
-        </div>
-      </div>
-
-      {/* ── Mobile Bottom Nav (prev / materi / next) ── */}
-      <div className="lms-bottom-nav">
-        {/* Sebelumnya */}
-        {currentIndex > 0 ? (
-          <Link
-            href={`/member/lms/${registrationId}?lessonId=${allLessons[currentIndex - 1]?.id}`}
-            className="lms-bottom-nav-btn"
-          >
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="13 5 7 10 13 15" />
-            </svg>
-            Sebelumnya
-          </Link>
         ) : (
-          <span className="lms-bottom-nav-btn disabled">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="13 5 7 10 13 15" />
-            </svg>
-            Sebelumnya
-          </span>
-        )}
+          <div className="lms-inner-container">
+            {/* Embed Video */}
+            {currentLesson.type === "VIDEO" && embedUrl && (
+              <LessonVideoPlayer src={embedUrl} title={currentLesson.title} />
+            )}
 
-        {/* Materi (buka drawer) — di-handle LmsMobileNav sudah punya toggle di header, ini adalah duplikasi state via button sederhana */}
-        <LmsMobileNav
-          sections={sidebarSections}
-          currentLessonId={currentLesson.id}
-          completedLessonIds={completedLessonIdsArr}
-          registrationId={registrationId}
-          completedCount={completedCount}
-          totalLessons={totalLessons}
-          progressPercent={progressPercent}
-          isAllDone={isAllDone}
-          bottomBar
-        />
+            {/* Embed PDF — read-only canvas */}
+            {currentLesson.type === "PDF" && currentLesson.fileUrl && (
+              <LmsPdfViewer fileUrl={currentLesson.fileUrl} title={currentLesson.title} />
+            )}
 
-        {/* Berikutnya */}
-        {nextLesson ? (
-          <Link
-            href={`/member/lms/${registrationId}?lessonId=${nextLesson.id}`}
-            className="lms-bottom-nav-btn"
-          >
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="7 5 13 10 7 15" />
-            </svg>
-            Berikutnya
-          </Link>
-        ) : (
-          <span className="lms-bottom-nav-btn disabled">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="7 5 13 10 7 15" />
-            </svg>
-            Berikutnya
-          </span>
+            {/* Info & Konten Materi */}
+            <div className="lms-lesson-card">
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.6rem",
+                  alignItems: "center",
+                  marginBottom: "0.8rem",
+                  flexWrap: "wrap",
+                }}
+              >
+                <span
+                  className="badge"
+                  style={{ background: "rgba(108, 92, 231, 0.1)", color: "var(--purple)" }}
+                >
+                  {TYPE_LABEL[currentLesson.type] ?? currentLesson.type}
+                </span>
+                <span style={{ fontSize: "0.8rem", color: "var(--ink-faint)" }}>
+                  Durasi: {currentLesson.duration}
+                </span>
+                {isCompleted && <span className="badge g">✓ Selesai</span>}
+              </div>
+
+              <h2 style={{ fontSize: "1.6rem", fontWeight: 800, marginBottom: "1rem" }}>
+                {currentLesson.title}
+              </h2>
+
+              {currentLesson.type === "QUIZ" ? (
+                <LessonQuiz
+                  registrationId={registrationId}
+                  lessonId={currentLesson.id}
+                  passingScore={quizPassingScore}
+                  alreadyPassed={isCompleted}
+                  nextHref={nextHref}
+                  questions={currentLesson.questions.map(
+                    (q): LessonQuizQuestion => ({
+                      id: q.id,
+                      text: q.text,
+                      options: [
+                        { key: "A", label: q.optionA },
+                        { key: "B", label: q.optionB },
+                        { key: "C", label: q.optionC },
+                        { key: "D", label: q.optionD },
+                      ],
+                    })
+                  )}
+                />
+              ) : (
+                <>
+                  {currentLesson.content &&
+                    (/<[a-z][\s\S]*>/i.test(currentLesson.content) ? (
+                      <div
+                        className="rt-content"
+                        style={{
+                          fontSize: "0.95rem",
+                          color: "var(--ink-soft)",
+                          marginBottom: "2.5rem",
+                        }}
+                        dangerouslySetInnerHTML={{ __html: currentLesson.content }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          fontSize: "0.95rem",
+                          lineHeight: 1.7,
+                          color: "var(--ink-soft)",
+                          whiteSpace: "pre-wrap",
+                          marginBottom: "2.5rem",
+                        }}
+                      >
+                        {currentLesson.content}
+                      </div>
+                    ))}
+
+                  {/* Tombol Selesai */}
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      borderTop: "1px solid var(--border)",
+                      paddingTop: "1.5rem",
+                    }}
+                  >
+                    <form action={handleMarkComplete}>
+                      <button
+                        type="submit"
+                        className="btn btn-purple btn-lg"
+                        style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+                      >
+                        {isCompleted ? "Lanjut Materi Berikutnya →" : "Tandai Selesai & Lanjutkan →"}
+                      </button>
+                    </form>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         )}
-      </div>
+      </LmsViewContainer>
 
       <Footer />
-
       <WaFloat />
     </>
   );
 }
+
