@@ -14,8 +14,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json() as { programId?: string; batchId?: string; messageType?: string; customMessage?: string };
-    const { programId, batchId, messageType, customMessage } = body;
+    const body = await req.json() as { programId?: string; batchId?: string; messageType?: string; customMessage?: string; includeRegistered?: boolean };
+    const { programId, batchId, messageType, customMessage, includeRegistered } = body;
 
     if (!messageType) {
       return NextResponse.json({ error: "Tipe pesan wajib diisi." }, { status: 400 });
@@ -28,7 +28,10 @@ export async function POST(req: Request) {
     }
 
     // ── Build where clause ──────────────────────────────────────
-    const where: { programId?: string; batchId?: string; whatsapp?: string } = {};
+    const statusFilter = includeRegistered ? ["PAID", "PASSED", "REGISTERED"] : ["PAID", "PASSED"];
+    const where: { programId?: string; batchId?: string; status: { in: string[] } } = {
+      status: { in: statusFilter },
+    };
     if (batchId) {
       where.batchId = batchId;
     } else if (programId) {

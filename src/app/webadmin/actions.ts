@@ -1185,12 +1185,16 @@ export async function sendBroadcast(formData: FormData) {
   if (!programId && !batchId) redirect("/webadmin/broadcast?e=target");
   if (messageType === "custom" && !customMessage) redirect("/webadmin/broadcast?e=pesan");
 
-  // ── Cari penerima lewat API internal ──
-  // Panggil API endpoint dengan header khusus (secret)
+  // ── Cari penerima ──
+  // Program GRATIS: status REGISTERED (nggak ada payment)
+  // Program BERBAYAR: cuma PAID/PASSED (yang belum bayar jangan dikirimi)
+  const prog = programId ? await prisma.program.findUnique({ where: { id: programId }, select: { price: true } }) : null;
+  const isFree = prog ? prog.price === 0 : false;
+
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/webadmin/broadcast`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-internal-secret": process.env.JETSCHOOL_API_KEY || "internal" },
-    body: JSON.stringify({ programId, batchId, messageType, customMessage: messageType === "custom" ? customMessage : undefined }),
+    body: JSON.stringify({ programId, batchId, messageType, customMessage: messageType === "custom" ? customMessage : undefined, includeRegistered: isFree }),
   });
 
   const data = await res.json();
