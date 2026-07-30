@@ -11,6 +11,9 @@ import LessonQuiz, { type LessonQuizQuestion } from "@/components/LessonQuiz";
 import ClaimCertButton from "@/components/ClaimCertButton";
 import MemberPayCertButton from "@/components/MemberPayCertButton";
 import LessonVideoPlayer from "@/components/LessonVideoPlayer";
+import LmsSidebar from "@/components/LmsSidebar";
+import LmsMobileNav from "@/components/LmsMobileNav";
+import LmsPdfViewer from "@/components/LmsPdfViewer";
 import { getEmbedUrl } from "@/lib/video";
 
 export const dynamic = "force-dynamic";
@@ -278,28 +281,60 @@ export default async function LmsPage({
     );
   }
 
+  // Serialisasi section untuk client component (hanya field yang diperlukan)
+  const sidebarSections = sections.map((s) => ({
+    title: s.title,
+    modules: s.modules.map((m) => ({
+      id: m.id,
+      title: m.title,
+      lessons: m.lessons.map((l) => ({
+        id: l.id,
+        title: l.title,
+        type: l.type,
+        duration: l.duration ?? null,
+      })),
+    })),
+  }));
+  const completedLessonIdsArr = Array.from(completedLessonIds);
+
   return (
     <>
       <Navbar minimal ctaHref="/member" ctaLabel="Dashboard Saya" />
 
       <div style={{ background: "var(--bg-panel)", minHeight: "90vh" }}>
-        {/* Progress Bar & Header */}
+        {/* Sticky Header */}
         <div className="lms-header">
-          <div>
-            <span className="kicker" style={{ fontSize: "0.72rem", marginBottom: "0.1rem" }}>LMS Interaktif</span>
-            <h1 style={{ fontSize: "1.25rem", margin: 0, fontWeight: 800 }}>{program.title}</h1>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span className="kicker" style={{ fontSize: "0.68rem", marginBottom: "0.1rem" }}>LMS Interaktif</span>
+            <h1 style={{ fontSize: "1.15rem", margin: 0, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {program.title}
+            </h1>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "1.2rem", minWidth: "16rem" }}>
+
+          {/* Progress bar (desktop) */}
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", minWidth: "14rem", flex: "0 0 auto" }}>
             <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", marginBottom: "0.2rem", fontWeight: 700 }}>
-                <span>Progres Belajar</span>
-                <span className="acc-p">{progressPercent}% ({completedCount}/{totalLessons})</span>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", marginBottom: "0.2rem", fontWeight: 700 }}>
+                <span>Progres</span>
+                <span className="acc-p">{progressPercent}%</span>
               </div>
-              <div style={{ width: "100%", height: "8px", background: "#eaeaea", borderRadius: "99px", overflow: "hidden" }}>
+              <div style={{ width: "100%", height: "7px", background: "#eaeaea", borderRadius: "99px", overflow: "hidden" }}>
                 <div style={{ width: `${progressPercent}%`, height: "100%", background: "var(--purple)", borderRadius: "99px", transition: "width 0.4s ease" }} />
               </div>
             </div>
           </div>
+
+          {/* Mobile nav toggle — only visible on mobile via CSS */}
+          <LmsMobileNav
+            sections={sidebarSections}
+            currentLessonId={currentLesson.id}
+            completedLessonIds={completedLessonIdsArr}
+            registrationId={registrationId}
+            completedCount={completedCount}
+            totalLessons={totalLessons}
+            progressPercent={progressPercent}
+            isAllDone={isAllDone}
+          />
         </div>
 
         {/* Banner klaim: syarat kelulusan sudah terpenuhi */}
@@ -313,7 +348,7 @@ export default async function LmsPage({
         )}
 
         {/* Layout Utama split-pane */}
-        <div className="lms-split">
+        <div className="lms-split" style={{ alignItems: "start" }}>
 
           {/* Sisi Kiri: Konten Materi */}
           <div className="lms-content-pane">
@@ -384,29 +419,12 @@ export default async function LmsPage({
                   <LessonVideoPlayer src={embedUrl} title={currentLesson.title} />
                 )}
 
-                {/* Embed PDF */}
+                {/* Embed PDF — no download */}
                 {currentLesson.type === "PDF" && currentLesson.fileUrl && (
-                  <div style={{
-                    borderRadius: "var(--r-md)",
-                    overflow: "hidden",
-                    boxShadow: "var(--shadow)",
-                    marginBottom: "1.5rem",
-                    background: "var(--white)"
-                  }}>
-                    <iframe
-                      src={`${currentLesson.fileUrl}#view=FitH`}
-                      style={{ width: "100%", height: "70vh", border: 0, display: "block" }}
-                      title={currentLesson.title}
-                    />
-                    <div style={{ padding: ".7rem 1rem", borderTop: "1px solid var(--border)", display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                      <a href={currentLesson.fileUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-line" style={{ fontSize: ".78rem" }}>
-                        📖 Buka di Tab Baru
-                      </a>
-                      <a href={currentLesson.fileUrl} download className="btn btn-sm btn-purple" style={{ fontSize: ".78rem" }}>
-                        ⬇️ Download PDF
-                      </a>
-                    </div>
-                  </div>
+                  <LmsPdfViewer
+                    fileUrl={currentLesson.fileUrl}
+                    title={currentLesson.title}
+                  />
                 )}
 
                 {/* Info & Konten Materi */}
@@ -477,150 +495,22 @@ export default async function LmsPage({
             )}
           </div>
 
-          {/* Sisi Kanan: Kurikulum berjenjang */}
-          <div className="lms-sidebar-pane">
-            <div style={{ marginBottom: "1.5rem" }}>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 800, margin: "0 0 0.3rem 0" }}>Kurikulum Kelas</h3>
-              <span style={{ fontSize: "0.78rem", color: "var(--ink-soft)", fontWeight: 500 }}>
-                {completedCount} dari {totalLessons} materi selesai
-              </span>
-            </div>
-
-            <div style={{ display: "grid", gap: "1.2rem" }}>
-              {sections.map((section, sIdx) => (
-                <div key={sIdx} style={{ display: "grid", gap: "0.9rem" }}>
-                  {section.title && (
-                    <div style={{
-                      fontSize: "0.72rem",
-                      textTransform: "uppercase",
-                      fontWeight: 900,
-                      letterSpacing: "0.08em",
-                      color: "var(--purple)",
-                      paddingBottom: ".3rem",
-                      borderBottom: "2px solid rgba(108, 92, 231, 0.15)"
-                    }}>
-                      {section.title}
-                    </div>
-                  )}
-
-                  {section.modules.map((mod) => {
-                    modNumber += 1;
-                    return (
-                      <div
-                        key={mod.id}
-                        style={{
-                          background: "var(--white)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "var(--r-md)",
-                          padding: "1.2rem",
-                          boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
-                        }}
-                      >
-                        <div style={{ marginBottom: "1rem", borderBottom: "1px solid var(--border)", paddingBottom: "0.6rem" }}>
-                          <span style={{
-                            display: "inline-block",
-                            fontSize: "0.65rem",
-                            textTransform: "uppercase",
-                            fontWeight: 900,
-                            letterSpacing: "0.08em",
-                            color: "var(--purple)",
-                            background: "rgba(108, 92, 231, 0.08)",
-                            padding: "0.2rem 0.5rem",
-                            borderRadius: "4px",
-                            marginBottom: "0.4rem"
-                          }}>
-                            Modul {modNumber}
-                          </span>
-                          <h4 style={{ fontSize: "0.88rem", fontWeight: 800, margin: 0, color: "var(--ink-main)", lineHeight: 1.4 }}>
-                            {mod.title}
-                          </h4>
-                        </div>
-
-                        {mod.lessons.length === 0 ? (
-                          <div style={{ fontSize: "0.75rem", color: "var(--ink-faint)", fontStyle: "italic", textAlign: "center", padding: "0.5rem 0" }}>
-                            Belum ada materi pelajaran
-                          </div>
-                        ) : (
-                          <div style={{ display: "grid", gap: "0.6rem" }}>
-                            {mod.lessons.map((les) => {
-                              const active = les.id === currentLesson.id && !isAllDone;
-                              const done = completedLessonIds.has(les.id);
-
-                              let indicatorNode = (
-                                <span style={{
-                                  width: "1.2rem", height: "1.2rem", border: "2px solid #ccc",
-                                  borderRadius: "50%", flexShrink: 0, marginTop: "0.1rem", display: "flex"
-                                }} />
-                              );
-                              if (done) {
-                                indicatorNode = (
-                                  <span style={{
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    width: "1.2rem", height: "1.2rem", background: "#2ecc71", border: "2px solid #2ecc71",
-                                    borderRadius: "50%", flexShrink: 0, color: "white", fontSize: "0.65rem",
-                                    fontWeight: "bold", marginTop: "0.1rem"
-                                  }}>✓</span>
-                                );
-                              } else if (active) {
-                                indicatorNode = (
-                                  <span style={{
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    width: "1.2rem", height: "1.2rem", border: "2px solid var(--purple)",
-                                    borderRadius: "50%", flexShrink: 0, background: "rgba(108, 92, 231, 0.1)", marginTop: "0.1rem"
-                                  }}>
-                                    <span style={{ width: "0.45rem", height: "0.45rem", background: "var(--purple)", borderRadius: "50%" }} />
-                                  </span>
-                                );
-                              }
-
-                              return (
-                                <Link
-                                  key={les.id}
-                                  href={`/member/lms/${registrationId}?lessonId=${les.id}`}
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "flex-start",
-                                    gap: "0.75rem",
-                                    padding: "0.6rem 0.8rem",
-                                    borderRadius: "var(--r-sm)",
-                                    textDecoration: "none",
-                                    background: active ? "var(--bg-panel)" : "transparent",
-                                    border: active ? "1.5px solid var(--purple)" : "1.5px solid transparent",
-                                    boxShadow: active ? "0 2px 8px rgba(108, 92, 231, 0.05)" : "none",
-                                    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
-                                  }}
-                                >
-                                  {indicatorNode}
-                                  <div style={{ flex: 1 }}>
-                                    <div style={{
-                                      fontSize: "0.82rem",
-                                      fontWeight: active ? 800 : done ? 600 : 500,
-                                      color: active ? "var(--purple)" : done ? "var(--ink-soft)" : "var(--ink-main)",
-                                      lineHeight: 1.35
-                                    }}>
-                                      {les.title}
-                                    </div>
-                                    <span style={{ fontSize: "0.7rem", color: "var(--ink-faint)" }}>
-                                      {TYPE_LABEL[les.type] ?? les.type} • {les.duration}
-                                    </span>
-                                  </div>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-
+          {/* Sisi Kanan: Kurikulum berjenjang (desktop) */}
+          <LmsSidebar
+            sections={sidebarSections}
+            currentLessonId={currentLesson.id}
+            completedLessonIds={completedLessonIdsArr}
+            registrationId={registrationId}
+            completedCount={completedCount}
+            totalLessons={totalLessons}
+            progressPercent={progressPercent}
+            isAllDone={isAllDone}
+          />
         </div>
       </div>
 
       <Footer />
+
       <WaFloat />
     </>
   );

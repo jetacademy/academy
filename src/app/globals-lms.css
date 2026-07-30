@@ -83,17 +83,43 @@
   max-width: 100%;
 }
 
+/* ── LMS Header ── */
 .lms-header {
   background: var(--white);
   border-bottom: 1px solid var(--border);
-  padding: 1rem 2rem;
+  padding: 0.85rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.8rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
 
+/* ── Mobile nav toggle (hidden on desktop) ── */
+.lms-mob-nav-toggle {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.lms-mob-nav-toggle:hover { background: #5a4fcf; }
+.lms-mob-nav-toggle svg { width: 1rem; height: 1rem; }
+
+/* ── Claim Banner ── */
 .lms-claim-banner {
   background: #E8F8EF;
   border-bottom: 1px solid #c9ecd9;
@@ -105,16 +131,30 @@
   gap: .8rem;
 }
 
+/* ── Main Split Layout ── */
+.lms-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  min-height: calc(100vh - 120px);
+  align-items: start;
+}
+
 .lms-content-pane {
   padding: 2rem;
   overflow-y: auto;
+  max-height: calc(100vh - 120px);
+  position: sticky;
+  top: 56px;
 }
 
 .lms-sidebar-pane {
   background: var(--bg-panel);
   border-left: 1px solid var(--border);
   overflow-y: auto;
-  padding: 2rem 1.5rem;
+  padding: 1.5rem;
+  max-height: calc(100vh - 120px);
+  position: sticky;
+  top: 56px;
 }
 
 .lms-inner-container {
@@ -122,7 +162,124 @@
   margin: 0 auto;
 }
 
-/* ---------- Video Player (Bunny Stream / YouTube / Vimeo) ---------- */
+/* ── Sidebar Drawer Overlay (mobile) ── */
+.lms-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 200;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.lms-sidebar-overlay.open { display: block; }
+
+/* ── Lesson Nav Drawer (mobile) ── */
+.lms-sidebar-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(85vw, 360px);
+  height: 100dvh;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  z-index: 201;
+  overflow-y: auto;
+  padding: 1.25rem;
+  transform: translateX(100%);
+  transition: transform .3s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: -4px 0 24px rgba(0,0,0,.15);
+}
+.lms-sidebar-drawer.open {
+  transform: translateX(0);
+}
+
+.lms-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.lms-drawer-header h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--ink);
+}
+.lms-drawer-close {
+  background: var(--chip);
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--ink-soft);
+  transition: background .15s;
+}
+.lms-drawer-close:hover { background: var(--border); }
+
+/* ── Progress Ring (sidebar header) ── */
+.lms-progress-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.9rem;
+  background: rgba(108,92,231,.08);
+  border-radius: var(--r-sm);
+  margin-bottom: 1.1rem;
+  border: 1px solid rgba(108,92,231,.15);
+}
+.lms-progress-mini-bar {
+  flex: 1;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.lms-progress-mini-fill {
+  height: 100%;
+  background: var(--purple);
+  border-radius: 99px;
+  transition: width .5s ease;
+}
+.lms-progress-mini-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--purple);
+  white-space: nowrap;
+}
+
+/* ── Lesson Item ── */
+.lms-lesson-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  border: 1.5px solid transparent;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+.lms-lesson-item:hover {
+  background: rgba(108,92,231,.06);
+  border-color: rgba(108,92,231,.2);
+}
+.lms-lesson-item.active {
+  background: rgba(108,92,231,.09);
+  border-color: var(--purple);
+  box-shadow: 0 2px 8px rgba(108,92,231,.1);
+}
+.lms-lesson-item.done {
+  opacity: 0.75;
+}
+
+/* ── Video Player (Bunny Stream / YouTube / Vimeo) ── */
 .lms-video-frame {
   position: relative;
   padding-bottom: 56.25%;
@@ -155,6 +312,64 @@
 }
 @keyframes lms-spin { to { transform: rotate(360deg); } }
 
+/* ── PDF Viewer (no-download) ── */
+.lms-pdf-wrapper {
+  position: relative;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+}
+.lms-pdf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.lms-pdf-header-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.lms-pdf-shield {
+  font-size: 0.7rem;
+  background: rgba(108,92,231,.1);
+  color: var(--purple);
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.lms-pdf-frame {
+  width: 100%;
+  height: 72vh;
+  border: 0;
+  display: block;
+  pointer-events: all;
+}
+/* Overlay blocker — prevents right-click save-as on the iframe area */
+.lms-pdf-overlay {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 180px;
+  height: 40px;
+  background: transparent;
+  pointer-events: none; /* only blocks the toolbar area in some renderers */
+}
+
+/* ── Lesson Card ── */
 .lms-lesson-card {
   background: var(--white);
   border-radius: var(--r-md);
@@ -163,18 +378,24 @@
   margin-bottom: 2rem;
 }
 
-.lms-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 22rem;
-  min-height: 75vh;
-}
+/* ══════════════ RESPONSIVE — MOBILE ══════════════ */
 
 @media (max-width: 900px) {
-  .lms-split { grid-template-columns: 1fr; }
-  .lms-split > div:last-child { border-left: 0 !important; border-top: 1px solid var(--border); }
+  /* Desktop sidebar hidden on mobile — rendered as drawer */
+  .lms-split {
+    grid-template-columns: 1fr;
+    min-height: unset;
+  }
   .lms-sidebar-pane {
-    border-left: none;
-    border-top: 1px solid var(--border);
+    display: none; /* hidden — replaced by drawer */
+  }
+  .lms-content-pane {
+    max-height: unset;
+    position: static;
+    padding: 1.2rem 1rem;
+  }
+  .lms-mob-nav-toggle {
+    display: flex;
   }
 }
 
@@ -199,21 +420,34 @@
     min-width: 100%;
   }
   .lms-header {
-    padding: 1rem;
+    padding: 0.75rem 1rem;
+    gap: 0.6rem;
+  }
+  .lms-header h1 {
+    font-size: 1rem !important;
   }
   .lms-claim-banner {
-    padding: .8rem 1rem;
+    padding: .75rem 1rem;
     flex-direction: column;
     align-items: stretch;
     text-align: center;
   }
-  .lms-content-pane {
-    padding: 1.2rem 1rem;
-  }
-  .lms-sidebar-pane {
-    padding: 1.5rem 1rem;
-  }
   .lms-lesson-card {
     padding: 1.2rem 1rem;
+  }
+  .lms-pdf-frame {
+    height: 60vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .lms-header {
+    flex-wrap: nowrap;
+  }
+  .lms-pdf-frame {
+    height: 55vh;
+  }
+  .lms-lesson-card {
+    padding: 1rem 0.85rem;
   }
 }
