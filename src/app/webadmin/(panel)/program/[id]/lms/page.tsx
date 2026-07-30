@@ -35,6 +35,7 @@ type ModuleRow = {
   title: string;
   groupId: string | null;
   lessons: LessonRow[];
+  batchLinks: { batchId: string }[];
 };
 
 type GroupOption = { id: string; title: string };
@@ -47,6 +48,7 @@ function ModuleCard({
   isFirst,
   isLast,
   groups,
+  batches,
 }: {
   programId: string;
   mod: ModuleRow;
@@ -54,6 +56,7 @@ function ModuleCard({
   isFirst: boolean;
   isLast: boolean;
   groups: GroupOption[];
+  batches: { id: string; label: string }[];
 }) {
   return (
     <section className="lms-mod">
@@ -76,6 +79,24 @@ function ModuleCard({
             ))}
           </select>
           <button type="submit" className="btn btn-sm btn-purple">Simpan</button>
+
+          <div style={{ width: "100%", display: "flex", gap: ".6rem 1rem", flexWrap: "wrap", paddingTop: ".5rem", borderTop: "1px solid var(--chip)", marginTop: ".5rem" }}>
+            {batches.length > 0 ? (
+              batches.map((b) => (
+                <label key={b.id} style={{ display: "flex", alignItems: "center", gap: ".3rem", fontSize: ".78rem", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    name="batchIds"
+                    value={b.id}
+                    defaultChecked={mod.batchLinks.some((bl) => bl.batchId === b.id)}
+                  />
+                  {b.label}
+                </label>
+              ))
+            ) : (
+              <span style={{ fontSize: ".78rem", color: "var(--ink-faint)" }}>Belum ada batch/angkatan.</span>
+            )}
+          </div>
         </form>
 
         <span style={{ fontSize: ".72rem", color: "var(--ink-faint)", fontWeight: 700 }}>
@@ -189,24 +210,36 @@ export default async function AdminLms({
       include: { _count: { select: { questions: true } } },
     },
   };
+  const moduleInclude = {
+    ...lessonInclude,
+    batchLinks: { select: { batchId: true } },
+  };
 
   const program = await prisma.program.findUnique({
     where: { id },
     include: {
+      batches: {
+        orderBy: { scheduleAt: "asc" },
+        select: { id: true, scheduleAt: true },
+      },
       groups: {
         orderBy: { order: "asc" },
-        include: { modules: { orderBy: { order: "asc" }, include: lessonInclude } },
+        include: { modules: { orderBy: { order: "asc" }, include: moduleInclude } },
       },
       modules: {
         where: { groupId: null },
         orderBy: { order: "asc" },
-        include: lessonInclude,
+        include: moduleInclude,
       },
     },
   });
   if (!program) notFound();
 
   const groupOptions: GroupOption[] = program.groups.map((g) => ({ id: g.id, title: g.title }));
+  const batchOptions = program.batches.map((b) => ({
+    id: b.id,
+    label: new Date(b.scheduleAt).toLocaleDateString("id-ID", { dateStyle: "medium" }),
+  }));
   const totalModules = program.groups.reduce((a, g) => a + g.modules.length, 0) + program.modules.length;
   const totalLessons =
     program.groups.reduce((a, g) => a + g.modules.reduce((b, m) => b + m.lessons.length, 0), 0) +
@@ -288,6 +321,7 @@ export default async function AdminLms({
                 isFirst={mIdx === 0}
                 isLast={mIdx === group.modules.length - 1}
                 groups={groupOptions}
+                batches={batchOptions}
               />
             ))}
 
@@ -322,6 +356,7 @@ export default async function AdminLms({
               isFirst={mIdx === 0}
               isLast={mIdx === program.modules.length - 1}
               groups={groupOptions}
+              batches={batchOptions}
             />
           ))}
         </div>

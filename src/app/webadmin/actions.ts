@@ -399,17 +399,31 @@ export async function saveLmsModule(formData: FormData) {
   // groupId dari form: "" = tanpa kelompok
   const hasGroupField = formData.has("groupId");
   const groupId = optStr(formData, "groupId");
+  const rawBatchIds = formData.getAll("batchIds").map((v) => String(v));
 
   if (!programId || !title) redirect(`/webadmin/program/${programId}/lms?e=lengkapi`);
+
+  let moduleId: string;
 
   if (id) {
     await prisma.lmsModule.update({
       where: { id },
       data: hasGroupField ? { title, groupId } : { title },
     });
+    moduleId = id;
   } else {
     const last = await prisma.lmsModule.findFirst({ where: { programId, groupId }, orderBy: { order: "desc" } });
-    await prisma.lmsModule.create({ data: { programId, groupId, title, order: (last?.order ?? 0) + 1 } });
+    const created = await prisma.lmsModule.create({ data: { programId, groupId, title, order: (last?.order ?? 0) + 1 } });
+    moduleId = created.id;
+  }
+
+  // Sync batch links: hapus semua lalu create ulang sesuai centang
+  const batchIds = [...new Set(rawBatchIds)];
+  await prisma.batchModule.deleteMany({ where: { moduleId } });
+  if (batchIds.length > 0) {
+    await prisma.batchModule.createMany({
+      data: batchIds.map((batchId) => ({ batchId, moduleId })),
+    });
   }
 
   revalidatePath(`/webadmin/program/${programId}/lms`);

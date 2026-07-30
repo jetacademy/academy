@@ -115,6 +115,7 @@ model ProgramBatch {
   seatsLeft     Int? // sisa kursi khusus batch ini (opsional)
   isActive      Boolean        @default(true) // nonaktifkan tanpa hapus (histori pendaftaran tetap utuh)
   registrations Registration[]
+  moduleLinks   BatchModule[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -331,11 +332,29 @@ model LmsModule {
   groupId   String?
   title     String
   order     Int       @default(0)
-  lessons   Lesson[]
+  lessons     Lesson[]
+  batchLinks  BatchModule[]
 
   @@index([programId])
   @@index([groupId])
   @@map("lmsmodule")
+}
+
+// Relasi batch ↔ module — menentukan modul mana yang aktif di batch/angkatan mana
+model BatchModule {
+  id        String   @id @default(cuid())
+  batchId   String
+  moduleId  String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  batch  ProgramBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  module LmsModule    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, moduleId])
+  @@index([batchId])
+  @@index([moduleId])
+  @@map("batchmodule")
 }
 
 // LMS Lessons (Materi pembelajaran: video / teks / PDF / kuis)

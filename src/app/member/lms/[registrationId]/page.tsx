@@ -138,14 +138,33 @@ export default async function LmsPage({
       },
     },
   };
+  const batchModuleFilter = reg.batchId
+    ? {
+        OR: [
+          { batchLinks: { none: {} } },
+          { batchLinks: { some: { batchId: reg.batchId } } },
+        ],
+      }
+    : {};
+
   const [groups, ungrouped] = await Promise.all([
     prisma.lmsGroup.findMany({
       where: { programId: program.id },
       orderBy: { order: "asc" },
-      include: { modules: { orderBy: { order: "asc" }, include: lessonInclude } },
+      include: {
+        modules: {
+          where: batchModuleFilter,
+          orderBy: { order: "asc" },
+          include: lessonInclude,
+        },
+      },
     }),
     prisma.lmsModule.findMany({
-      where: { programId: program.id, groupId: null },
+      where: {
+        programId: program.id,
+        groupId: null,
+        ...batchModuleFilter,
+      },
       orderBy: { order: "asc" },
       include: lessonInclude,
     }),
