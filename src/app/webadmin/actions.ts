@@ -1208,18 +1208,25 @@ export async function sendBroadcast(formData: FormData) {
     messageText = `Halo {{name}},\n\nBergabunglah ke grup WhatsApp peserta melalui link berikut:\n${grupLink}\n\nSilakan perkenalkan diri dan tanyakan jika ada yang perlu. Terima kasih! 😊`;
   }
 
-  // ── Kirim broadcast ───────────────────────────────────
+  // ── Kirim broadcast (batch: 5 per group, jeda 3 detik antar group) ──
   let sent = 0, failed = 0;
-  for (const reg of registrations) {
-    if (!reg.whatsapp) { failed++; continue; }
-    const personalMsg = messageText.replace(/\{\{name\}\}/g, reg.name);
-    try {
-      const ok = await sendWa(reg.whatsapp, personalMsg);
-      if (ok) sent++; else failed++;
-    } catch { failed++; }
-    // Jeda 3-5 detik antar pengiriman
-    if (sent + failed < registrations.length) {
-      await new Promise((r) => setTimeout(r, 3000 + Math.random() * 2000));
+  const batchSize = 5;
+  for (let i = 0; i < registrations.length; i += batchSize) {
+    const batch = registrations.slice(i, i + batchSize);
+    const results = await Promise.allSettled(
+      batch.map(async (reg) => {
+        if (!reg.whatsapp) return false;
+        const personalMsg = messageText.replace(/\{\{name\}\}/g, reg.name);
+        return sendWa(reg.whatsapp, personalMsg);
+      })
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value) sent++;
+      else failed++;
+    }
+    // Jeda 3 detik antar batch — cukup untuk hindari blokir
+    if (i + batchSize < registrations.length) {
+      await new Promise((r) => setTimeout(r, 3000));
     }
   }
 
