@@ -1186,7 +1186,7 @@ export async function sendBroadcast(formData: FormData) {
   if (messageType === "custom" && !customMessage) redirect("/webadmin/broadcast?e=pesan");
 
   // ── Cari penerima ─────────────────────────────────────
-  const where: any = { status: { in: ["PAID", "PASSED"] } };
+  const where: any = { status: { in: ["PAID", "PASSED", "REGISTERED"] }, whatsapp: { not: null } };
   if (batchId) where.batchId = batchId;
   else if (programId) where.programId = programId;
 
