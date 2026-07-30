@@ -1186,17 +1186,15 @@ export async function sendBroadcast(formData: FormData) {
   if (messageType === "custom" && !customMessage) redirect("/webadmin/broadcast?e=pesan");
 
   // ── Cari penerima ─────────────────────────────────────
-  const regsRaw = await (prisma.registration as any).findMany({
-    where: {
-      status: { in: ["PAID", "PASSED", "REGISTERED"] },
-      ...(batchId ? { batchId } : {}),
-      ...(!batchId && programId ? { programId } : {}),
-    },
-    select: { id: true, name: true, whatsapp: true },
-  });
+  // Raw query untuk hindari Prisma type issues
+  const regRows = await prisma.$queryRaw<Array<{ id: string; name: string; whatsapp: string | null }>>`
+    SELECT id, name, whatsapp FROM registration
+    WHERE status IN ('PAID', 'PASSED', 'REGISTERED')
+    ${batchId ? `AND batchId = ${batchId}` : ``}
+    ${!batchId && programId ? `AND programId = ${programId}` : ``}
+  `;
 
-  // Filter yang WA-nya kosong
-  const validRegs = regsRaw.filter((r: any) => r.whatsapp);
+  const validRegs = regRows.filter((r) => r.whatsapp);
 
   // ── Buat pesan ────────────────────────────────────────
   // Ambil link Zoom/Grup dari program
