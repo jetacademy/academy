@@ -195,9 +195,8 @@ export default async function MemberDashboardPage() {
                 const prog = reg.program;
                 const pay = reg.payment;
                 const cert = reg.certificate;
-
                 const now = new Date();
-                const eventTime = new Date(prog.scheduleAt);
+                const eventTime = reg.batch ? new Date(reg.batch.scheduleAt) : new Date(prog.scheduleAt);
                 // Acara "selesai" = scheduleAt + 3 jam (durasi konservatif webinar 2 jam)
                 const eventEndTime = new Date(eventTime.getTime() + 3 * 60 * 60 * 1000);
                 const eventHasStarted = now >= eventTime;
@@ -280,11 +279,8 @@ export default async function MemberDashboardPage() {
                       </p>
 
                       <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", fontSize: "0.82rem", color: "var(--ink-soft)" }}>
-                        <div>📅 <strong>Jadwal:</strong> {formatJadwal(prog.scheduleAt)}</div>
+                        <div>📅 <strong>Jadwal:</strong> {reg.batch ? formatJadwal(reg.batch.scheduleAt) : formatJadwal(prog.scheduleAt)}</div>
                         <div>👤 <strong>Mentor:</strong> {prog.mentorName}</div>
-                        {reg.batch && (
-                          <div>📦 <strong>Batch:</strong> {formatJadwal(reg.batch.scheduleAt)}</div>
-                        )}
                         <div>⏱️ <strong>Durasi:</strong> {prog.durationLabel}</div>
                       </div>
                     </div>
