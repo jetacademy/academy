@@ -1175,7 +1175,6 @@ export async function deleteArticle(formData: FormData) {
 
 export async function sendBroadcast(formData: FormData) {
   await requireAdmin();
-  const session = await getAdminSession();
 
   const programId = optStr(formData, "programId");
   const batchId = optStr(formData, "batchId");
