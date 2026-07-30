@@ -3,6 +3,7 @@
 import { useId, useRef, useState } from "react";
 import { Upload as TusUpload } from "tus-js-client";
 import { createBunnyUploadSession, deleteBunnyVideoAction } from "@/app/webadmin/actions";
+import MediaPicker from "./MediaPicker";
 
 const BUNNY_EMBED_RE = /iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i;
 const MAX_VIDEO_BYTES = 5 * 1024 * 1024 * 1024; // 5 GB — batas wajar sisi klien, Bunny sendiri jauh lebih longgar
@@ -17,7 +18,7 @@ function formatBytes(bytes: number): string {
  * dengan drag & drop, progress bar, batal, dan pratinjau player setelah selesai.
  * Bisa juga diisi manual pakai URL YouTube/Vimeo.
  */
-export default function VideoUploader({ name, defaultValue }: { name: string; defaultValue: string }) {
+export default function VideoUploader({ name, defaultValue, programId }: { name: string; defaultValue: string; programId?: string }) {
   const [videoUrl, setVideoUrl] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -174,12 +175,25 @@ export default function VideoUploader({ name, defaultValue }: { name: string; de
             <span style={{ display: "block", marginTop: ".5rem", fontSize: ".78rem", color: "var(--red)", fontWeight: 700 }}>{error}</span>
           )}
 
-          <input
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value.trim())}
-            placeholder="…atau tempel URL YouTube/Vimeo di sini"
-            style={{ marginTop: ".7rem" }}
-          />
+          <div style={{ display: "flex", gap: ".4rem", alignItems: "center", marginTop: ".7rem" }}>
+            <input
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value.trim())}
+              placeholder="…atau tempel URL YouTube/Vimeo di sini"
+              style={{ flex: 1, minWidth: 0 }}
+            />
+            {programId && (
+              <MediaPicker
+                programId={programId}
+                onSelect={(url) => setVideoUrl(url)}
+                trigger={
+                  <button type="button" className="btn btn-sm" title="Pilih dari Gallery">
+                    📁
+                  </button>
+                }
+              />
+            )}
+          </div>
         </>
       )}
     </>
