@@ -309,8 +309,6 @@ export default async function LmsPage({
 
   return (
     <>
-      <Navbar minimal ctaHref="/member" ctaLabel="Dashboard Saya" />
-
       {/* Banner klaim: syarat kelulusan sudah terpenuhi */}
       {canClaim && !isAllDone && (
         <div className="lms-claim-banner">
