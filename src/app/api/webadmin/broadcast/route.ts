@@ -6,15 +6,16 @@ export type BroadcastMessageType = "zoom" | "grup" | "custom";
 export type BroadcastResult = { sent: number; failed: number; total: number };
 
 export async function POST(req: Request) {
-  // Auth via X-API-Key header (sama dengan API v1)
-  const apiKey = req.headers.get("X-API-Key");
-  const validKey = process.env.JETSCHOOL_API_KEY;
-  if (!validKey || apiKey !== validKey) {
+  // Cek session admin via cookie
+  const { cookies } = await import("next/headers");
+  const jar = await cookies();
+  const jsaAdmin = jar.get("jsa_admin");
+  if (!jsaAdmin?.value) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const body: BroadcastRequest = await request.json();
+    const body = await req.json() as { programId?: string; batchId?: string; messageType?: string; customMessage?: string };
     const { programId, batchId, messageType, customMessage } = body;
 
     if (!messageType) {
@@ -79,34 +80,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Pesan tidak boleh kosong." }, { status: 400 });
     }
 
-    // ── Send broadcast ─────────────────────────────────────────
+    // ── Send broadcast (batch: 5 per group, jeda 3 detik) ──
     let sent = 0;
     let failed = 0;
-    const errors: string[] = [];
-
-    for (const reg of registrations) {
-      if (!reg.whatsapp) {
-        failed++;
-        continue;
+    const batchSize = 5;
+    for (let i = 0; i < registrations.length; i += batchSize) {
+      const batch = registrations.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map(async (reg) => {
+          if (!reg.whatsapp) return false;
+          return sendWa(reg.whatsapp, messageText.replace(/\{\{name\}\}/g, reg.name));
+        })
+      );
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value) sent++;
+        else failed++;
       }
-      const personalMsg = messageText.replace(/\{\{name\}\}/g, reg.name);
-      const ok = await sendWa(reg.whatsapp, personalMsg);
-      if (ok) {
-        sent++;
-      } else {
-        failed++;
-        errors.push(`${reg.name} (${reg.whatsapp})`);
-      }
-      // Jeda 3-5 detik antar pengiriman agar WA tidak blokir
-      if (sent + failed < registrations.length) {
-        await new Promise((r) => setTimeout(r, 3000 + Math.random() * 2000));
+      if (i + batchSize < registrations.length) {
+        await new Promise((r) => setTimeout(r, 3000));
       }
     }
 
-    const result: BroadcastResult = { sent, failed, total: registrations.length, errors };
-
-    // Catat log broadcast
-    console.log(`[broadcast] ${session.email} — ${messageType} → ${registrations.length} penerima (${sent} terkirim, ${failed} gagal)`);
+    const result: BroadcastResult = { sent, failed, total: registrations.length };
+    console.log(`[broadcast] admin — ${messageType} → ${registrations.length} penerima (${sent} terkirim, ${failed} gagal)`);
 
     return NextResponse.json(result);
   } catch (err) {
