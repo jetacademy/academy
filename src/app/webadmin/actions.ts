@@ -1185,55 +1185,21 @@ export async function sendBroadcast(formData: FormData) {
   if (!programId && !batchId) redirect("/webadmin/broadcast?e=target");
   if (messageType === "custom" && !customMessage) redirect("/webadmin/broadcast?e=pesan");
 
-  // ── Cari penerima ─────────────────────────────────────
-  // Raw query untuk hindari Prisma type issues
-  const regRows = await prisma.$queryRaw<Array<{ id: string; name: string; whatsapp: string | null }>>`
-    SELECT id, name, whatsapp FROM registration
-    WHERE status IN ('PAID', 'PASSED', 'REGISTERED')
-    ${batchId ? `AND batchId = ${batchId}` : ``}
-    ${!batchId && programId ? `AND programId = ${programId}` : ``}
-  `;
+  const authRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/webadmin/broadcast`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-Key": process.env.JETSCHOOL_API_KEY || "",
+    },
+    body: JSON.stringify({ programId, batchId, messageType, customMessage: messageType === "custom" ? customMessage : undefined }),
+  });
 
-  const validRegs = regRows.filter((r) => r.whatsapp);
-
-  // ── Buat pesan ────────────────────────────────────────
-  // Ambil link Zoom/Grup dari program
-  const progData = programId
-    ? await prisma.program.findUnique({ where: { id: programId }, select: { zoomLink: true, waGroupLink: true } })
-    : null;
-
-  let messageText = "";
-  if (messageType === "custom") {
-    messageText = customMessage;
-  } else if (messageType === "zoom") {
-    const zoomLink = progData?.zoomLink ?? "";
-    messageText = `Halo {{name}},\n\nBerikut link Zoom untuk pelatihan:\n${zoomLink}\n\nPastikan sudah siap 15 menit sebelum acara. Terima kasih! 😊`;
-  } else if (messageType === "grup") {
-    const grupLink = progData?.waGroupLink ?? "";
-    messageText = `Halo {{name}},\n\nBergabunglah ke grup WhatsApp peserta melalui link berikut:\n${grupLink}\n\nSilakan perkenalkan diri dan tanyakan jika ada yang perlu. Terima kasih! 😊`;
+  if (!authRes.ok) {
+    const errData = await authRes.json().catch(() => ({ error: "Gagal" }));
+    redirect(`/webadmin/broadcast?e=${encodeURIComponent(errData.error || "Gagal")}`);
   }
 
-  // ── Kirim broadcast (batch: 5 per group, jeda 3 detik antar group) ──
-  let sent = 0, failed = 0;
-  const batchSize = 5;
-  for (let i = 0; i < validRegs.length; i += batchSize) {
-    const batch = validRegs.slice(i, i + batchSize);
-    const results = await Promise.allSettled(
-      batch.map(async (reg: any) => {
-        if (!reg.whatsapp) return false;
-        const personalMsg = messageText.replace(/\{\{name\}\}/g, reg.name);
-        return sendWa(reg.whatsapp, personalMsg);
-      })
-    );
-    for (const r of results) {
-      if (r.status === "fulfilled" && r.value) sent++;
-      else failed++;
-    }
-    if (i + batchSize < validRegs.length) {
-      await new Promise((r) => setTimeout(r, 3000));
-    }
-  }
-
-  const resultQuery = new URLSearchParams({ ok: "1", sent: String(sent), failed: String(failed), total: String(validRegs.length) });
+  const data = await authRes.json();
+  const resultQuery = new URLSearchParams({ ok: "1", sent: String(data.sent), failed: String(data.failed), total: String(data.total) });
   redirect(`/webadmin/broadcast?${resultQuery.toString()}`);
 }

@@ -1,25 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendWa } from "@/lib/wa";
-import { getAdminSession } from "@/lib/admin-auth";
 
 export type BroadcastMessageType = "zoom" | "grup" | "custom";
-export type BroadcastRequest = {
-  programId?: string;
-  batchId?: string;
-  messageType: BroadcastMessageType;
-  customMessage?: string;
-};
-export type BroadcastResult = {
-  sent: number;
-  failed: number;
-  total: number;
-  errors: string[];
-};
+export type BroadcastResult = { sent: number; failed: number; total: number };
 
-export async function POST(request: Request): Promise<NextResponse<BroadcastResult | { error: string }>> {
-  const session = await getAdminSession();
-  if (!session || session.role !== "ADMIN") {
+export async function POST(req: Request) {
+  // Auth via X-API-Key header (sama dengan API v1)
+  const apiKey = req.headers.get("X-API-Key");
+  const validKey = process.env.JETSCHOOL_API_KEY;
+  if (!validKey || apiKey !== validKey) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
