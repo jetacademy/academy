@@ -15,6 +15,7 @@ interface FreeWebinarClaimSectionProps {
   hasInternalLms: boolean;
   hasExternalLms: boolean;
   lmsLink?: string | null;
+  batchLabel?: string | null;
   programTitle: string;
 }
 
@@ -27,6 +28,7 @@ export default function FreeWebinarClaimSection({
   hasInternalLms,
   hasExternalLms,
   lmsLink,
+  batchLabel,
   programTitle,
 }: FreeWebinarClaimSectionProps) {
   const [showBenefits, setShowBenefits] = useState(false);
@@ -153,7 +155,7 @@ export default function FreeWebinarClaimSection({
                     </a>
                   ) : hasExternalLms ? (
                     <a href={lmsLink!} target="_blank" rel="noopener noreferrer" className="btn btn-purple btn-block" style={{ textAlign: "center", display: "block" }}>
-                      📚 Akses Rekaman &amp; Materi
+                      📚 {batchLabel ? `Rekaman sesi batch ${batchLabel}` : "Akses Rekaman &amp; Materi"}
                     </a>
                   ) : (
                     <ClaimCertButton registrationId={registrationId} />

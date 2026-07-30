@@ -204,7 +204,13 @@ export default async function MemberDashboardPage() {
                 const eventHasEnded = now >= eventEndTime;
 
                 const hasInternalLms = !!(prog.modules && prog.modules.length > 0);
-                const hasExternalLms = !!prog.lmsLink;
+                const hasExternalLms = !!(prog.lmsLink || reg.batch?.recordingLink);
+
+                // Link per batch — fallback ke link program
+                const batchWaLink = reg.batch?.waGroupLink || prog.waGroupLink;
+                const batchZoomLink = reg.batch?.zoomLink || prog.zoomLink;
+                const batchRecordingLink = reg.batch?.recordingLink || prog.lmsLink;
+                const batchLabel = reg.batch ? formatJadwal(reg.batch.scheduleAt) : null;
 
                 // Gerbang admin: apakah klaim sertifikat sudah dibuka?
                 // NONAKTIF — sertifikat akan dikirim manual via dashboard
@@ -314,9 +320,9 @@ export default async function MemberDashboardPage() {
                       {/* ══ KASUS 2: REGISTERED + WEBINAR GRATIS ══ */}
                       {reg.status === "REGISTERED" && prog.price === 0 && (
                         <>
-                          {/* WA Grup — hanya jika tersedia */}
-                          {prog.waGroupLink ? (
-                            <a href={prog.waGroupLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
+                          {/* WA Grup — priority: batch link, fallback program link */}
+                          {batchWaLink ? (
+                            <a href={batchWaLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
                               Gabung Grup WA Pelatihan
                             </a>
                           ) : (
@@ -325,9 +331,9 @@ export default async function MemberDashboardPage() {
                             </p>
                           )}
 
-                          {/* Zoom — muncul saat live */}
-                          {prog.zoomLink && eventHasStarted && !eventHasEnded && (
-                            <a href={prog.zoomLink} target="_blank" rel="noopener noreferrer" className="btn btn-ink btn-block" style={{ textAlign: "center" }}>
+                          {/* Zoom — priority: batch link, fallback program link */}
+                          {batchZoomLink && eventHasStarted && !eventHasEnded && (
+                            <a href={batchZoomLink} target="_blank" rel="noopener noreferrer" className="btn btn-ink btn-block" style={{ textAlign: "center" }}>
                               🔴 Masuk Zoom Live
                             </a>
                           )}
@@ -341,7 +347,8 @@ export default async function MemberDashboardPage() {
                             certPrice={prog.certPrice}
                             hasInternalLms={hasInternalLms}
                             hasExternalLms={hasExternalLms}
-                            lmsLink={prog.lmsLink}
+                            lmsLink={batchRecordingLink}
+                            batchLabel={batchLabel}
                             programTitle={prog.title}
                           />
                         </>
@@ -350,12 +357,12 @@ export default async function MemberDashboardPage() {
                       {/* ══ KASUS 3: SUDAH LUNAS (PAID) ══ */}
                       {reg.status === "PAID" && (
                         <>
-                          {prog.zoomLink && (
-                            <a href={prog.zoomLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
+                          {batchZoomLink && (
+                            <a href={batchZoomLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
                               Masuk Zoom Live
                             </a>
                           )}
-                          {!prog.zoomLink && (
+                          {!batchZoomLink && (
                             <p style={{ fontSize: "0.82rem", color: "var(--ink-soft)", textAlign: "center", margin: "0.5rem 0" }}>
                               Link Zoom akan dikirim H-1 ya Kak 🙏
                             </p>
@@ -364,9 +371,13 @@ export default async function MemberDashboardPage() {
                             <Link href={`/member/lms/${reg.id}`} className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
                               📚 Lanjut Belajar &amp; Tes
                             </Link>
-                          ) : hasExternalLms ? (
-                            <a href={prog.lmsLink!} target="_blank" rel="noopener noreferrer" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                          ) : hasExternalLms && !batchLabel ? (
+                            <a href={batchRecordingLink!} target="_blank" rel="noopener noreferrer" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
                               📚 Akses Rekaman &amp; Materi
+                            </a>
+                          ) : hasExternalLms && batchLabel ? (
+                            <a href={batchRecordingLink!} target="_blank" rel="noopener noreferrer" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
+                              📚 Rekaman sesi batch {batchLabel}
                             </a>
                           ) : (
                             <ClaimCertButton registrationId={reg.id} />
@@ -385,9 +396,14 @@ export default async function MemberDashboardPage() {
                               Akses LMS Interaktif
                             </Link>
                           )}
-                          {hasExternalLms && !hasInternalLms && (
-                            <a href={prog.lmsLink!} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
+                          {hasExternalLms && !hasInternalLms && !batchLabel && (
+                            <a href={batchRecordingLink!} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
                               Akses Rekaman LMS
+                            </a>
+                          )}
+                          {hasExternalLms && !hasInternalLms && batchLabel && (
+                            <a href={batchRecordingLink!} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
+                              Rekaman sesi batch {batchLabel}
                             </a>
                           )}
                         </>

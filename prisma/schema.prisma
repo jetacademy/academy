@@ -107,6 +107,9 @@ model ProgramBatch {
   id            String         @id @default(cuid())
   program       Program        @relation(fields: [programId], references: [id], onDelete: Cascade)
   programId     String
+  zoomLink      String?        @db.Text // link Zoom khusus batch ini
+  waGroupLink   String?        @db.Text // link grup WA khusus batch ini
+  recordingLink String?        @db.Text // link rekaman khusus batch ini
   scheduleAt    DateTime
   seatsLeft     Int? // sisa kursi khusus batch ini (opsional)
   isActive      Boolean        @default(true) // nonaktifkan tanpa hapus (histori pendaftaran tetap utuh)
