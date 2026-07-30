@@ -199,6 +199,14 @@ export default async function AdminBroadcast({
           </table>
         </div>
 
+        {/* ── Opsi: hanya pendaftar baru ──────────────────────── */}
+        <div style={{ marginBottom: "1.4rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <input type="checkbox" id="onlyNew" name="onlyNew" value="1" defaultChecked />
+          <label htmlFor="onlyNew" style={{ fontSize: ".85rem", fontWeight: 600 }}>
+            Hanya pendaftar baru (sejak broadcast terakhir)
+          </label>
+        </div>
+
         {/* ── Preview pesan ───────────────────────────────────── */}
         {(selectedType === "zoom" || selectedType === "grup") && (
           <div style={{ marginBottom: "1.4rem" }}>
