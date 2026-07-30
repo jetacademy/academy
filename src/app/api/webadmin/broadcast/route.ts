@@ -107,6 +107,10 @@ export async function POST(request: Request): Promise<NextResponse<BroadcastResu
         failed++;
         errors.push(`${reg.name} (${reg.whatsapp})`);
       }
+      // Jeda 3-5 detik antar pengiriman agar WA tidak blokir
+      if (sent + failed < registrations.length) {
+        await new Promise((r) => setTimeout(r, 3000 + Math.random() * 2000));
+      }
     }
 
     const result: BroadcastResult = { sent, failed, total: registrations.length, errors };
