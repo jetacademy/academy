@@ -302,29 +302,23 @@ export default async function LmsPage({
       <Navbar minimal ctaHref="/member" ctaLabel="Dashboard Saya" />
 
       <div className="lms-scope" style={{ background: "var(--bg-panel)", minHeight: "90vh" }}>
-        {/* Sticky Header */}
+        {/* Sticky Header — compact single-row */}
         <div className="lms-header">
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <span className="kicker" style={{ fontSize: "0.68rem", marginBottom: "0.1rem" }}>LMS Interaktif</span>
-            <h1 style={{ fontSize: "1.15rem", margin: 0, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {program.title}
-            </h1>
+          {/* Judul */}
+          <div className="lms-header-title">
+            <span className="lms-header-label">LMS Interaktif</span>
+            <span className="lms-header-name">{program.title}</span>
           </div>
 
-          {/* Progress bar (desktop) */}
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem", minWidth: "14rem", flex: "0 0 auto" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem", marginBottom: "0.2rem", fontWeight: 700 }}>
-                <span>Progres</span>
-                <span className="acc-p">{progressPercent}%</span>
-              </div>
-              <div style={{ width: "100%", height: "7px", background: "#eaeaea", borderRadius: "99px", overflow: "hidden" }}>
-                <div style={{ width: `${progressPercent}%`, height: "100%", background: "var(--purple)", borderRadius: "99px", transition: "width 0.4s ease" }} />
-              </div>
+          {/* Progress pill — desktop only (hidden on mobile via CSS) */}
+          <div className="lms-header-progress">
+            <div className="lms-header-progress-bar">
+              <div className="lms-header-progress-fill" style={{ width: `${progressPercent}%` }} />
             </div>
+            <span className="lms-header-progress-pct">{progressPercent}%</span>
           </div>
 
-          {/* Mobile nav toggle — only visible on mobile via CSS */}
+          {/* Tombol Materi — mobile only */}
           <LmsMobileNav
             sections={sidebarSections}
             currentLessonId={currentLesson.id}
@@ -507,6 +501,62 @@ export default async function LmsPage({
             isAllDone={isAllDone}
           />
         </div>
+      </div>
+
+      {/* ── Mobile Bottom Nav (prev / materi / next) ── */}
+      <div className="lms-bottom-nav">
+        {/* Sebelumnya */}
+        {currentIndex > 0 ? (
+          <Link
+            href={`/member/lms/${registrationId}?lessonId=${allLessons[currentIndex - 1]?.id}`}
+            className="lms-bottom-nav-btn"
+          >
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="13 5 7 10 13 15" />
+            </svg>
+            Sebelumnya
+          </Link>
+        ) : (
+          <span className="lms-bottom-nav-btn disabled">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="13 5 7 10 13 15" />
+            </svg>
+            Sebelumnya
+          </span>
+        )}
+
+        {/* Materi (buka drawer) — di-handle LmsMobileNav sudah punya toggle di header, ini adalah duplikasi state via button sederhana */}
+        <LmsMobileNav
+          sections={sidebarSections}
+          currentLessonId={currentLesson.id}
+          completedLessonIds={completedLessonIdsArr}
+          registrationId={registrationId}
+          completedCount={completedCount}
+          totalLessons={totalLessons}
+          progressPercent={progressPercent}
+          isAllDone={isAllDone}
+          bottomBar
+        />
+
+        {/* Berikutnya */}
+        {nextLesson ? (
+          <Link
+            href={`/member/lms/${registrationId}?lessonId=${nextLesson.id}`}
+            className="lms-bottom-nav-btn"
+          >
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="7 5 13 10 7 15" />
+            </svg>
+            Berikutnya
+          </Link>
+        ) : (
+          <span className="lms-bottom-nav-btn disabled">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="7 5 13 10 7 15" />
+            </svg>
+            Berikutnya
+          </span>
+        )}
       </div>
 
       <Footer />

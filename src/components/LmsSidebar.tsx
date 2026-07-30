@@ -324,8 +324,14 @@ export default function LmsSidebar({
           aria-modal="true"
           aria-label="Kurikulum Kelas"
         >
+          {/* Sticky drawer header */}
           <div className="lms-drawer-header">
-            <h3>Kurikulum Kelas</h3>
+            <div className="lms-drawer-header-title">
+              <h3>Kurikulum Kelas</h3>
+              <span className="lms-drawer-header-sub">
+                {completedCount} dari {totalLessons} selesai
+              </span>
+            </div>
             <button
               className="lms-drawer-close"
               onClick={onClose}
@@ -335,7 +341,11 @@ export default function LmsSidebar({
               ✕
             </button>
           </div>
-          {sidebarContent}
+
+          {/* Scrollable body */}
+          <div className="lms-drawer-body">
+            {sidebarContent}
+          </div>
         </div>
       </>
     );
