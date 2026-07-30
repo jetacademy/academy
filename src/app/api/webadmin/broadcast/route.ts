@@ -14,8 +14,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json() as { programId?: string; batchId?: string; messageType?: string; customMessage?: string; includeRegistered?: boolean };
-    const { programId, batchId, messageType, customMessage, includeRegistered } = body;
+    const body = await req.json() as { programId?: string; batchId?: string; messageType?: string; customMessage?: string; includeRegistered?: boolean; onlyNew?: boolean; lastSentAt?: string };
+    const { programId, batchId, messageType, customMessage, includeRegistered, onlyNew, lastSentAt } = body;
 
     if (!messageType) {
       return NextResponse.json({ error: "Tipe pesan wajib diisi." }, { status: 400 });
@@ -29,13 +29,17 @@ export async function POST(req: Request) {
 
     // ── Build where clause ──────────────────────────────────────
     const statusFilter = includeRegistered ? ["PAID", "PASSED", "REGISTERED"] : ["PAID", "PASSED"];
-    const where: { programId?: string; batchId?: string; status: { in: string[] } } = {
+    const where: any = {
       status: { in: statusFilter },
     };
     if (batchId) {
       where.batchId = batchId;
     } else if (programId) {
       where.programId = programId;
+    }
+    // Filter hanya pendaftar baru sejak broadcast terakhir
+    if (onlyNew && lastSentAt) {
+      where.createdAt = { gt: new Date(lastSentAt) };
     }
 
     // ── Fetch recipients ────────────────────────────────────────

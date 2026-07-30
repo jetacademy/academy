@@ -1190,15 +1190,35 @@ export async function sendBroadcast(formData: FormData) {
   // Program BERBAYAR: cuma PAID/PASSED (yang belum bayar jangan dikirimi)
   const prog = programId ? await prisma.program.findUnique({ where: { id: programId }, select: { price: true } }) : null;
   const isFree = prog ? prog.price === 0 : false;
+  const onlyNew = formData.get("onlyNew") === "1";
+
+  // Cek kapan terakhir broadcast
+  let lastSentAt: Date | null = null;
+  if (onlyNew && programId) {
+    const setting = await prisma.systemSetting.findUnique({ where: { id: "singleton" } });
+    const key = `last_broadcast_${programId}`;
+    lastSentAt = (setting as any)?.[key] ? new Date((setting as any)[key]) : null;
+  }
 
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/webadmin/broadcast`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-internal-secret": process.env.JETSCHOOL_API_KEY || "internal" },
-    body: JSON.stringify({ programId, batchId, messageType, customMessage: messageType === "custom" ? customMessage : undefined, includeRegistered: isFree }),
+    body: JSON.stringify({
+      programId, batchId, messageType,
+      customMessage: messageType === "custom" ? customMessage : undefined,
+      includeRegistered: isFree,
+      onlyNew,
+      lastSentAt: lastSentAt?.toISOString(),
+    }),
   });
 
   const data = await res.json();
   if (!res.ok) redirect(`/webadmin/broadcast?e=${encodeURIComponent(data.error || "Gagal")}`);
+
+  // Simpan timestamp broadcast terakhir
+  if (programId && data.sent > 0) {
+    await prisma.$executeRaw`UPDATE systemSetting SET \`last_broadcast_${programId}\` = NOW() WHERE id = 'singleton'`;
+  }
 
   const resultQuery = new URLSearchParams({ ok: "1", sent: String(data.sent), failed: String(data.failed), total: String(data.total) });
   redirect(`/webadmin/broadcast?${resultQuery.toString()}`);
