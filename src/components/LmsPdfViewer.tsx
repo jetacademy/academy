@@ -1,32 +1,28 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-// Gunakan worker dari CDN (sesuai versi pdfjs-dist yang di-bundle react-pdf)
+// Worker CDN pdf.worker.min.mjs
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-/**
- * LmsPdfViewer — PDF viewer menggunakan react-pdf (PDF.js).
- * - Render tiap halaman sebagai <canvas> → tidak ada toolbar download browser
- * - Tidak ada link download yang ditampilkan
- * - Navigasi halaman (prev/next)
- * - Konteks kanan diblokir pada kontainer
- */
-export default function LmsPdfViewer({
-  fileUrl,
-  title,
-}: {
+interface LmsPdfViewerProps {
   fileUrl: string;
   title: string;
-}) {
+}
+
+export default function LmsPdfViewer({ fileUrl, title }: LmsPdfViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [containerWidth, setContainerWidth] = useState(700);
+  const [containerWidth, setContainerWidth] = useState(750);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1.0);
+
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const containerRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
@@ -59,89 +55,147 @@ export default function LmsPdfViewer({
     e.preventDefault();
   }
 
+  function toggleFullscreen() {
+    setIsFullscreen((prev) => !prev);
+  }
+
+  function zoomIn() {
+    setZoomScale((z) => Math.min(2.5, z + 0.25));
+  }
+
+  function zoomOut() {
+    setZoomScale((z) => Math.max(0.6, z - 0.25));
+  }
+
+  function resetZoom() {
+    setZoomScale(1.0);
+  }
+
+  // Keyboard navigation untuk Fullscreen & standar
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false);
+      } else if (e.key === "ArrowLeft") {
+        setPageNumber((p) => Math.max(1, p - 1));
+      } else if (e.key === "ArrowRight" && numPages > 0) {
+        setPageNumber((p) => Math.min(numPages, p + 1));
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreen, numPages]);
+
+  // Lock body scroll saat Fullscreen mode
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isFullscreen]);
+
+  const targetWidth = Math.floor(
+    (isFullscreen ? Math.min(window.innerWidth - 40, 1100) : Math.min(containerWidth - 32, 900)) * zoomScale
+  );
+
   return (
     <div
-      className="lms-pdf-wrapper"
+      ref={wrapperRef}
+      className={`lms-pdf-wrapper${isFullscreen ? " is-fullscreen" : ""}`}
       onContextMenu={handleContextMenu}
       style={{ userSelect: "none" }}
     >
-      {/* Header */}
+      {/* PDF Header Bar */}
       <div className="lms-pdf-header">
         <div className="lms-pdf-header-title">
           <span>📄</span>
-          <span
-            style={{
-              maxWidth: "55vw",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <span className="lms-pdf-title-text" title={title}>
             {title}
           </span>
+          <span className="lms-pdf-shield">🔒 Hanya Baca</span>
         </div>
-        <div className="lms-pdf-shield">🔒 Hanya baca</div>
+
+        {/* Action Controls: Zoom + Fullscreen */}
+        <div className="lms-pdf-header-actions">
+          {/* Zoom controls (saat dokumen sudah termuat) */}
+          {!loading && !error && (
+            <div className="lms-pdf-zoom-group">
+              <button
+                type="button"
+                className="lms-pdf-btn-icon"
+                onClick={zoomOut}
+                title="Perkecil (-)"
+                disabled={zoomScale <= 0.6}
+              >
+                −
+              </button>
+              <button
+                type="button"
+                className="lms-pdf-btn-zoom-label"
+                onClick={resetZoom}
+                title="Reset Zoom (100%)"
+              >
+                {Math.round(zoomScale * 100)}%
+              </button>
+              <button
+                type="button"
+                className="lms-pdf-btn-icon"
+                onClick={zoomIn}
+                title="Perbesar (+)"
+                disabled={zoomScale >= 2.5}
+              >
+                +
+              </button>
+            </div>
+          )}
+
+          {/* Fullscreen Toggle Button */}
+          <button
+            type="button"
+            className={`lms-pdf-fullscreen-btn${isFullscreen ? " active" : ""}`}
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Keluar Layar Penuh (Esc)" : "Mode Baca Layar Penuh"}
+          >
+            {isFullscreen ? (
+              <>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+                </svg>
+                <span>Keluar</span>
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                </svg>
+                <span>Layar Penuh</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Loading state */}
       {loading && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "3rem 1rem",
-            gap: "0.8rem",
-            background: "var(--bg-panel)",
-          }}
-        >
-          <div
-            style={{
-              width: "2rem",
-              height: "2rem",
-              border: "3px solid rgba(108,92,231,.2)",
-              borderTopColor: "var(--purple)",
-              borderRadius: "50%",
-              animation: "lms-spin .8s linear infinite",
-            }}
-          />
-          <span style={{ fontSize: "0.8rem", color: "var(--ink-soft)", fontWeight: 600 }}>
-            Memuat dokumen…
-          </span>
+        <div className="lms-pdf-loading">
+          <div className="lms-pdf-spinner" />
+          <span>Memuat dokumen PDF…</span>
         </div>
       )}
 
       {/* Error state */}
-      {error && (
-        <div
-          style={{
-            padding: "2rem",
-            textAlign: "center",
-            color: "var(--red, #e5484d)",
-            fontSize: "0.88rem",
-            fontWeight: 600,
-          }}
-        >
-          ⚠️ {error}
-        </div>
-      )}
+      {error && <div className="lms-pdf-error">⚠️ {error}</div>}
 
-      {/* PDF Canvas Area */}
+      {/* Canvas Scroll Area */}
       <div
         ref={containerRef}
-        style={{
-          width: "100%",
-          overflowX: "auto",
-          overflowY: "auto",
-          maxHeight: "72vh",
-          background: "#525659",
-          display: loading || error ? "none" : "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "1rem 0",
-          gap: "0.75rem",
-        }}
+        className="lms-pdf-canvas-area"
+        style={{ display: loading || error ? "none" : "flex" }}
       >
         <Document
           file={fileUrl}
@@ -151,9 +205,9 @@ export default function LmsPdfViewer({
           noData={null}
         >
           <Page
-            key={`page_${pageNumber}`}
+            key={`page_${pageNumber}_zoom_${zoomScale}_fs_${isFullscreen}`}
             pageNumber={pageNumber}
-            width={Math.min(containerWidth - 32, 900)}
+            width={targetWidth}
             renderTextLayer={false}
             renderAnnotationLayer={false}
             loading={null}
@@ -161,57 +215,27 @@ export default function LmsPdfViewer({
         </Document>
       </div>
 
-      {/* Navigasi halaman */}
+      {/* Bottom Floating Navigation Toolbar */}
       {!loading && !error && numPages > 0 && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "0.75rem",
-            padding: "0.65rem 1rem",
-            borderTop: "1px solid var(--border)",
-            background: "var(--bg-panel)",
-          }}
-        >
+        <div className="lms-pdf-footer">
           <button
             type="button"
+            className="lms-pdf-nav-btn"
             onClick={prevPage}
             disabled={pageNumber <= 1}
-            style={{
-              padding: "0.35rem 0.9rem",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              borderRadius: "var(--r-sm)",
-              border: "1.5px solid var(--border)",
-              background: pageNumber <= 1 ? "var(--chip)" : "var(--white)",
-              color: pageNumber <= 1 ? "var(--ink-faint)" : "var(--ink)",
-              cursor: pageNumber <= 1 ? "not-allowed" : "pointer",
-              transition: "all .15s",
-            }}
           >
             ← Sebelumnya
           </button>
 
-          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--ink-soft)", minWidth: "5rem", textAlign: "center" }}>
-            {pageNumber} / {numPages}
+          <span className="lms-pdf-page-indicator">
+            Halaman {pageNumber} dari {numPages}
           </span>
 
           <button
             type="button"
+            className="lms-pdf-nav-btn next"
             onClick={nextPage}
             disabled={pageNumber >= numPages}
-            style={{
-              padding: "0.35rem 0.9rem",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              borderRadius: "var(--r-sm)",
-              border: "1.5px solid var(--border)",
-              background: pageNumber >= numPages ? "var(--chip)" : "var(--purple)",
-              color: pageNumber >= numPages ? "var(--ink-faint)" : "#fff",
-              cursor: pageNumber >= numPages ? "not-allowed" : "pointer",
-              transition: "all .15s",
-            }}
           >
             Berikutnya →
           </button>
