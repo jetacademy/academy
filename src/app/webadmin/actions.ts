@@ -458,46 +458,48 @@ type LessonTypeStr = (typeof LESSON_TYPES)[number];
 
 export async function saveLmsLesson(formData: FormData) {
   await requireAdmin();
+  try {
+    const id = optStr(formData, "id");
+    const programId = String(formData.get("programId") ?? "").trim();
+    const moduleId = String(formData.get("moduleId") ?? "").trim();
+    const title = String(formData.get("title") ?? "").trim();
+    const rawType = String(formData.get("type") ?? "VIDEO");
+    const type: LessonTypeStr = (LESSON_TYPES as readonly string[]).includes(rawType) ? (rawType as LessonTypeStr) : "VIDEO";
+    const videoUrl = optStr(formData, "videoUrl");
+    if (videoUrl && !isValidVideoUrl(videoUrl)) {
+      redirect(`/webadmin/program/${programId}/lms/lesson/${id || "new"}?e=video`);
+    }
+    const fileUrl = optStr(formData, "fileUrl");
+    const content = await sanitizeHtml(optStr(formData, "content"));
+    const duration = String(formData.get("duration") ?? "10 menit").trim() || "10 menit";
+    const passingScoreRaw = num(formData, "passingScore");
+    const hasPassingScore = formData.has("passingScore") && String(formData.get("passingScore")).trim() !== "";
+    const passingScore = type === "QUIZ" && hasPassingScore ? Math.min(100, Math.max(0, passingScoreRaw)) : null;
+    const isPreview = formData.get("isPreview") === "on";
 
-  const id = optStr(formData, "id");
-  const programId = String(formData.get("programId") ?? "").trim();
-  const moduleId = String(formData.get("moduleId") ?? "").trim();
-  const title = String(formData.get("title") ?? "").trim();
-  const rawType = String(formData.get("type") ?? "VIDEO");
-  const type: LessonTypeStr = (LESSON_TYPES as readonly string[]).includes(rawType) ? (rawType as LessonTypeStr) : "VIDEO";
-  const videoUrl = optStr(formData, "videoUrl");
-  // Validasi video URL: YouTube/Vimeo, atau video Bunny Stream yang diunggah dari editor ini
-  if (videoUrl && !isValidVideoUrl(videoUrl)) {
-    redirect(`/webadmin/program/${programId}/lms/lesson/${id || "new"}?e=video`);
+    if (!programId || !moduleId || !title) redirect(`/webadmin/program/${programId}/lms?e=lengkapi`);
+
+    const data = { moduleId, title, type, videoUrl, fileUrl, content, duration, passingScore, isPreview };
+
+    let lessonId = id;
+    if (id) {
+      await prisma.lesson.update({ where: { id }, data });
+    } else {
+      const last = await prisma.lesson.findFirst({ where: { moduleId }, orderBy: { order: "desc" } });
+      const created = await prisma.lesson.create({ data: { ...data, order: (last?.order ?? 0) + 1 } });
+      lessonId = created.id;
+    }
+
+    revalidatePath(`/webadmin/program/${programId}/lms`);
+    if (!id && type === "QUIZ") {
+      redirect(`/webadmin/program/${programId}/lms/lesson/${lessonId}?ok=baru`);
+    }
+    redirect(`/webadmin/program/${programId}/lms?ok=1`);
+  } catch (err) {
+    console.error("[saveLmsLesson]", err);
+    const programId = String(formData.get("programId") ?? "").trim();
+    redirect(`/webadmin/program/${programId}/lms?e=gagal`);
   }
-  const fileUrl = optStr(formData, "fileUrl");
-  const content = await sanitizeHtml(optStr(formData, "content"));
-  const duration = String(formData.get("duration") ?? "10 menit").trim() || "10 menit";
-  const passingScoreRaw = num(formData, "passingScore");
-  const hasPassingScore = formData.has("passingScore") && String(formData.get("passingScore")).trim() !== "";
-  const passingScore = type === "QUIZ" && hasPassingScore ? Math.min(100, Math.max(0, passingScoreRaw)) : null;
-  const isPreview = formData.get("isPreview") === "on";
-
-  if (!programId || !moduleId || !title) redirect(`/webadmin/program/${programId}/lms?e=lengkapi`);
-
-  const data = { moduleId, title, type, videoUrl, fileUrl, content, duration, passingScore, isPreview };
-
-  let lessonId = id;
-  if (id) {
-    await prisma.lesson.update({ where: { id }, data });
-  } else {
-    const last = await prisma.lesson.findFirst({ where: { moduleId }, orderBy: { order: "desc" } });
-    const created = await prisma.lesson.create({ data: { ...data, order: (last?.order ?? 0) + 1 } });
-    lessonId = created.id;
-  }
-
-  revalidatePath(`/webadmin/program/${programId}/lms`);
-  // Materi kuis baru → langsung ke editornya agar admin bisa menambah soal;
-  // selain itu kembali ke outline kurikulum.
-  if (!id && type === "QUIZ") {
-    redirect(`/webadmin/program/${programId}/lms/lesson/${lessonId}?ok=baru`);
-  }
-  redirect(`/webadmin/program/${programId}/lms?ok=1`);
 }
 
 export async function deleteLmsLesson(formData: FormData) {
