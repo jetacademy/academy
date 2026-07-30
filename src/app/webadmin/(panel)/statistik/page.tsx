@@ -406,7 +406,7 @@ export default async function AdminStatistik() {
                     </span>
                     <span style={{ fontSize: "0.78rem", color: "var(--ink-faint)", marginLeft: "0.4rem" }}>
                       {(() => {
-                        const sorted = [...batchStatsRaw].sort((a, b) => new Date(a.batchSchedule).getTime() - new Date(b.batchSchedule).getTime());
+                        const sorted = [...batchStatsRaw].sort((a, b) => (a.batchSchedule?.getTime() ?? 0) - (b.batchSchedule?.getTime() ?? 0));
                         const idx = sorted.findIndex(x => x.batchId === b.batchId);
                         return idx >= 0 ? `Batch ${idx + 1}` : '';
                       })()}
