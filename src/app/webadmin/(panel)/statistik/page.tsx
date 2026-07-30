@@ -401,7 +401,16 @@ export default async function AdminStatistik() {
                     </a>
                   </td>
                   <td data-label="Batch">
-                    <span className="badge">{b.batchId.slice(0, 8)}…</span>
+                    <span className="badge" style={{ background: new Date(b.batchSchedule) > new Date() ? "rgba(46, 204, 113, 0.15)" : "var(--chip)", color: new Date(b.batchSchedule) > new Date() ? "#27ae60" : "var(--ink-soft)", fontWeight: 700 }}>
+                      {new Date(b.batchSchedule) > new Date() ? "🟢 Aktif" : "✅ Selesai"}
+                    </span>
+                    <span style={{ fontSize: "0.78rem", color: "var(--ink-faint)", marginLeft: "0.4rem" }}>
+                      {(() => {
+                        const sorted = [...batchStatsRaw].sort((a, b) => new Date(a.batchSchedule).getTime() - new Date(b.batchSchedule).getTime());
+                        const idx = sorted.findIndex(x => x.batchId === b.batchId);
+                        return idx >= 0 ? `Batch ${idx + 1}` : '';
+                      })()}
+                    </span>
                   </td>
                   <td data-label="Tanggal">
                     {b.batchSchedule ? formatHariTanggal(new Date(b.batchSchedule)) : "—"}
