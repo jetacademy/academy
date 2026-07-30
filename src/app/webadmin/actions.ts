@@ -1223,3 +1223,22 @@ export async function sendBroadcast(formData: FormData) {
   const resultQuery = new URLSearchParams({ ok: "1", sent: String(data.sent), failed: String(data.failed), total: String(data.total) });
   redirect(`/webadmin/broadcast?${resultQuery.toString()}`);
 }
+
+export async function updateBatchLinks(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const programId = String(formData.get("programId") ?? "");
+  const zoomLink = String(formData.get("zoomLink") ?? "").trim();
+  const waGroupLink = String(formData.get("waGroupLink") ?? "").trim();
+  const recordingLink = String(formData.get("recordingLink") ?? "").trim();
+  if (!id) redirect(`/webadmin/program/${programId}/batch?e=id`);
+  await prisma.programBatch.update({
+    where: { id },
+    data: {
+      zoomLink: zoomLink || null,
+      waGroupLink: waGroupLink || null,
+      recordingLink: recordingLink || null,
+    },
+  });
+  redirect(`/webadmin/program/${programId}/batch?ok=1`);
+}

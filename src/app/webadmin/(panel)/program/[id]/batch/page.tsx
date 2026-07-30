@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { createBatch, toggleBatch, deleteBatch } from "@/app/webadmin/actions";
+import { createBatch, toggleBatch, deleteBatch, updateBatchLinks } from "@/app/webadmin/actions";
 import { formatJadwal } from "@/lib/format";
 import ConfirmButton from "@/components/ConfirmButton";
 
@@ -68,6 +68,7 @@ export default async function AdminBatch({
               <th>Kuota</th>
               <th>Pendaftar</th>
               <th>Status</th>
+              <th style={{ minWidth: "16rem" }}>Link Zoom &amp; Grup</th>
               <th>Aksi</th>
             </tr>
           </thead>
@@ -84,6 +85,16 @@ export default async function AdminBatch({
                   <td data-label="Pendaftar">{b._count.registrations}</td>
                   <td data-label="Status">
                     <span className={`badge ${b.isActive ? "g" : "dim"}`}>{b.isActive ? "Aktif" : "Nonaktif"}</span>
+                  </td>
+                  <td data-label="Link">
+                    <form action={updateBatchLinks} style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+                      <input type="hidden" name="id" value={b.id} />
+                      <input type="hidden" name="programId" value={program.id} />
+                      <input name="zoomLink" defaultValue={b.zoomLink ?? ""} placeholder="Link Zoom" style={{ fontSize: "0.75rem", padding: "0.2rem 0.4rem", border: "1px solid var(--border)", borderRadius: "4px", width: "100%" }} />
+                      <input name="waGroupLink" defaultValue={b.waGroupLink ?? ""} placeholder="Link Grup WA" style={{ fontSize: "0.75rem", padding: "0.2rem 0.4rem", border: "1px solid var(--border)", borderRadius: "4px", width: "100%" }} />
+                      <input name="recordingLink" defaultValue={b.recordingLink ?? ""} placeholder="Link Rekaman" style={{ fontSize: "0.75rem", padding: "0.2rem 0.4rem", border: "1px solid var(--border)", borderRadius: "4px", width: "100%" }} />
+                      <button type="submit" className="btn btn-sm" style={{ alignSelf: "flex-end" }}>Simpan</button>
+                    </form>
                   </td>
                   <td data-label="Aksi">
                     <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
