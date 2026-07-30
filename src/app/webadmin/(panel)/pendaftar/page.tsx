@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { rupiah } from "@/lib/format";
+import { rupiah, formatHariTanggal } from "@/lib/format";
 import { markPaid, deleteRegistration } from "../../actions";
 import ConfirmButton from "@/components/ConfirmButton";
 import RefundButton from "@/components/RefundButton";
@@ -16,9 +16,9 @@ const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
 };
 
 export default async function AdminPendaftar({ searchParams }: {
-  searchParams: Promise<{ q?: string; program?: string; status?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; program?: string; status?: string; batchId?: string; page?: string }>;
 }) {
-  const { q, program, status, page } = await searchParams;
+  const { q, program, status, batchId, page } = await searchParams;
 
   const currentPage = Number(page ?? "1") || 1;
   const limit = 50;
@@ -28,13 +28,18 @@ export default async function AdminPendaftar({ searchParams }: {
     ...(q ? { OR: [{ name: { contains: q } }, { whatsapp: { contains: q } }, { email: { contains: q } }] } : {}),
     ...(program ? { programId: program } : {}),
     ...(status ? { status: status as "REGISTERED" | "PAID" | "PASSED" | "EXPIRED" | "FAILED" | "CANCELLED" | "REFUNDED" } : {}),
+    ...(batchId ? { batchId } : {}),
   };
 
-  const [programs, regs, totalCount, paidCount] = await Promise.all([
+  const [programs, batches, regs, totalCount, paidCount] = await Promise.all([
     prisma.program.findMany({ orderBy: { title: "asc" }, take: 200, select: { id: true, title: true } }),
+    prisma.programBatch.findMany({
+      orderBy: { scheduleAt: "desc" },
+      select: { id: true, scheduleAt: true, program: { select: { title: true } } },
+    }),
     prisma.registration.findMany({
       where,
-      include: { program: true, payment: { include: { voucher: { select: { code: true } } } }, certificate: true },
+      include: { program: true, batch: true, payment: { include: { voucher: { select: { code: true } } } }, certificate: true },
       orderBy: { createdAt: "desc" },
       skip: (currentPage - 1) * limit,
       take: limit,
@@ -59,6 +64,14 @@ export default async function AdminPendaftar({ searchParams }: {
           <option value="">Semua Program</option>
           {programs.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
         </select>
+        <select name="batchId" defaultValue={batchId ?? ""}>
+          <option value="">Semua Batch</option>
+          {batches.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.program.title} — {formatHariTanggal(b.scheduleAt)}
+            </option>
+          ))}
+        </select>
         <select name="status" defaultValue={status ?? ""}>
           <option value="">Semua Status</option>
           <option value="REGISTERED">Terdaftar</option>
@@ -75,7 +88,7 @@ export default async function AdminPendaftar({ searchParams }: {
       <div className="tbl-wrap">
         <table className="tbl">
           <thead>
-            <tr><th>Nama</th><th>Kontak</th><th>Program</th><th>Status</th><th>Pembayaran</th><th>Aksi</th></tr>
+            <tr><th>Nama</th><th>Kontak</th><th>Program</th><th>Batch</th><th>Status</th><th>Pembayaran</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             {regs.map((r) => {
@@ -88,6 +101,9 @@ export default async function AdminPendaftar({ searchParams }: {
                   </td>
                   <td data-label="Kontak">{r.whatsapp}<div className="muted">{r.email}</div></td>
                   <td data-label="Program" className="muted">{r.program.title}</td>
+                  <td data-label="Batch" className="muted">
+                    {r.batch ? formatHariTanggal(r.batch.scheduleAt) : <span className="muted">—</span>}
+                  </td>
                   <td data-label="Status"><span className={`badge ${b.cls}`}>{b.label}</span></td>
                   <td data-label="Pembayaran">
                     {r.payment
@@ -138,7 +154,7 @@ export default async function AdminPendaftar({ searchParams }: {
                       )}
                       {r.status === 'REGISTERED' && r.whatsapp && r.payment?.invoiceUrl && (
                         <a
-                          href={'https://wa.me/' + r.whatsapp.replace(/^0+/, '62') + '?text=' + encodeURIComponent('Halo ' + r.name + ', ini link pembayaran kamu Kak 👇\n' + r.payment.invoiceUrl + '\n\nEarly bird Rp225rb — jangan sampai kelewat ya 😊')}
+                          href={'https://wa.me/' + r.whatsapp.replace(/^0+/, '62') + '?text=' + encodeURIComponent('Halo ' + r.name + ', ini link pembayaran kamu Kak 👇\\n' + r.payment.invoiceUrl + '\\n\\nEarly bird Rp225rb — jangan sampai kelewat ya 😊')}
                           target='_blank'
                           rel='noopener noreferrer'
                           className='btn btn-sm btn-lime'
@@ -169,7 +185,7 @@ export default async function AdminPendaftar({ searchParams }: {
                 </tr>
               );
             })}
-            {regs.length === 0 && <tr><td colSpan={6} className="muted">Tidak ada pendaftar yang cocok.</td></tr>}
+            {regs.length === 0 && <tr><td colSpan={7} className="muted">Tidak ada pendaftar yang cocok.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -183,6 +199,7 @@ export default async function AdminPendaftar({ searchParams }: {
                 ...(q ? { q } : {}),
                 ...(program ? { program } : {}),
                 ...(status ? { status } : {}),
+                ...(batchId ? { batchId } : {}),
                 page: String(currentPage - 1),
               }).toString()}`}
               className="btn btn-sm"
@@ -199,6 +216,7 @@ export default async function AdminPendaftar({ searchParams }: {
                 ...(q ? { q } : {}),
                 ...(program ? { program } : {}),
                 ...(status ? { status } : {}),
+                ...(batchId ? { batchId } : {}),
                 page: String(currentPage + 1),
               }).toString()}`}
               className="btn btn-sm"

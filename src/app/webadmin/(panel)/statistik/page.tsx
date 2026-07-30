@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { rupiah } from "@/lib/format";
+import { rupiah, formatHariTanggal } from "@/lib/format";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,15 @@ interface ProgramStatsRaw {
   voucher_regs: bigint;
   total_income: number | null;
   total_discount: number | null;
+}
+
+interface BatchStatsRaw {
+  batchId: string;
+  batchSchedule: Date | null;
+  programId: string;
+  programTitle: string;
+  total_paid: bigint;
+  total_revenue: number | null;
 }
 
 interface ProgramWithStats {
@@ -32,7 +41,7 @@ interface ProgramWithStats {
 /* ──────────── Server component ──────────── */
 
 export default async function AdminStatistik() {
-  const [revenueAgg, discountAgg, paidRegCount, programs, statsRaw] =
+  const [revenueAgg, discountAgg, paidRegCount, programs, statsRaw, batchStatsRaw] =
     await Promise.all([
       // Total pendapatan lunas
       prisma.payment.aggregate({
@@ -76,6 +85,23 @@ export default async function AdminStatistik() {
         FROM registration r
         LEFT JOIN payment p ON p.registrationId = r.id
         GROUP BY r.programId
+      `,
+      // Statistik per batch (hanya program yang punya batch)
+      prisma.$queryRaw<BatchStatsRaw[]>`
+        SELECT
+          r.batchId                                           AS batchId,
+          pb.scheduleAt                                       AS batchSchedule,
+          pr.id                                               AS programId,
+          pr.title                                            AS programTitle,
+          COUNT(DISTINCT r.id)                                AS total_paid,
+          SUM(p.amount)                                       AS total_revenue
+        FROM registration r
+        JOIN payment p           ON p.registrationId = r.id
+        JOIN program pr          ON pr.id          = r.programId
+        JOIN programbatch pb     ON pb.id          = r.batchId
+        WHERE p.status = 'PAID'
+        GROUP BY r.batchId, pb.scheduleAt, pr.id, pr.title
+        ORDER BY pb.scheduleAt DESC
       `,
     ]);
 
@@ -343,6 +369,55 @@ export default async function AdminStatistik() {
               <tr>
                 <td colSpan={7} className="muted" style={{ textAlign: "center", padding: "1.5rem" }}>
                   Belum ada program. Jalankan <code>npm run db:seed</code> atau buat program baru.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ═══════ Tabel per Batch ═══════ */}
+      <div className="adm-head" style={{ marginTop: "2.4rem" }}>
+        <h2 style={{ fontSize: "1.25rem" }}>Rekap per Batch</h2>
+      </div>
+      <div className="tbl-wrap">
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th>Program</th>
+              <th>Batch</th>
+              <th>Tanggal</th>
+              <th>Pendaftar Lunas</th>
+              <th>Penghasilan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {batchStatsRaw.length > 0 ? (
+              batchStatsRaw.map((b) => (
+                <tr key={b.batchId}>
+                  <td data-label="Program" style={{ fontWeight: 600 }}>
+                    <a href={`/webadmin/program/${b.programId}`} style={{ color: "inherit", textDecoration: "none" }}>
+                      {b.programTitle}
+                    </a>
+                  </td>
+                  <td data-label="Batch">
+                    <span className="badge">{b.batchId.slice(0, 8)}…</span>
+                  </td>
+                  <td data-label="Tanggal">
+                    {b.batchSchedule ? formatHariTanggal(new Date(b.batchSchedule)) : "—"}
+                  </td>
+                  <td data-label="Pendaftar Lunas">
+                    {Number(b.total_paid)}
+                  </td>
+                  <td data-label="Penghasilan" style={{ fontWeight: 700 }}>
+                    {rupiah(Number(b.total_revenue ?? 0))}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="muted" style={{ textAlign: "center", padding: "1.5rem" }}>
+                  Belum ada data batch dengan pembayaran lunas.
                 </td>
               </tr>
             )}

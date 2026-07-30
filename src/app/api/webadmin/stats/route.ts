@@ -16,6 +16,13 @@ type PaidCountByProgram = {
   count: number;
 };
 
+type RevenueByBatch = {
+  batchId: string | null;
+  batchSchedule: string | null;
+  revenue: number;
+  count: number;
+};
+
 type StatsResponse = {
   totalRevenue: number;
   revenueByProgram: RevenueByProgram[];
@@ -23,20 +30,9 @@ type StatsResponse = {
   revenueNonVoucher: number;
   paidCountByProgram: PaidCountByProgram[];
   avgPerPendaftar: number;
+  revenueByBatch: RevenueByBatch[];
 };
 
-/**
- * PATCH /api/webadmin/stats — mengembalikan agregat statistik pembayaran.
- * Hanya bisa diakses oleh admin yang sudah login.
- *
- * Return:
- *  - totalRevenue: total pemasukan dari pembayaran PAID
- *  - revenueByProgram: pemasukan per program
- *  - revenueFromVouchers: total diskon dari voucher
- *  - revenueNonVoucher: pemasukan dari transaksi tanpa voucher
- *  - paidCountByProgram: jumlah peserta lunas per program
- *  - avgPerPendaftar: rata-rata nominal per pendaftar unik
- */
 export async function PATCH(): Promise<NextResponse<StatsResponse | { error: string }>> {
   const session = await getAdminSession();
   if (!session || session.role !== "ADMIN") {
@@ -44,7 +40,6 @@ export async function PATCH(): Promise<NextResponse<StatsResponse | { error: str
   }
 
   try {
-    // Gunakan raw query untuk menghindari Prisma intersection type depth issues
     const rows = await prisma.$queryRaw<
       Array<{
         registrationId: string;
@@ -54,6 +49,8 @@ export async function PATCH(): Promise<NextResponse<StatsResponse | { error: str
         programId: string;
         programTitle: string;
         programSlug: string;
+        batchId: string | null;
+        batchSchedule: Date | null;
       }>
     >`
       SELECT
@@ -63,17 +60,18 @@ export async function PATCH(): Promise<NextResponse<StatsResponse | { error: str
         p.voucherId,
         r.programId,
         pr.title AS programTitle,
-        pr.slug  AS programSlug
+        pr.slug  AS programSlug,
+        r.batchId,
+        pb.scheduleAt AS batchSchedule
       FROM payment p
       JOIN registration r  ON r.id  = p.registrationId
       JOIN program pr      ON pr.id = r.programId
+      LEFT JOIN programbatch pb ON pb.id = r.batchId
       WHERE p.status = 'PAID'
     `;
 
-    // ─── 1. Total Revenue ───────────────────────────────────────────
     const totalRevenue = rows.reduce((sum, r) => sum + r.amount, 0);
 
-    // ─── 2. Revenue by Program & 5. Jumlah Lunas per Program ────────
     const revMap = new Map<string, RevenueByProgram>();
     const countMap = new Map<string, number>();
 
@@ -89,37 +87,42 @@ export async function PATCH(): Promise<NextResponse<StatsResponse | { error: str
           revenue: r.amount,
         });
       }
-
       countMap.set(r.programId, (countMap.get(r.programId) ?? 0) + 1);
     }
 
     const revenueByProgram = Array.from(revMap.values());
-
     const paidCountByProgram: PaidCountByProgram[] = Array.from(countMap.entries()).map(([programId, count]) => {
       const prog = revMap.get(programId);
-      return {
-        programId,
-        programTitle: prog?.programTitle ?? "Unknown",
-        programSlug: prog?.programSlug ?? "",
-        count,
-      };
+      return { programId, programTitle: prog?.programTitle ?? "Unknown", programSlug: prog?.programSlug ?? "", count };
     });
 
-    // ─── 3. Revenue from Vouchers (total diskon dari voucher) ───────
-    const revenueFromVouchers = rows
-      .filter((r) => r.voucherId !== null)
-      .reduce((sum, r) => sum + r.discountAmount, 0);
-
-    // ─── 4. Revenue Non-Voucher (pembayaran tanpa voucher) ──────────
-    const revenueNonVoucher = rows
-      .filter((r) => r.voucherId === null)
-      .reduce((sum, r) => sum + r.amount, 0);
-
-    // ─── 6. Rata-rata per Pendaftar ─────────────────────────────────
+    const revenueFromVouchers = rows.filter((r) => r.voucherId !== null).reduce((sum, r) => sum + r.discountAmount, 0);
+    const revenueNonVoucher = rows.filter((r) => r.voucherId === null).reduce((sum, r) => sum + r.amount, 0);
     const uniqueRegistrations = new Set(rows.map((r) => r.registrationId));
-    const avgPerPendaftar = uniqueRegistrations.size > 0
-      ? Math.round(totalRevenue / uniqueRegistrations.size)
-      : 0;
+    const avgPerPendaftar = uniqueRegistrations.size > 0 ? Math.round(totalRevenue / uniqueRegistrations.size) : 0;
+
+    // ─── Revenue per Batch ──────────────────────────────────
+    const batchMap = new Map<string, RevenueByBatch>();
+    for (const r of rows) {
+      const key = r.batchId ?? "no-batch";
+      const existing = batchMap.get(key);
+      if (existing) {
+        existing.revenue += r.amount;
+        existing.count += 1;
+      } else {
+        batchMap.set(key, {
+          batchId: r.batchId,
+          batchSchedule: r.batchSchedule ? r.batchSchedule.toISOString() : null,
+          revenue: r.amount,
+          count: 1,
+        });
+      }
+    }
+    const revenueByBatch = Array.from(batchMap.values()).sort((a, b) => {
+      if (!a.batchSchedule) return 1;
+      if (!b.batchSchedule) return -1;
+      return a.batchSchedule.localeCompare(b.batchSchedule);
+    });
 
     return NextResponse.json({
       totalRevenue,
@@ -128,6 +131,7 @@ export async function PATCH(): Promise<NextResponse<StatsResponse | { error: str
       revenueNonVoucher,
       paidCountByProgram,
       avgPerPendaftar,
+      revenueByBatch,
     });
   } catch (err) {
     console.error("[webadmin stats]", err);

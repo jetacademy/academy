@@ -13,7 +13,7 @@ import BonusCountdown from "@/components/BonusCountdown";
 import FreeWebinarClaimSection from "@/components/FreeWebinarClaimSection";
 import EditProfileModal from "@/components/EditProfileModal";
 import { rupiah, formatJadwal } from "@/lib/format";
-import { Registration, Program, Payment, Certificate } from "@prisma/client";
+import { Registration, Program, Payment, Certificate, ProgramBatch } from "@prisma/client";
 
 interface LocalLmsModule {
   id: string;
@@ -31,6 +31,7 @@ type RegistrationWithDetails = Registration & {
   program: ProgramWithCertClaim;
   payment: Payment | null;
   certificate: Certificate | null;
+  batch: ProgramBatch | null;
 };
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export default async function MemberDashboardPage() {
       program: { include: { modules: { take: 1 } } },
       payment: true,
       certificate: true,
+      batch: true,
     },
     orderBy: { createdAt: "desc" },
   }) as unknown as RegistrationWithDetails[];
@@ -274,6 +276,9 @@ export default async function MemberDashboardPage() {
                       <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", fontSize: "0.82rem", color: "var(--ink-soft)" }}>
                         <div>📅 <strong>Jadwal:</strong> {formatJadwal(prog.scheduleAt)}</div>
                         <div>👤 <strong>Mentor:</strong> {prog.mentorName}</div>
+                        {reg.batch && (
+                          <div>📦 <strong>Batch:</strong> {formatJadwal(reg.batch.scheduleAt)}</div>
+                        )}
                         <div>⏱️ <strong>Durasi:</strong> {prog.durationLabel}</div>
                       </div>
                     </div>
