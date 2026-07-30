@@ -831,6 +831,54 @@ export async function uploadFileAction(formData: FormData): Promise<{ url?: stri
   }
 }
 
+// ─── Media Gallery ──────────────────────────────────────────────
+
+/**
+ * Simpan file ke tabel media gallery setelah upload — dipanggil dari
+ * client setelah uploadFileAction berhasil.
+ */
+export async function saveToMediaGallery(
+  programId: string,
+  filename: string,
+  url: string,
+  mimeType: string,
+  size: number,
+): Promise<{ id?: string; error?: string }> {
+  await requireAdmin();
+  try {
+    const media = await prisma.media.create({
+      data: { programId, filename, url, mimeType, size },
+      select: { id: true },
+    });
+    revalidatePath(`/webadmin/program/${programId}/media`);
+    return { id: media.id };
+  } catch (err) {
+    console.error("[saveToMediaGallery]", err);
+    return { error: "Gagal menyimpan ke galeri media." };
+  }
+}
+
+/** Ambil daftar media per program (server function). */
+export async function getMediaGallery(programId: string): Promise<
+  { id: string; filename: string; url: string; mimeType: string; size: number; createdAt: Date }[]
+> {
+  await requireAdmin();
+  return prisma.media.findMany({
+    where: { programId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, filename: true, url: true, mimeType: true, size: true, createdAt: true },
+  });
+}
+
+/** Hapus media dari gallery — file fisik tetap ada di disk, hanya catatan DB yang dihapus. */
+export async function deleteMedia(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+  await prisma.media.delete({ where: { id } }).catch((err) => console.error("[deleteMedia] Gagal:", err));
+  revalidatePath(`/webadmin/program/${programId}/media`);
+}
+
 export async function saveCertTemplate(programId: string, certBgUrl: string | null, certConfig: unknown) {
   await requireAdmin();
   await prisma.program.update({

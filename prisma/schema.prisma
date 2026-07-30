@@ -92,6 +92,7 @@ model Program {
   batches            ProgramBatch[]
   categoryId         String?
   category           Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  media              Media[]
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -121,6 +122,21 @@ model ProgramBatch {
   @@index([programId, scheduleAt])
   @@index([scheduleAt])
   @@map("programbatch")
+}
+
+// File media yang diunggah ke program (PDF materi, gambar, video)
+model MediaFile {
+  id        String   @id @default(cuid())
+  programId String
+  filename  String
+  url       String   @db.Text
+  type      String   // 'PDF' | 'IMAGE' | 'VIDEO'
+  mime      String?
+  size      Int?
+  createdAt DateTime @default(now())
+
+  @@index([programId])
+  @@map("mediafile")
 }
 
 // Pendaftar webinar (leads dari iklan Meta)
@@ -621,4 +637,20 @@ model Article {
 
   @@index([isPublished, publishedAt])
   @@map("article")
+}
+
+// Media gallery — file yang diupload ke program (gambar / PDF)
+model Media {
+  id        String   @id @default(cuid())
+  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  programId String
+  filename  String   // nama file asli
+  url       String   @db.Text // path URL publik file
+  mimeType  String   // MIME type file
+  size      Int      // ukuran file dalam bytes
+  createdAt DateTime @default(now())
+
+  @@index([programId])
+  @@index([programId, createdAt])
+  @@map("media")
 }

@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 import { uploadFileAction } from "@/app/webadmin/actions";
 import RichTextEditor from "@/components/RichTextEditor";
 import VideoUploader from "@/components/VideoUploader";
+import MediaPicker from "@/components/MediaPicker";
 
 type LessonData = {
   title?: string;
@@ -27,7 +28,7 @@ const TYPES: { value: string; label: string; hint: string }[] = [
  * Field-field form materi — dirender di dalam <form action={saveLmsLesson}>.
  * Menampilkan dua kartu: Konten Materi (berubah sesuai tipe) dan Pengaturan.
  */
-export default function LessonFields({ lesson }: { lesson?: LessonData }) {
+export default function LessonFields({ lesson, programId }: { lesson?: LessonData; programId?: string }) {
   const [type, setType] = useState(lesson?.type ?? "VIDEO");
   const [fileUrl, setFileUrl] = useState(lesson?.fileUrl ?? "");
   const [uploading, setUploading] = useState(false);
@@ -91,7 +92,7 @@ export default function LessonFields({ lesson }: { lesson?: LessonData }) {
           {type === "VIDEO" && (
             <div className="field">
               <label>Video</label>
-              <VideoUploader name="videoUrl" defaultValue={lesson?.videoUrl ?? ""} />
+              <VideoUploader name="videoUrl" defaultValue={lesson?.videoUrl ?? ""} programId={programId} />
             </div>
           )}
 
@@ -131,12 +132,25 @@ export default function LessonFields({ lesson }: { lesson?: LessonData }) {
               {uploadErr && (
                 <span style={{ display: "block", marginTop: ".4rem", fontSize: ".78rem", color: "var(--red)", fontWeight: 700 }}>{uploadErr}</span>
               )}
-              <input
-                defaultValue={lesson?.fileUrl ?? ""}
-                onChange={(e) => setFileUrl(e.target.value.trim())}
-                placeholder="…atau tempel URL PDF eksternal di sini"
-                style={{ marginTop: ".6rem" }}
-              />
+              <div style={{ display: "flex", gap: ".4rem", alignItems: "center", marginTop: ".6rem" }}>
+                <input
+                  defaultValue={lesson?.fileUrl ?? ""}
+                  onChange={(e) => setFileUrl(e.target.value.trim())}
+                  placeholder="…atau tempel URL PDF eksternal di sini"
+                  style={{ flex: 1, minWidth: 0 }}
+                />
+                {programId && (
+                  <MediaPicker
+                    programId={programId}
+                    onSelect={(url) => setFileUrl(url)}
+                    trigger={
+                      <button type="button" className="btn btn-sm" title="Pilih dari Gallery">
+                        📁
+                      </button>
+                    }
+                  />
+                )}
+              </div>
             </div>
           )}
 

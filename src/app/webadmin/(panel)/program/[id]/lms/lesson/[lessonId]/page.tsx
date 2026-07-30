@@ -46,7 +46,7 @@ export default async function AdminLessonEdit({
         <input type="hidden" name="programId" value={id} />
         <input type="hidden" name="moduleId" value={lesson.module.id} />
 
-        <LessonFields lesson={lesson} />
+        <LessonFields lesson={lesson} programId={id} />
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
           <Link href={`/webadmin/program/${id}/lms`} className="btn btn-sm">Batal, kembali ke kurikulum</Link>
