@@ -35,6 +35,9 @@ export interface CertConfig {
   subtitle?: string;
   placeDate?: string;
   materiJp?: CertMateriJp[];
+  /** @deprecated Tanda tangan narasumber dihapus dari desain (2026-07) — sertifikat kini hanya
+   *  menampilkan satu tanda tangan (Direktur, lihat sign2*). Field lama tetap dibiarkan di tipe
+   *  ini supaya data JSON program lama yang masih menyimpannya tidak menyebabkan type error. */
   sign1Name?: string;
   sign1Role?: string;
   sign1Img?: string;
@@ -43,6 +46,8 @@ export interface CertConfig {
   sign2Img?: string;
   stampImg?: string;
   showPmmBadge?: boolean;
+  /** Warna aksen sertifikat (judul, badge nomor, garis bingkai) — hex, mis. "#232176" */
+  accentColor?: string;
   positions?: CertPositions;
 }
 

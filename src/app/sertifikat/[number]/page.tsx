@@ -89,17 +89,14 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
 
   const totalJp = materiJp.reduce((acc, curr) => acc + curr.teori + curr.tugas, 0);
 
-  // Signatures
-  const s1Name = certConfig.sign1Name || program.mentorName;
-  const s1Role = certConfig.sign1Role || "Narasumber / Tim Ahli";
-  const s1Img = certConfig.sign1Img || "";
-
+  // Tanda tangan — hanya Direktur (satu tanda tangan resmi)
   const s2Name = certConfig.sign2Name || "Najib";
   const s2Role = certConfig.sign2Role || "Direktur PT Jetschool Academy Indonesia";
   const s2Img = certConfig.sign2Img || "";
   const stImg = certConfig.stampImg || "";
 
   const showPmm = certConfig.showPmmBadge !== false;
+  const accentColor = certConfig.accentColor || "#232176";
 
   // Sub-judul default mengikuti jenis sertifikat program
   const KIND_SUBTITLE: Record<string, string> = {
@@ -156,28 +153,33 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
               overflow: "hidden"
             }}
           >
-            {/* Default border frame if no background image is configured */}
+            {/* Bingkai & watermark bawaan Jetschool Academy — dipakai kalau admin belum upload background sendiri */}
             {!certBgUrl && (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: "15px",
-                  border: "2px solid var(--purple)",
-                  pointerEvents: "none",
-                  boxSizing: "border-box"
-                }}
-              />
-            )}
-            {!certBgUrl && (
-              <div
-                style={{
-                  position: "absolute",
-                  inset: "20px",
-                  border: "1px dashed var(--line)",
-                  pointerEvents: "none",
-                  boxSizing: "border-box"
-                }}
-              />
+              <>
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: "14px",
+                    border: `3px solid ${accentColor}`,
+                    borderRadius: "6px",
+                    pointerEvents: "none",
+                    boxSizing: "border-box"
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: "20px",
+                    border: `1px solid ${accentColor}`,
+                    opacity: 0.5,
+                    pointerEvents: "none",
+                    boxSizing: "border-box"
+                  }}
+                />
+                <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", opacity: 0.05, pointerEvents: "none", zIndex: 0 }}>
+                  <Image src="/iconjetschool academy.png" alt="" width={340} height={340} style={{ objectFit: "contain" }} />
+                </div>
+              </>
             )}
 
             {/* 1. Official Logo Header */}
@@ -196,7 +198,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
             >
               <Image src="/iconjetschool academy.png" alt="Jetschool Academy" width={48} height={48} style={{ objectFit: "contain" }} />
               <div style={{ fontSize: ".75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", fontFamily: "sans-serif" }}>
-                Jetschool <span style={{ color: "var(--purple)" }}>Academy</span>
+                Jetschool <span style={{ color: accentColor }}>Academy</span>
               </div>
             </div>
 
@@ -213,7 +215,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
                 fontWeight: 900,
                 letterSpacing: ".25em",
                 textTransform: "uppercase",
-                color: "var(--purple)",
+                color: accentColor,
                 fontFamily: "sans-serif",
                 textAlign: "center",
                 zIndex: 2
@@ -251,7 +253,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
                 left: `${positions.number.x}%`,
                 top: `${positions.number.y}%`,
                 transform: "translate(-50%, -50%)",
-                background: "var(--purple)",
+                background: accentColor,
                 color: "var(--white)",
                 padding: ".35rem 2rem",
                 borderRadius: "20px",
@@ -286,8 +288,8 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
                 style={{
                   fontSize: "clamp(1.2rem, 3.5vw, 1.8rem)",
                   fontWeight: 800,
-                  color: "var(--purple)",
-                  borderBottom: "1px dashed var(--purple)",
+                  color: accentColor,
+                  borderBottom: `1px dashed ${accentColor}`,
                   paddingBottom: ".2rem",
                   margin: ".5rem 0 .2rem",
                   textAlign: "center",
@@ -364,7 +366,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
                   ))}
                   <tr style={{ background: "rgba(0,0,0,0.015)" }}>
                     <td colSpan={2} style={{ padding: ".5rem .3rem", fontWeight: 800, textAlign: "right" }}>Jumlah Total JP</td>
-                    <td colSpan={3} style={{ padding: ".5rem .3rem", fontWeight: 900, textAlign: "center", color: "var(--purple)", fontSize: "clamp(.62rem, 1.8vw, .8rem)" }}>
+                    <td colSpan={3} style={{ padding: ".5rem .3rem", fontWeight: 900, textAlign: "center", color: accentColor, fontSize: "clamp(.62rem, 1.8vw, .8rem)" }}>
                       {totalJp} JP
                     </td>
                   </tr>
@@ -396,7 +398,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
                 left: `${positions.signatures.x}%`,
                 top: `${positions.signatures.y}%`,
                 transform: "translate(-50%, -50%)",
-                width: "86%",
+                width: "70%",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -407,29 +409,16 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
                 style={{
                   width: "100%",
                   display: "flex",
-                  justifyContent: "space-between",
+                  justifyContent: "center",
                   alignItems: "center",
+                  gap: "3rem",
                   fontFamily: "sans-serif",
                   fontSize: "clamp(.55rem, 1.5vw, .7rem)",
                   position: "relative"
                 }}
               >
-                {/* Signature 1 (Narasumber / Mentor) */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "35%" }}>
-                  <div style={{ height: "45px", position: "relative", marginBottom: ".3rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {s1Img ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={s1Img} alt="Signature 1" style={{ maxHeight: "45px", objectFit: "contain" }} />
-                    ) : (
-                      <div style={{ height: "45px" }} />
-                    )}
-                  </div>
-                  <b style={{ textDecoration: "underline", color: "#1B1710" }}>{s1Name}</b>
-                  <span style={{ color: "#555", fontSize: "clamp(.48rem, 1.3vw, .62rem)", marginTop: ".1rem" }}>{s1Role}</span>
-                </div>
-
-                {/* QR Verification (Middle) */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "22%" }}>
+                {/* QR Verifikasi */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "26%" }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={qrDataUrl} alt="Verification QR" style={{ width: "64px", height: "64px", border: "1px solid #eee", background: "#fff" }} />
                   <span style={{ fontSize: "clamp(.42rem, 1.2vw, .55rem)", marginTop: ".3rem", color: "#666", fontWeight: 700 }}>
@@ -437,8 +426,8 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
                   </span>
                 </div>
 
-                {/* Signature 2 (Direktur Najib) + Stamp */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "35%", position: "relative" }}>
+                {/* Tanda Tangan Direktur + Stempel */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "40%", position: "relative" }}>
                   {/* Stamp overlay */}
                   {stImg && (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -450,8 +439,9 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
                         height: "64px",
                         width: "64px",
                         objectFit: "contain",
-                        left: "15px",
+                        left: "50%",
                         top: "-25px",
+                        transform: "translateX(-50%)",
                         opacity: 0.85,
                         pointerEvents: "none",
                         zIndex: 3
@@ -462,7 +452,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
                   <div style={{ height: "45px", position: "relative", marginBottom: ".3rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {s2Img ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={s2Img} alt="Signature 2" style={{ maxHeight: "45px", objectFit: "contain" }} />
+                      <img src={s2Img} alt="Tanda tangan Direktur" style={{ maxHeight: "45px", objectFit: "contain" }} />
                     ) : (
                       <div style={{ height: "45px" }} />
                     )}

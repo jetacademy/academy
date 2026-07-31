@@ -17,6 +17,8 @@ type ProgramData = {
   certConfig: any; // JSON
 };
 
+const DEFAULT_ACCENT_COLOR = "#232176";
+
 const DEFAULT_POSITIONS = {
   logo: { x: 50, y: 11 },
   title: { x: 50, y: 20 },
@@ -36,7 +38,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
   // Parse initial config
   const initialConfig = program.certConfig || {};
   const [bgUrl, setBgUrl] = useState(program.certBgUrl || "");
-  
+
   const [title, setTitle] = useState(initialConfig.title || "SERTIFIKAT");
   const [subtitle, setSubtitle] = useState(initialConfig.subtitle || "KETERANGAN SELESAI TOPIK PELATIHAN");
   const [numberFormat, setNumberFormat] = useState(initialConfig.numberFormat || "NOMOR : 2500/JSA-GP/[serial]/[month]/[year]");
@@ -44,11 +46,10 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
     initialConfig.description ||
       "Sebagai peserta dalam pelatihan nasional yang diadakan oleh PT Jetschool Academy Indonesia dengan tema: \"{title}\" yang dilaksanakan pada {date}."
   );
-  
-  const [sign1Name, setSign1Name] = useState(initialConfig.sign1Name || program.mentorName);
-  const [sign1Role, setSign1Role] = useState(initialConfig.sign1Role || "Narasumber / Tim Ahli");
-  const [sign1Img, setSig1Img] = useState(initialConfig.sign1Img || "");
+  const [placeDate, setPlaceDate] = useState(initialConfig.placeDate || "Pangandaran, [date]");
+  const [accentColor, setAccentColor] = useState(initialConfig.accentColor || DEFAULT_ACCENT_COLOR);
 
+  // Tanda tangan — hanya Direktur (satu tanda tangan resmi, sesuai kebijakan terbaru)
   const [sign2Name, setSign2Name] = useState(initialConfig.sign2Name || "Najib");
   const [sign2Role, setSign2Role] = useState(initialConfig.sign2Role || "Direktur PT Jetschool Academy Indonesia");
   const [sign2Img, setSig2Img] = useState(initialConfig.sign2Img || "");
@@ -100,7 +101,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
   const totalJp = materiJp.reduce((acc, curr) => acc + curr.teori + curr.tugas, 0);
 
   // File upload handler
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, target: "bg" | "sig1" | "sig2" | "stamp") {
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, target: "bg" | "sig2" | "stamp") {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -117,7 +118,6 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
       }
       const url = res.url;
       if (target === "bg") setBgUrl(url);
-      if (target === "sig1") setSig1Img(url);
       if (target === "sig2") setSig2Img(url);
       if (target === "stamp") setStampImg(url);
     } catch {
@@ -142,9 +142,8 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
       subtitle,
       numberFormat,
       description,
-      sign1Name,
-      sign1Role,
-      sign1Img,
+      placeDate,
+      accentColor,
       sign2Name,
       sign2Role,
       sign2Img,
@@ -225,6 +224,8 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
     .replace(/\[month\]/g, "VIII")
     .replace(/\[year\]/g, "2026");
 
+  const previewPlaceDate = placeDate.replace(/\[date\]/g, "02 Agustus 2026");
+
   const LABELS: Record<string, string> = {
     logo: "Logo Kiri & Teks Header",
     title: "Judul Utama (Sertifikat)",
@@ -234,7 +235,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
     description: "Paragraf Deskripsi Kelulusan",
     table: "Tabel Jam Pelajaran (JP)",
     placeDate: "Tempat, Tanggal Terbit",
-    signatures: "Area Tanda Tangan, Stempel & QR Code"
+    signatures: "Tanda Tangan, Stempel & QR Code"
   };
 
   return (
@@ -250,7 +251,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
             Desain Background
           </h4>
           <p style={{ fontSize: ".8rem", color: "var(--ink-soft)", margin: ".3rem 0 .8rem" }}>
-            Upload desain template sertifikat kosong (A4 Portrait disarankan).
+            Upload desain template sertifikat kosong (A4 Portrait disarankan). Kosongkan untuk pakai desain bawaan Jetschool Academy di bawah.
           </p>
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <input
@@ -280,6 +281,24 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               URL: <code>{bgUrl}</code>
             </div>
           )}
+
+          <div className="field" style={{ marginTop: "1rem" }}>
+            <label>Warna Aksen (judul, badge nomor, garis bingkai)</label>
+            <div style={{ display: "flex", gap: ".6rem", alignItems: "center" }}>
+              <input
+                type="color"
+                value={accentColor}
+                onChange={(e) => setAccentColor(e.target.value)}
+                style={{ width: "3rem", height: "2.2rem", padding: "2px", cursor: "pointer" }}
+              />
+              <input
+                value={accentColor}
+                onChange={(e) => setAccentColor(e.target.value)}
+                placeholder="#232176"
+                style={{ maxWidth: "10rem" }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* 2. Main Texts */}
@@ -313,6 +332,13 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
             />
             <span style={{ fontSize: ".72rem", color: "var(--ink-soft)" }}>
               Gunakan placeholder: <code>{"{title}"}</code>, <code>{"{name}"}</code>, <code>{"{institution}"}</code>, <code>{"{date}"}</code>.
+            </span>
+          </div>
+          <div className="field">
+            <label>Tempat &amp; Tanggal Terbit</label>
+            <input value={placeDate} onChange={(e) => setPlaceDate(e.target.value)} placeholder="Pangandaran, [date]" />
+            <span style={{ fontSize: ".72rem", color: "var(--ink-soft)" }}>
+              Gunakan <code>[date]</code> untuk tanggal terbit otomatis. Ganti nama kota sesuai lokasi program.
             </span>
           </div>
         </div>
@@ -425,34 +451,14 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           </div>
         </div>
 
-        {/* 5. Signatures */}
+        {/* 5. Signature — Direktur saja (satu tanda tangan resmi) */}
         <div style={{ borderBottom: "1px solid var(--line)", paddingBottom: "1.5rem", marginBottom: "1.5rem" }}>
           <h4 style={{ display: "flex", alignItems: "center", gap: ".5rem", color: "var(--purple)", marginBottom: "1rem" }}>
             <Icon name="users" size={18} />
             Tanda Tangan &amp; Stempel
           </h4>
 
-          {/* Narasumber */}
-          <div style={{ background: "rgba(108, 92, 231, 0.02)", padding: "1rem", borderRadius: "var(--r-sm)", border: "1px solid rgba(108, 92, 231, 0.15)", marginBottom: "1rem" }}>
-            <b style={{ fontSize: ".85rem", display: "block", marginBottom: ".6rem" }}>Tanda Tangan 1 (Narasumber)</b>
-            <div className="field">
-              <label>Nama Lengkap</label>
-              <input value={sign1Name} onChange={(e) => setSign1Name(e.target.value)} placeholder="Soeharti, M.Pd." />
-            </div>
-            <div className="field">
-              <label>Jabatan / Peran</label>
-              <input value={sign1Role} onChange={(e) => setSign1Role(e.target.value)} placeholder="Tim Ahli Guru Pembelajar Indonesia" />
-            </div>
-            <div className="field">
-              <label>File Tanda Tangan (PNG Transparan)</label>
-              <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, "sig1")} />
-              {sign1Img && <div style={{ fontSize: ".75rem", opacity: 0.7, marginTop: ".2rem" }}>Uploaded: {sign1Img}</div>}
-            </div>
-          </div>
-
-          {/* Direktur */}
           <div style={{ background: "rgba(108, 92, 231, 0.02)", padding: "1rem", borderRadius: "var(--r-sm)", border: "1px solid rgba(108, 92, 231, 0.15)" }}>
-            <b style={{ fontSize: ".85rem", display: "block", marginBottom: ".6rem" }}>Tanda Tangan 2 (Direktur Najib)</b>
             <div className="field">
               <label>Nama Lengkap</label>
               <input value={sign2Name} onChange={(e) => setSign2Name(e.target.value)} placeholder="Najib" />
@@ -531,18 +537,15 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
             boxSizing: "border-box"
           }}
         >
-          {/* Default Decorative Background if no background image is set */}
+          {/* Default decorative frame + faint watermark logo when no background image is set */}
           {!bgUrl && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                border: "10px solid var(--purple)",
-                pointerEvents: "none",
-                borderRadius: "var(--r-md)",
-                boxSizing: "border-box"
-              }}
-            />
+            <>
+              <div style={{ position: "absolute", inset: "12px", border: `3px solid ${accentColor}`, pointerEvents: "none", borderRadius: "4px", boxSizing: "border-box" }} />
+              <div style={{ position: "absolute", inset: "18px", border: `1px solid ${accentColor}`, opacity: 0.5, pointerEvents: "none", boxSizing: "border-box" }} />
+              <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", opacity: 0.05, pointerEvents: "none" }}>
+                <Image src="/iconjetschool academy.png" alt="" width={260} height={260} style={{ objectFit: "contain" }} />
+              </div>
+            </>
           )}
 
           {/* DRAGGABLE 1: Logo Header */}
@@ -559,7 +562,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               alignItems: "center",
               gap: ".2rem",
               padding: "0.2rem 0.5rem",
-              border: activeDrag === "logo" ? "2px solid var(--purple)" : "1px dashed rgba(108, 92, 231, 0.4)",
+              border: activeDrag === "logo" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
               borderRadius: "4px",
               background: activeDrag === "logo" ? "rgba(108, 92, 231, 0.05)" : "transparent",
               userSelect: "none"
@@ -568,7 +571,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           >
             <Image src="/iconjetschool academy.png" alt="Logo" width={32} height={32} style={{ objectFit: "contain" }} />
             <div style={{ fontSize: ".6rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".1em", fontFamily: "sans-serif" }}>
-              Jetschool <span style={{ color: "var(--purple)" }}>Academy</span>
+              Jetschool <span style={{ color: accentColor }}>Academy</span>
             </div>
           </div>
 
@@ -584,14 +587,14 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               width: "90%",
               textAlign: "center",
               padding: "0.2rem 0.5rem",
-              border: activeDrag === "title" ? "2px solid var(--purple)" : "1px dashed rgba(108, 92, 231, 0.4)",
+              border: activeDrag === "title" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
               borderRadius: "4px",
               background: activeDrag === "title" ? "rgba(108, 92, 231, 0.05)" : "transparent",
               userSelect: "none"
             }}
             onMouseDown={(e) => handleDragStart("title", e)}
           >
-            <h1 style={{ fontSize: "1.8rem", margin: "0", fontWeight: 900, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--purple)", fontFamily: "sans-serif" }}>
+            <h1 style={{ fontSize: "1.8rem", margin: "0", fontWeight: 900, letterSpacing: ".2em", textTransform: "uppercase", color: accentColor, fontFamily: "sans-serif" }}>
               {title}
             </h1>
           </div>
@@ -608,7 +611,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               width: "80%",
               textAlign: "center",
               padding: "0.2rem 0.5rem",
-              border: activeDrag === "subtitle" ? "2px solid var(--purple)" : "1px dashed rgba(108, 92, 231, 0.4)",
+              border: activeDrag === "subtitle" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
               borderRadius: "4px",
               background: activeDrag === "subtitle" ? "rgba(108, 92, 231, 0.05)" : "transparent",
               userSelect: "none"
@@ -630,14 +633,14 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               cursor: "move",
               zIndex: 20,
               padding: "0.2rem 0.5rem",
-              border: activeDrag === "number" ? "2px solid var(--purple)" : "1px dashed rgba(108, 92, 231, 0.4)",
+              border: activeDrag === "number" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
               borderRadius: "4px",
               background: activeDrag === "number" ? "rgba(108, 92, 231, 0.05)" : "transparent",
               userSelect: "none"
             }}
             onMouseDown={(e) => handleDragStart("number", e)}
           >
-            <div style={{ background: "var(--purple)", color: "var(--white)", padding: ".25rem 1.2rem", borderRadius: "20px", fontSize: ".58rem", fontWeight: 700, fontFamily: "sans-serif" }}>
+            <div style={{ background: accentColor, color: "var(--white)", padding: ".25rem 1.2rem", borderRadius: "20px", fontSize: ".58rem", fontWeight: 700, fontFamily: "sans-serif" }}>
               {previewNum}
             </div>
           </div>
@@ -654,7 +657,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               width: "80%",
               textAlign: "center",
               padding: "0.2rem 0.5rem",
-              border: activeDrag === "recipient" ? "2px solid var(--purple)" : "1px dashed rgba(108, 92, 231, 0.4)",
+              border: activeDrag === "recipient" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
               borderRadius: "4px",
               background: activeDrag === "recipient" ? "rgba(108, 92, 231, 0.05)" : "transparent",
               userSelect: "none"
@@ -662,7 +665,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
             onMouseDown={(e) => handleDragStart("recipient", e)}
           >
             <div style={{ fontSize: ".62rem", color: "#666", fontStyle: "italic", marginBottom: ".1rem" }}>Diberikan kepada :</div>
-            <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--purple)", textDecoration: "underline", lineHeight: 1.2 }}>
+            <div style={{ fontSize: "1.2rem", fontWeight: 800, color: accentColor, textDecoration: "underline", lineHeight: 1.2 }}>
               Syntia Bella, S.Pd.
             </div>
             <div style={{ fontSize: ".74rem", fontWeight: 700, color: "#444", marginTop: ".1rem" }}>
@@ -682,7 +685,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               width: "84%",
               textAlign: "center",
               padding: "0.2rem 0.5rem",
-              border: activeDrag === "description" ? "2px solid var(--purple)" : "1px dashed rgba(108, 92, 231, 0.4)",
+              border: activeDrag === "description" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
               borderRadius: "4px",
               background: activeDrag === "description" ? "rgba(108, 92, 231, 0.05)" : "transparent",
               userSelect: "none"
@@ -705,7 +708,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               zIndex: 20,
               width: "86%",
               padding: "0.2rem 0.5rem",
-              border: activeDrag === "table" ? "2px solid var(--purple)" : "1px dashed rgba(108, 92, 231, 0.4)",
+              border: activeDrag === "table" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
               borderRadius: "4px",
               background: activeDrag === "table" ? "rgba(108, 92, 231, 0.05)" : "transparent",
               userSelect: "none"
@@ -741,7 +744,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
                 )}
                 <tr style={{ background: "rgba(0,0,0,0.01)" }}>
                   <td colSpan={2} style={{ padding: ".3rem", fontWeight: 800, textAlign: "right" }}>Jumlah Total</td>
-                  <td colSpan={3} style={{ padding: ".3rem", fontWeight: 900, textAlign: "center", color: "var(--purple)", fontSize: ".58rem" }}>
+                  <td colSpan={3} style={{ padding: ".3rem", fontWeight: 900, textAlign: "center", color: accentColor, fontSize: ".58rem" }}>
                     {totalJp} JP
                   </td>
                 </tr>
@@ -759,7 +762,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               cursor: "move",
               zIndex: 20,
               padding: "0.2rem 0.5rem",
-              border: activeDrag === "placeDate" ? "2px solid var(--purple)" : "1px dashed rgba(108, 92, 231, 0.4)",
+              border: activeDrag === "placeDate" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
               borderRadius: "4px",
               background: activeDrag === "placeDate" ? "rgba(108, 92, 231, 0.05)" : "transparent",
               userSelect: "none"
@@ -767,11 +770,11 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
             onMouseDown={(e) => handleDragStart("placeDate", e)}
           >
             <div style={{ fontSize: ".58rem", fontWeight: 700, color: "#555", fontFamily: "sans-serif" }}>
-              Pangandaran, 02 Agustus 2026
+              {previewPlaceDate}
             </div>
           </div>
 
-          {/* DRAGGABLE 9: Signatures & Stamp & QR */}
+          {/* DRAGGABLE 9: Signature (Direktur) & Stamp & QR */}
           <div
             style={{
               position: "absolute",
@@ -780,9 +783,9 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               transform: "translate(-50%, -50%)",
               cursor: "move",
               zIndex: 20,
-              width: "86%",
+              width: "70%",
               padding: "0.2rem 0.5rem",
-              border: activeDrag === "signatures" ? "2px solid var(--purple)" : "1px dashed rgba(108, 92, 231, 0.4)",
+              border: activeDrag === "signatures" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
               borderRadius: "4px",
               background: activeDrag === "signatures" ? "rgba(108, 92, 231, 0.05)" : "transparent",
               userSelect: "none"
@@ -793,37 +796,24 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               style={{
                 width: "100%",
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent: "center",
                 alignItems: "center",
+                gap: "1.2rem",
                 position: "relative",
                 fontFamily: "sans-serif",
                 fontSize: ".52rem"
               }}
             >
-              {/* Narasumber */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "35%" }}>
-                <div style={{ height: "26px", position: "relative", marginBottom: ".15rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {sign1Img ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={sign1Img} alt="Signature 1" style={{ maxHeight: "26px", objectFit: "contain" }} />
-                  ) : (
-                    <span style={{ fontSize: ".45rem", color: "#999", fontStyle: "italic" }}>(ttd)</span>
-                  )}
-                </div>
-                <b style={{ textDecoration: "underline", color: "#222" }}>{sign1Name}</b>
-                <span style={{ color: "#666", fontSize: ".45rem" }}>{sign1Role}</span>
-              </div>
-
               {/* QR Code */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "20%" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "28%" }}>
                 <div style={{ width: "28px", height: "28px", background: "#f5f5f5", border: "1px solid #ddd", display: "grid", placeItems: "center" }}>
                   <span style={{ fontSize: ".38rem", fontWeight: 800, color: "#777" }}>QR</span>
                 </div>
                 <span style={{ fontSize: ".32rem", marginTop: ".05rem", color: "#888" }}>ID: JSA-0042</span>
               </div>
 
-              {/* Direktur + Stamp wrapper */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "35%", position: "relative" }}>
+              {/* Direktur + Stamp */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "45%", position: "relative" }}>
                 {stampImg && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -834,8 +824,9 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
                       height: "32px",
                       width: "32px",
                       objectFit: "contain",
-                      left: "15px",
+                      left: "50%",
                       top: "-12px",
+                      transform: "translateX(-50%)",
                       opacity: 0.85,
                       pointerEvents: "none"
                     }}
@@ -845,7 +836,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
                 <div style={{ height: "26px", position: "relative", marginBottom: ".15rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {sign2Img ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={sign2Img} alt="Signature 2" style={{ maxHeight: "26px", objectFit: "contain" }} />
+                    <img src={sign2Img} alt="Tanda tangan Direktur" style={{ maxHeight: "26px", objectFit: "contain" }} />
                   ) : (
                     <span style={{ fontSize: ".45rem", color: "#999", fontStyle: "italic" }}>(ttd)</span>
                   )}
