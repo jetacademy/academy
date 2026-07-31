@@ -2,10 +2,11 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { uploadFileAction, saveCertTemplate } from "@/app/webadmin/actions";
 import Icon from "@/components/Icon";
+import CertificateSheet, { ELEMENT_LABELS, FONT_FAMILY_OPTIONS } from "@/components/CertificateSheet";
+import type { CertConfig } from "@/lib/types";
 
 type ProgramData = {
   id: string;
@@ -187,7 +188,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
 
       setPositions((prev: any) => ({
         ...prev,
-        [key]: { x: newX, y: newY }
+        [key]: { ...prev[key], x: newX, y: newY }
       }));
     };
 
@@ -212,6 +213,22 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
     }));
   };
 
+  // Helper to change font scale / rotation / z-index of an element
+  const updateStyle = (key: string, field: "fontScale" | "rotation" | "zIndex", val: number | undefined) => {
+    setPositions((prev: any) => ({
+      ...prev,
+      [key]: { ...prev[key], [field]: val }
+    }));
+  };
+
+  // Helper to change font family of an element ("" = pakai bawaan)
+  const updateFontFamily = (key: string, val: string) => {
+    setPositions((prev: any) => ({
+      ...prev,
+      [key]: { ...prev[key], fontFamily: val }
+    }));
+  };
+
   // Resolve template variables for preview
   const previewDesc = description
     .replace(/{title}/g, program.title)
@@ -226,17 +243,15 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
 
   const previewPlaceDate = placeDate.replace(/\[date\]/g, "02 Agustus 2026");
 
-  const LABELS: Record<string, string> = {
-    logo: "Logo Kiri & Teks Header",
-    title: "Judul Utama (Sertifikat)",
-    subtitle: "Sub-Judul Tipe",
-    number: "Nomor Sertifikat",
-    recipient: "Nama & Instansi Penerima",
-    description: "Paragraf Deskripsi Kelulusan",
-    table: "Tabel Jam Pelajaran (JP)",
-    placeDate: "Tempat, Tanggal Terbit",
-    signatures: "Tanda Tangan, Stempel & QR Code"
-  };
+  // Preview cetak/PDF: simpan draft saat ini ke sessionStorage lalu buka tab pratinjau
+  function handlePreviewPdf() {
+    const config = {
+      title, subtitle, numberFormat, description, placeDate, accentColor,
+      sign2Name, sign2Role, sign2Img, stampImg, showPmmBadge, materiJp, positions,
+    };
+    sessionStorage.setItem(`certDraft:${program.id}`, JSON.stringify({ bgUrl, config }));
+    window.open(`/webadmin/program/${program.id}/cert/preview`, "_blank");
+  }
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: "2rem", alignItems: "start", marginTop: "1.5rem" }}>
@@ -356,10 +371,14 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem", background: "rgba(0,0,0,0.02)", padding: "1rem", borderRadius: "8px" }}>
             {Object.keys(DEFAULT_POSITIONS).map((k) => {
               const pos = positions[k] || DEFAULT_POSITIONS[k as keyof typeof DEFAULT_POSITIONS];
+              const fontScale = pos.fontScale ?? 1;
+              const rotation = pos.rotation ?? 0;
+              const zIndex = pos.zIndex;
+              const fontFamily = pos.fontFamily ?? "";
               return (
                 <div key={k} style={{ borderBottom: "1px solid var(--line)", paddingBottom: "0.6rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", fontWeight: 700, marginBottom: "0.3rem" }}>
-                    <span>{LABELS[k]}</span>
+                    <span>{ELEMENT_LABELS[k as keyof typeof ELEMENT_LABELS]}</span>
                     <span style={{ color: "var(--purple)" }}>X: {pos.x}%, Y: {pos.y}%</span>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
@@ -383,6 +402,55 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
                         value={pos.y}
                         onChange={(e) => updatePosition(k, "y", Number(e.target.value))}
                         style={{ height: "4px" }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "0.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", flexShrink: 0 }}>Ukuran Font ({Math.round(fontScale * 100)}%)</span>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.05"
+                        value={fontScale}
+                        onChange={(e) => updateStyle(k, "fontScale", Number(e.target.value))}
+                        style={{ height: "4px" }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", flexShrink: 0 }}>Rotasi ({rotation}&deg;)</span>
+                      <input
+                        type="range"
+                        min="-45"
+                        max="45"
+                        value={rotation}
+                        onChange={(e) => updateStyle(k, "rotation", Number(e.target.value))}
+                        style={{ height: "4px" }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "0.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", flexShrink: 0 }}>Font</span>
+                      <select
+                        value={fontFamily}
+                        onChange={(e) => updateFontFamily(k, e.target.value)}
+                        style={{ fontSize: "0.75rem", padding: ".25rem .4rem" }}
+                      >
+                        {FONT_FAMILY_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", flexShrink: 0 }}>Lapisan (Z-Index)</span>
+                      <input
+                        type="number"
+                        value={zIndex ?? ""}
+                        placeholder="otomatis"
+                        onChange={(e) => updateStyle(k, "zIndex", e.target.value === "" ? undefined : Number(e.target.value))}
+                        style={{ width: "5rem", padding: ".25rem .4rem", fontSize: "0.75rem" }}
                       />
                     </div>
                   </div>
@@ -497,7 +565,15 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           </label>
         </div>
 
-        {/* Save Button */}
+        {/* Save & Preview Buttons */}
+        <button
+          type="button"
+          onClick={handlePreviewPdf}
+          className="btn btn-block"
+          style={{ fontWeight: 700, marginBottom: ".7rem" }}
+        >
+          Preview Sertifikat (Uji Coba) &amp; Cetak/PDF
+        </button>
         <button
           type="button"
           onClick={handleSave}
@@ -519,357 +595,33 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           <span style={{ fontSize: ".8rem", color: "var(--purple)", fontWeight: 700 }}>✓ Sinkron Instan</span>
         </div>
 
-        {/* DRAGGABLE CERTIFICATE WINDOW */}
         <div
           className="cert-preview-wrapper"
-          style={{
-            width: "100%",
-            aspectRatio: "1 / 1.414",
-            background: bgUrl ? `url(${bgUrl}) no-repeat center center / cover` : "var(--white)",
-            borderRadius: "var(--r-md)",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
-            border: bgUrl ? "none" : "1px solid var(--line)",
-            position: "relative",
-            padding: "0",
-            color: "#1B1710",
-            fontFamily: "Georgia, serif",
-            overflow: "hidden",
-            boxSizing: "border-box"
-          }}
+          style={{ width: "100%", position: "relative" }}
         >
-          {/* Default decorative frame + faint watermark logo when no background image is set */}
-          {!bgUrl && (
-            <>
-              <div style={{ position: "absolute", inset: "12px", border: `3px solid ${accentColor}`, pointerEvents: "none", borderRadius: "4px", boxSizing: "border-box" }} />
-              <div style={{ position: "absolute", inset: "18px", border: `1px solid ${accentColor}`, opacity: 0.5, pointerEvents: "none", boxSizing: "border-box" }} />
-              <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", opacity: 0.05, pointerEvents: "none" }}>
-                <Image src="/iconjetschool academy.png" alt="" width={260} height={260} style={{ objectFit: "contain" }} />
-              </div>
-            </>
-          )}
-
-          {/* DRAGGABLE 1: Logo Header */}
-          <div
-            style={{
-              position: "absolute",
-              left: `${positions.logo.x}%`,
-              top: `${positions.logo.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              zIndex: 20,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: ".2rem",
-              padding: "0.2rem 0.5rem",
-              border: activeDrag === "logo" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
-              borderRadius: "4px",
-              background: activeDrag === "logo" ? "rgba(108, 92, 231, 0.05)" : "transparent",
-              userSelect: "none"
-            }}
-            onMouseDown={(e) => handleDragStart("logo", e)}
-          >
-            <Image src="/iconjetschool academy.png" alt="Logo" width={32} height={32} style={{ objectFit: "contain" }} />
-            <div style={{ fontSize: ".6rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".1em", fontFamily: "sans-serif" }}>
-              Jetschool <span style={{ color: accentColor }}>Academy</span>
-            </div>
-          </div>
-
-          {/* DRAGGABLE 2: Title */}
-          <div
-            style={{
-              position: "absolute",
-              left: `${positions.title.x}%`,
-              top: `${positions.title.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              zIndex: 20,
-              width: "90%",
-              textAlign: "center",
-              padding: "0.2rem 0.5rem",
-              border: activeDrag === "title" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
-              borderRadius: "4px",
-              background: activeDrag === "title" ? "rgba(108, 92, 231, 0.05)" : "transparent",
-              userSelect: "none"
-            }}
-            onMouseDown={(e) => handleDragStart("title", e)}
-          >
-            <h1 style={{ fontSize: "1.8rem", margin: "0", fontWeight: 900, letterSpacing: ".2em", textTransform: "uppercase", color: accentColor, fontFamily: "sans-serif" }}>
-              {title}
-            </h1>
-          </div>
-
-          {/* DRAGGABLE 3: Subtitle */}
-          <div
-            style={{
-              position: "absolute",
-              left: `${positions.subtitle.x}%`,
-              top: `${positions.subtitle.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              zIndex: 20,
-              width: "80%",
-              textAlign: "center",
-              padding: "0.2rem 0.5rem",
-              border: activeDrag === "subtitle" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
-              borderRadius: "4px",
-              background: activeDrag === "subtitle" ? "rgba(108, 92, 231, 0.05)" : "transparent",
-              userSelect: "none"
-            }}
-            onMouseDown={(e) => handleDragStart("subtitle", e)}
-          >
-            <div style={{ fontSize: ".58rem", letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 700, fontFamily: "sans-serif", borderBottom: "1.5px solid #1B1710", paddingBottom: ".3rem", width: "100%" }}>
-              {subtitle}
-            </div>
-          </div>
-
-          {/* DRAGGABLE 4: Number */}
-          <div
-            style={{
-              position: "absolute",
-              left: `${positions.number.x}%`,
-              top: `${positions.number.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              zIndex: 20,
-              padding: "0.2rem 0.5rem",
-              border: activeDrag === "number" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
-              borderRadius: "4px",
-              background: activeDrag === "number" ? "rgba(108, 92, 231, 0.05)" : "transparent",
-              userSelect: "none"
-            }}
-            onMouseDown={(e) => handleDragStart("number", e)}
-          >
-            <div style={{ background: accentColor, color: "var(--white)", padding: ".25rem 1.2rem", borderRadius: "20px", fontSize: ".58rem", fontWeight: 700, fontFamily: "sans-serif" }}>
-              {previewNum}
-            </div>
-          </div>
-
-          {/* DRAGGABLE 5: Recipient */}
-          <div
-            style={{
-              position: "absolute",
-              left: `${positions.recipient.x}%`,
-              top: `${positions.recipient.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              zIndex: 20,
-              width: "80%",
-              textAlign: "center",
-              padding: "0.2rem 0.5rem",
-              border: activeDrag === "recipient" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
-              borderRadius: "4px",
-              background: activeDrag === "recipient" ? "rgba(108, 92, 231, 0.05)" : "transparent",
-              userSelect: "none"
-            }}
-            onMouseDown={(e) => handleDragStart("recipient", e)}
-          >
-            <div style={{ fontSize: ".62rem", color: "#666", fontStyle: "italic", marginBottom: ".1rem" }}>Diberikan kepada :</div>
-            <div style={{ fontSize: "1.2rem", fontWeight: 800, color: accentColor, textDecoration: "underline", lineHeight: 1.2 }}>
-              Syntia Bella, S.Pd.
-            </div>
-            <div style={{ fontSize: ".74rem", fontWeight: 700, color: "#444", marginTop: ".1rem" }}>
-              SMP Negeri 234 Yogyakarta
-            </div>
-          </div>
-
-          {/* DRAGGABLE 6: Description */}
-          <div
-            style={{
-              position: "absolute",
-              left: `${positions.description.x}%`,
-              top: `${positions.description.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              zIndex: 20,
-              width: "84%",
-              textAlign: "center",
-              padding: "0.2rem 0.5rem",
-              border: activeDrag === "description" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
-              borderRadius: "4px",
-              background: activeDrag === "description" ? "rgba(108, 92, 231, 0.05)" : "transparent",
-              userSelect: "none"
-            }}
-            onMouseDown={(e) => handleDragStart("description", e)}
-          >
-            <p style={{ fontSize: ".58rem", color: "#333", lineHeight: 1.5, margin: "0", fontFamily: "Georgia, serif" }}>
-              {previewDesc}
-            </p>
-          </div>
-
-          {/* DRAGGABLE 7: Table JP */}
-          <div
-            style={{
-              position: "absolute",
-              left: `${positions.table.x}%`,
-              top: `${positions.table.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              zIndex: 20,
-              width: "86%",
-              padding: "0.2rem 0.5rem",
-              border: activeDrag === "table" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
-              borderRadius: "4px",
-              background: activeDrag === "table" ? "rgba(108, 92, 231, 0.05)" : "transparent",
-              userSelect: "none"
-            }}
-            onMouseDown={(e) => handleDragStart("table", e)}
-          >
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: ".52rem", fontFamily: "sans-serif" }}>
-              <thead>
-                <tr style={{ background: "rgba(0,0,0,0.03)" }}>
-                  <th style={{ borderBottom: "1px solid #ddd", padding: ".3rem", textAlign: "center", width: "8%" }}>No</th>
-                  <th style={{ borderBottom: "1px solid #ddd", padding: ".3rem", textAlign: "left" }}>Materi</th>
-                  <th style={{ borderBottom: "1px solid #ddd", padding: ".3rem", textAlign: "center", width: "14%" }}>Teori</th>
-                  <th style={{ borderBottom: "1px solid #ddd", padding: ".3rem", textAlign: "center", width: "14%" }}>Tugas</th>
-                  <th style={{ borderBottom: "1px solid #ddd", padding: ".3rem", textAlign: "center", width: "14%" }}>Jumlah</th>
-                </tr>
-              </thead>
-              <tbody>
-                {materiJp.slice(0, 4).map((m, i) => (
-                  <tr key={i}>
-                    <td style={{ borderBottom: "1px solid #eee", padding: ".25rem .15rem", textAlign: "center" }}>{i + 1}</td>
-                    <td style={{ borderBottom: "1px solid #eee", padding: ".25rem .15rem", textAlign: "left", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "140px" }}>{m.materi || "(Materi kosong)"}</td>
-                    <td style={{ borderBottom: "1px solid #eee", padding: ".25rem .15rem", textAlign: "center" }}>{m.teori} JP</td>
-                    <td style={{ borderBottom: "1px solid #eee", padding: ".25rem .15rem", textAlign: "center" }}>{m.tugas} JP</td>
-                    <td style={{ borderBottom: "1px solid #eee", padding: ".25rem .15rem", textAlign: "center", fontWeight: 700 }}>{m.teori + m.tugas} JP</td>
-                  </tr>
-                ))}
-                {materiJp.length > 4 && (
-                  <tr>
-                    <td colSpan={5} style={{ textAlign: "center", fontSize: ".45rem", color: "var(--ink-soft)", padding: ".15rem" }}>
-                      (+ {materiJp.length - 4} materi lainnya tidak ditampilkan di pratinjau ringkas)
-                    </td>
-                  </tr>
-                )}
-                <tr style={{ background: "rgba(0,0,0,0.01)" }}>
-                  <td colSpan={2} style={{ padding: ".3rem", fontWeight: 800, textAlign: "right" }}>Jumlah Total</td>
-                  <td colSpan={3} style={{ padding: ".3rem", fontWeight: 900, textAlign: "center", color: accentColor, fontSize: ".58rem" }}>
-                    {totalJp} JP
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* DRAGGABLE 8: Place Date */}
-          <div
-            style={{
-              position: "absolute",
-              left: `${positions.placeDate.x}%`,
-              top: `${positions.placeDate.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              zIndex: 20,
-              padding: "0.2rem 0.5rem",
-              border: activeDrag === "placeDate" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
-              borderRadius: "4px",
-              background: activeDrag === "placeDate" ? "rgba(108, 92, 231, 0.05)" : "transparent",
-              userSelect: "none"
-            }}
-            onMouseDown={(e) => handleDragStart("placeDate", e)}
-          >
-            <div style={{ fontSize: ".58rem", fontWeight: 700, color: "#555", fontFamily: "sans-serif" }}>
-              {previewPlaceDate}
-            </div>
-          </div>
-
-          {/* DRAGGABLE 9: Signature (Direktur) & Stamp & QR */}
-          <div
-            style={{
-              position: "absolute",
-              left: `${positions.signatures.x}%`,
-              top: `${positions.signatures.y}%`,
-              transform: "translate(-50%, -50%)",
-              cursor: "move",
-              zIndex: 20,
-              width: "70%",
-              padding: "0.2rem 0.5rem",
-              border: activeDrag === "signatures" ? `2px solid ${accentColor}` : "1px dashed rgba(108, 92, 231, 0.4)",
-              borderRadius: "4px",
-              background: activeDrag === "signatures" ? "rgba(108, 92, 231, 0.05)" : "transparent",
-              userSelect: "none"
-            }}
-            onMouseDown={(e) => handleDragStart("signatures", e)}
-          >
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: "1.2rem",
-                position: "relative",
-                fontFamily: "sans-serif",
-                fontSize: ".52rem"
-              }}
-            >
-              {/* QR Code */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "28%" }}>
-                <div style={{ width: "28px", height: "28px", background: "#f5f5f5", border: "1px solid #ddd", display: "grid", placeItems: "center" }}>
-                  <span style={{ fontSize: ".38rem", fontWeight: 800, color: "#777" }}>QR</span>
-                </div>
-                <span style={{ fontSize: ".32rem", marginTop: ".05rem", color: "#888" }}>ID: JSA-0042</span>
-              </div>
-
-              {/* Direktur + Stamp */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "45%", position: "relative" }}>
-                {stampImg && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={stampImg}
-                    alt="Stamp"
-                    style={{
-                      position: "absolute",
-                      height: "32px",
-                      width: "32px",
-                      objectFit: "contain",
-                      left: "50%",
-                      top: "-12px",
-                      transform: "translateX(-50%)",
-                      opacity: 0.85,
-                      pointerEvents: "none"
-                    }}
-                  />
-                )}
-
-                <div style={{ height: "26px", position: "relative", marginBottom: ".15rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {sign2Img ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={sign2Img} alt="Tanda tangan Direktur" style={{ maxHeight: "26px", objectFit: "contain" }} />
-                  ) : (
-                    <span style={{ fontSize: ".45rem", color: "#999", fontStyle: "italic" }}>(ttd)</span>
-                  )}
-                </div>
-                <b style={{ textDecoration: "underline", color: "#222" }}>{sign2Name}</b>
-                <span style={{ color: "#666", fontSize: ".45rem" }}>{sign2Role}</span>
-              </div>
-            </div>
-
-            {/* PMM Badge inside block if checked */}
-            {showPmmBadge && (
-              <div
-                style={{
-                  width: "100%",
-                  background: "rgba(16, 185, 129, 0.06)",
-                  border: "1px solid rgba(16, 185, 129, 0.15)",
-                  borderRadius: "4px",
-                  padding: ".2rem .4rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: ".3rem",
-                  marginTop: ".6rem",
-                  boxSizing: "border-box"
-                }}
-              >
-                <span style={{ color: "#10B981", fontWeight: 800, fontSize: ".45rem", fontFamily: "sans-serif" }}>✓</span>
-                <span style={{ color: "#065F46", fontWeight: 700, fontSize: ".42rem", fontFamily: "sans-serif" }}>
-                  Registered on Komunitas PMM
-                </span>
-              </div>
-            )}
-          </div>
+          <CertificateSheet
+            certBgUrl={bgUrl}
+            certConfig={{ positions } as unknown as CertConfig}
+            accentColor={accentColor}
+            title={title}
+            subtitle={subtitle}
+            numFormatted={previewNum}
+            recipientName="Syntia Bella, S.Pd."
+            recipientInstitution="SMP Negeri 234 Yogyakarta"
+            descResolved={previewDesc}
+            materiJp={materiJp}
+            totalJp={totalJp}
+            placeDateResolved={previewPlaceDate}
+            qrIdLabel="JSA-0042"
+            showPmm={showPmmBadge}
+            s2Name={sign2Name}
+            s2Role={sign2Role}
+            s2Img={sign2Img || undefined}
+            stampImg={stampImg || undefined}
+            editable
+            activeDragKey={activeDrag}
+            onElementMouseDown={handleDragStart}
+          />
         </div>
 
         <div style={{ marginTop: "1rem" }}>

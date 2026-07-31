@@ -10,7 +10,13 @@
       "Bash(node \"C:\\\\Users\\\\HUBUNG~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Hubungan-Alumni-OneDrive-Dokumen-APLIKASI-2026-academy\\\\106fa60b-4547-46d2-bd1b-6dfb89bdede8\\\\scratchpad\\\\shot.mjs\")",
       "Bash(curl -s -X PUT http://localhost:9333/json/new)",
       "Bash(node \"C:\\\\Users\\\\HUBUNG~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Hubungan-Alumni-OneDrive-Dokumen-APLIKASI-2026-academy\\\\106fa60b-4547-46d2-bd1b-6dfb89bdede8\\\\scratchpad\\\\shot2.mjs\")",
-      "PowerShell(Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | Where-Object { $_.CommandLine -match 'remote-debugging-port' } | Select-Object ProcessId, CommandLine | Format-List)"
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | Where-Object { $_.CommandLine -match 'remote-debugging-port' } | Select-Object ProcessId, CommandLine | Format-List)",
+      "Bash(curl -s -D - -o /tmp/admin_preview.html -b jsa_admin=__TRACKED_VAR__ http://localhost:3001/webadmin/program/cms9lot2j0000uuwg7s2vq8f0/cert/preview)",
+      "Read(//tmp/**)",
+      "Bash(grep -iE \"error|exception|Unhandled|TypeError\" /tmp/dev.log | grep -v \"webpackHotUpdate\" | tail -60)",
+      "Bash(lsof -ti:3001 -sTCP:LISTEN)",
+      "Bash(powershell -Command \"Stop-Process -Id 24672 -Force\")",
+      "Bash(powershell -Command \"Stop-Process -Id 2992 -Force\")"
     ]
   }
 }

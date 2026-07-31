@@ -2,8 +2,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WaFloat from "@/components/WaFloat";
 import PrintButton from "@/components/PrintButton";
+import CertificateSheet from "@/components/CertificateSheet";
 import Link from "next/link";
-import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
@@ -106,19 +106,6 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
   };
   const defaultSubtitle = KIND_SUBTITLE[String(program.certKind)] ?? "KETERANGAN SELESAI TOPIK PELATIHAN";
 
-  // Coordinates positioning from JSON config or default layout
-  const positions = certConfig.positions || {
-    logo: { x: 50, y: 11 },
-    title: { x: 50, y: 20 },
-    subtitle: { x: 50, y: 26 },
-    number: { x: 50, y: 31 },
-    recipient: { x: 50, y: 40 },
-    description: { x: 50, y: 51 },
-    table: { x: 50, y: 64 },
-    placeDate: { x: 50, y: 77 },
-    signatures: { x: 50, y: 84 },
-  };
-
   return (
     <>
       <Navbar minimal ctaHref="/program" ctaLabel="Ikut Kelas Lain" />
@@ -136,358 +123,28 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
 
           {/* MAIN CERTIFICATE SHEET (A4 Portrait aspect ratio, padding 0 for complete absolute control) */}
           <div className="cert-scroll-wrapper">
-            <div
-              className="cert-a4"
-            style={{
-              width: "100%",
-              aspectRatio: "1 / 1.414",
-              background: certBgUrl ? `url(${certBgUrl}) no-repeat center center / cover` : "var(--white)",
-              borderRadius: "var(--r-md)",
-              boxShadow: "var(--shadow-lg)",
-              border: certBgUrl ? "none" : "1px solid var(--line)",
-              position: "relative",
-              padding: "0",
-              color: "#1B1710",
-              fontFamily: "Georgia, serif",
-              boxSizing: "border-box",
-              overflow: "hidden"
-            }}
-          >
-            {/* Bingkai & watermark bawaan Jetschool Academy — dipakai kalau admin belum upload background sendiri */}
-            {!certBgUrl && (
-              <>
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: "14px",
-                    border: `3px solid ${accentColor}`,
-                    borderRadius: "6px",
-                    pointerEvents: "none",
-                    boxSizing: "border-box"
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: "20px",
-                    border: `1px solid ${accentColor}`,
-                    opacity: 0.5,
-                    pointerEvents: "none",
-                    boxSizing: "border-box"
-                  }}
-                />
-                <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", opacity: 0.05, pointerEvents: "none", zIndex: 0 }}>
-                  <Image src="/iconjetschool academy.png" alt="" width={340} height={340} style={{ objectFit: "contain" }} />
-                </div>
-              </>
-            )}
-
-            {/* 1. Official Logo Header */}
-            <div
-              style={{
-                position: "absolute",
-                left: `${positions.logo.x}%`,
-                top: `${positions.logo.y}%`,
-                transform: "translate(-50%, -50%)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: ".2rem",
-                zIndex: 2
-              }}
-            >
-              <Image src="/iconjetschool academy.png" alt="Jetschool Academy" width={48} height={48} style={{ objectFit: "contain" }} />
-              <div style={{ fontSize: ".75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em", fontFamily: "sans-serif" }}>
-                Jetschool <span style={{ color: accentColor }}>Academy</span>
-              </div>
-            </div>
-
-            {/* 2. Main Title */}
-            <h2
-              style={{
-                position: "absolute",
-                left: `${positions.title.x}%`,
-                top: `${positions.title.y}%`,
-                transform: "translate(-50%, -50%)",
-                width: "90%",
-                fontSize: "clamp(1.6rem, 4vw, 2.5rem)",
-                margin: "0",
-                fontWeight: 900,
-                letterSpacing: ".25em",
-                textTransform: "uppercase",
-                color: accentColor,
-                fontFamily: "sans-serif",
-                textAlign: "center",
-                zIndex: 2
-              }}
-            >
-              {certConfig.title || "SERTIFIKAT"}
-            </h2>
-
-            {/* 3. Subtitle */}
-            <div
-              style={{
-                position: "absolute",
-                left: `${positions.subtitle.x}%`,
-                top: `${positions.subtitle.y}%`,
-                transform: "translate(-50%, -50%)",
-                width: "80%",
-                fontSize: "clamp(.55rem, 1.5vw, .75rem)",
-                letterSpacing: ".1em",
-                textTransform: "uppercase",
-                fontWeight: 700,
-                fontFamily: "sans-serif",
-                borderBottom: "2px solid #1B1710",
-                paddingBottom: ".4rem",
-                textAlign: "center",
-                zIndex: 2
-              }}
-            >
-              {certConfig.subtitle || defaultSubtitle}
-            </div>
-
-            {/* 4. Certificate Number Badge */}
-            <div
-              style={{
-                position: "absolute",
-                left: `${positions.number.x}%`,
-                top: `${positions.number.y}%`,
-                transform: "translate(-50%, -50%)",
-                background: accentColor,
-                color: "var(--white)",
-                padding: ".35rem 2rem",
-                borderRadius: "20px",
-                fontSize: "clamp(.55rem, 1.5vw, .7rem)",
-                fontWeight: 700,
-                fontFamily: "sans-serif",
-                zIndex: 2,
-                boxShadow: "0 2px 8px rgba(108, 92, 231, 0.2)"
-              }}
-            >
-              {numFormatted}
-            </div>
-
-            {/* 5. Recipient Name & Institution */}
-            <div
-              style={{
-                position: "absolute",
-                left: `${positions.recipient.x}%`,
-                top: `${positions.recipient.y}%`,
-                transform: "translate(-50%, -50%)",
-                width: "80%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                zIndex: 2
-              }}
-            >
-              <div style={{ fontSize: "clamp(.65rem, 1.8vw, .8rem)", color: "#555", fontStyle: "italic" }}>
-                Diberikan kepada :
-              </div>
-              <div
-                style={{
-                  fontSize: "clamp(1.2rem, 3.5vw, 1.8rem)",
-                  fontWeight: 800,
-                  color: accentColor,
-                  borderBottom: `1px dashed ${accentColor}`,
-                  paddingBottom: ".2rem",
-                  margin: ".5rem 0 .2rem",
-                  textAlign: "center",
-                  lineHeight: 1.2,
-                  fontFamily: "Georgia, serif"
-                }}
-              >
-                {cert.registration.name}
-              </div>
-              {cert.registration.institution && (
-                <div
-                  style={{
-                    fontSize: "clamp(.75rem, 2vw, 1rem)",
-                    fontWeight: 700,
-                    color: "#333",
-                    textAlign: "center"
-                  }}
-                >
-                  {cert.registration.institution}
-                </div>
-              )}
-            </div>
-
-            {/* 6. Description Text */}
-            <p
-              style={{
-                position: "absolute",
-                left: `${positions.description.x}%`,
-                top: `${positions.description.y}%`,
-                transform: "translate(-50%, -50%)",
-                width: "84%",
-                fontSize: "clamp(.62rem, 1.6vw, .78rem)",
-                color: "#333",
-                textAlign: "center",
-                lineHeight: 1.6,
-                margin: "0",
-                fontFamily: "Georgia, serif",
-                zIndex: 2
-              }}
-            >
-              {descResolved}
-            </p>
-
-            {/* 7. Syllabus Table */}
-            <div
-              style={{
-                position: "absolute",
-                left: `${positions.table.x}%`,
-                top: `${positions.table.y}%`,
-                transform: "translate(-50%, -50%)",
-                width: "86%",
-                zIndex: 2
-              }}
-            >
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "clamp(.55rem, 1.5vw, .7rem)", fontFamily: "sans-serif" }}>
-                <thead>
-                  <tr style={{ background: "rgba(0,0,0,0.03)" }}>
-                    <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "center", width: "8%" }}>No</th>
-                    <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "left" }}>Materi Pelatihan</th>
-                    <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "center", width: "15%" }}>Teori</th>
-                    <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "center", width: "15%" }}>Tugas</th>
-                    <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "center", width: "15%" }}>Jumlah</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {materiJp.map((m, idx) => (
-                    <tr key={idx}>
-                      <td style={{ borderBottom: "1px solid #eee", padding: ".45rem .3rem", textAlign: "center" }}>{idx + 1}</td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: ".45rem .3rem", textAlign: "left", fontWeight: 600 }}>{m.materi}</td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: ".45rem .3rem", textAlign: "center" }}>{m.teori} JP</td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: ".45rem .3rem", textAlign: "center" }}>{m.tugas} JP</td>
-                      <td style={{ borderBottom: "1px solid #eee", padding: ".45rem .3rem", textAlign: "center", fontWeight: 700 }}>{m.teori + m.tugas} JP</td>
-                    </tr>
-                  ))}
-                  <tr style={{ background: "rgba(0,0,0,0.015)" }}>
-                    <td colSpan={2} style={{ padding: ".5rem .3rem", fontWeight: 800, textAlign: "right" }}>Jumlah Total JP</td>
-                    <td colSpan={3} style={{ padding: ".5rem .3rem", fontWeight: 900, textAlign: "center", color: accentColor, fontSize: "clamp(.62rem, 1.8vw, .8rem)" }}>
-                      {totalJp} JP
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* 8. Issued Location & Date */}
-            <div
-              style={{
-                position: "absolute",
-                left: `${positions.placeDate.x}%`,
-                top: `${positions.placeDate.y}%`,
-                transform: "translate(-50%, -50%)",
-                fontSize: "clamp(.62rem, 1.8vw, .75rem)",
-                fontWeight: 700,
-                color: "#444",
-                fontFamily: "sans-serif",
-                zIndex: 2
-              }}
-            >
-              {certConfig.placeDate ? certConfig.placeDate.replace(/\[date\]/g, issuedDate) : `Pangandaran, ${issuedDate}`}
-            </div>
-
-            {/* 9. Signatures, Stamp & QR Area */}
-            <div
-              style={{
-                position: "absolute",
-                left: `${positions.signatures.x}%`,
-                top: `${positions.signatures.y}%`,
-                transform: "translate(-50%, -50%)",
-                width: "70%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                zIndex: 2
-              }}
-            >
-              <div
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: "3rem",
-                  fontFamily: "sans-serif",
-                  fontSize: "clamp(.55rem, 1.5vw, .7rem)",
-                  position: "relative"
-                }}
-              >
-                {/* QR Verifikasi */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "26%" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={qrDataUrl} alt="Verification QR" style={{ width: "64px", height: "64px", border: "1px solid #eee", background: "#fff" }} />
-                  <span style={{ fontSize: "clamp(.42rem, 1.2vw, .55rem)", marginTop: ".3rem", color: "#666", fontWeight: 700 }}>
-                    ID: {cert.number}
-                  </span>
-                </div>
-
-                {/* Tanda Tangan Direktur + Stempel */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", width: "40%", position: "relative" }}>
-                  {/* Stamp overlay */}
-                  {stImg && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={stImg}
-                      alt="Official Stamp"
-                      style={{
-                        position: "absolute",
-                        height: "64px",
-                        width: "64px",
-                        objectFit: "contain",
-                        left: "50%",
-                        top: "-25px",
-                        transform: "translateX(-50%)",
-                        opacity: 0.85,
-                        pointerEvents: "none",
-                        zIndex: 3
-                      }}
-                    />
-                  )}
-
-                  <div style={{ height: "45px", position: "relative", marginBottom: ".3rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {s2Img ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={s2Img} alt="Tanda tangan Direktur" style={{ maxHeight: "45px", objectFit: "contain" }} />
-                    ) : (
-                      <div style={{ height: "45px" }} />
-                    )}
-                  </div>
-                  <b style={{ textDecoration: "underline", color: "#1B1710" }}>{s2Name}</b>
-                  <span style={{ color: "#555", fontSize: "clamp(.48rem, 1.3vw, .62rem)", marginTop: ".1rem" }}>{s2Role}</span>
-                </div>
-              </div>
-
-              {/* PMM / Kemendikbud Komunitas Badge */}
-              {showPmm && (
-                <div
-                  style={{
-                    width: "100%",
-                    background: "rgba(16, 185, 129, 0.08)",
-                    border: "1px solid rgba(16, 185, 129, 0.2)",
-                    borderRadius: "6px",
-                    padding: ".4rem .8rem",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: ".5rem",
-                    marginTop: "1.2rem",
-                    boxSizing: "border-box"
-                  }}
-                >
-                  <span style={{ color: "#10B981", fontWeight: 900, fontSize: ".8rem" }}>✓</span>
-                  <span style={{ color: "#065F46", fontWeight: 700, fontSize: "clamp(.5rem, 1.5vw, .68rem)", fontFamily: "sans-serif" }}>
-                    Registered on Komunitas Platform Merdeka Mengajar (PMM)
-                  </span>
-                </div>
-              )}
-            </div>
+            <CertificateSheet
+              certBgUrl={certBgUrl}
+              certConfig={certConfig}
+              accentColor={accentColor}
+              title={certConfig.title || "SERTIFIKAT"}
+              subtitle={certConfig.subtitle || defaultSubtitle}
+              numFormatted={numFormatted}
+              recipientName={cert.registration.name}
+              recipientInstitution={cert.registration.institution || undefined}
+              descResolved={descResolved}
+              materiJp={materiJp}
+              totalJp={totalJp}
+              placeDateResolved={certConfig.placeDate ? certConfig.placeDate.replace(/\[date\]/g, issuedDate) : `Pangandaran, ${issuedDate}`}
+              qrDataUrl={qrDataUrl}
+              qrIdLabel={cert.number}
+              showPmm={showPmm}
+              s2Name={s2Name}
+              s2Role={s2Role}
+              s2Img={s2Img || undefined}
+              stampImg={stImg || undefined}
+            />
           </div>
-        </div>
 
           {/* Action Buttons (Hide when printing) */}
           <div className="no-print" style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "2.5rem", flexWrap: "wrap" }}>

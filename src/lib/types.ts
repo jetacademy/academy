@@ -7,17 +7,29 @@ export interface CertPosition {
   y: number;
 }
 
-/** All certificate element positions */
+/** Per-element style override for a certificate element (position + optional typography/transform) */
+export interface CertElementStyle extends CertPosition {
+  /** Multiplier applied to the element's default clamp() font-size, e.g. 1.25 = 125%. Default 1. */
+  fontScale?: number;
+  /** CSS font-family stack. Omit/empty to keep the element's built-in default font. */
+  fontFamily?: string;
+  /** Rotation in degrees applied around the element's center. Default 0. */
+  rotation?: number;
+  /** Stacking order override. Omit to keep the element's default render order. */
+  zIndex?: number;
+}
+
+/** All certificate element positions/styles */
 export interface CertPositions {
-  logo: CertPosition;
-  title: CertPosition;
-  subtitle: CertPosition;
-  number: CertPosition;
-  recipient: CertPosition;
-  description: CertPosition;
-  table: CertPosition;
-  placeDate: CertPosition;
-  signatures: CertPosition;
+  logo: CertElementStyle;
+  title: CertElementStyle;
+  subtitle: CertElementStyle;
+  number: CertElementStyle;
+  recipient: CertElementStyle;
+  description: CertElementStyle;
+  table: CertElementStyle;
+  placeDate: CertElementStyle;
+  signatures: CertElementStyle;
 }
 
 /** A single materi/jp row in the certificate syllabus table */

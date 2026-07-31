@@ -1015,6 +1015,12 @@
   margin: 0 auto;
 }
 
+@media print {
+  .adm-sidebar, .adm-sidebar-overlay, .adm-mobile-header { display: none !important; }
+  .adm-content-wrapper { margin-left: 0 !important; }
+  .adm-main-content { padding: 0 !important; max-width: 100% !important; }
+}
+
 /* Mobile Header */
 .adm-mobile-header {
   height: 64px;
