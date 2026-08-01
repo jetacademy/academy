@@ -490,10 +490,11 @@ export async function saveLmsLesson(formData: FormData) {
     const hasPassingScore = formData.has("passingScore") && String(formData.get("passingScore")).trim() !== "";
     const passingScore = type === "QUIZ" && hasPassingScore ? Math.min(100, Math.max(0, passingScoreRaw)) : null;
     const isPreview = formData.get("isPreview") === "on";
+    const allowDownload = formData.get("allowDownload") === "on";
 
     if (!programId || !moduleId || !title) redirect(`/webadmin/program/${programId}/lms?e=lengkapi`);
 
-    const data = { moduleId, title, type, videoUrl, fileUrl, content, duration, passingScore, isPreview };
+    const data = { moduleId, title, type, videoUrl, fileUrl, content, duration, passingScore, isPreview, allowDownload };
 
     let lessonId = id;
     if (id) {

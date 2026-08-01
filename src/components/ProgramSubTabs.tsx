@@ -8,6 +8,7 @@ const TABS = [
   { suffix: "/konten", label: "Editor Halaman" },
   { suffix: "/batch", label: "Jadwal & Batch" },
   { suffix: "/lms", label: "Kurikulum" },
+  { suffix: "/media", label: "Media" },
   { suffix: "/kelulusan", label: "Kelulusan" },
   { suffix: "/cert", label: "Desain Sertifikat" },
 ];

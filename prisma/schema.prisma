@@ -371,6 +371,7 @@ model Lesson {
   duration     String       @default("10 menit") // Durasi materi
   passingScore Int? // khusus QUIZ: skor minimal lulus (null = pakai passingScore program)
   isPreview    Boolean      @default(false) // materi bisa diakses gratis sebagai preview
+  allowDownload Boolean     @default(false) // khusus PDF: izinkan peserta mengunduh file (default: hanya baca)
   order        Int          @default(0)
   questions    Question[] // soal kuis (khusus type QUIZ)
   completions  Completion[]

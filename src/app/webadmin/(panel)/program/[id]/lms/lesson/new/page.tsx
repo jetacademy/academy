@@ -32,7 +32,7 @@ export default async function AdminLessonBaru({
         <input type="hidden" name="programId" value={id} />
         <input type="hidden" name="moduleId" value={mod.id} />
 
-        <LessonFields />
+        <LessonFields programId={id} />
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
           <Link href={`/webadmin/program/${id}/lms`} className="btn btn-sm">Batal, kembali ke kurikulum</Link>

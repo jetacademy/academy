@@ -498,7 +498,11 @@ export default async function LmsPage({
 
             {/* Embed PDF — read-only canvas */}
             {currentLesson.type === "PDF" && currentLesson.fileUrl && (
-              <LmsPdfViewer fileUrl={currentLesson.fileUrl} title={currentLesson.title} />
+              <LmsPdfViewer
+                fileUrl={currentLesson.fileUrl}
+                title={currentLesson.title}
+                allowDownload={currentLesson.allowDownload ?? false}
+              />
             )}
 
             {/* Info & Konten Materi */}

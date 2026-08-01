@@ -15,6 +15,7 @@ type LessonData = {
   duration?: string;
   passingScore?: number | null;
   isPreview?: boolean;
+  allowDownload?: boolean;
 };
 
 const TYPES: { value: string; label: string; hint: string }[] = [
@@ -150,6 +151,18 @@ export default function LessonFields({ lesson, programId }: { lesson?: LessonDat
                     }
                   />
                 )}
+              </div>
+              <div className="field full" style={{ display: "flex", alignItems: "center", gap: ".6rem", marginBottom: 0, marginTop: ".6rem" }}>
+                <input
+                  type="checkbox"
+                  name="allowDownload"
+                  id={`${uid}-download`}
+                  defaultChecked={lesson?.allowDownload ?? false}
+                  style={{ width: "auto" }}
+                />
+                <label htmlFor={`${uid}-download`} style={{ margin: 0, fontSize: ".82rem" }}>
+                  Izinkan peserta mengunduh PDF ini (kalau tidak dicentang, hanya bisa dibaca di LMS)
+                </label>
               </div>
             </div>
           )}
