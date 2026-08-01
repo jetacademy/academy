@@ -162,6 +162,15 @@ export default function CertificateSheet({
 
   const scale = (key: keyof CertPositions) => resolveStyle(certConfig, key).fontScale;
 
+  // Tabel JP menciut otomatis kalau baris materinya banyak, supaya tidak menabrak elemen
+  // di atas/bawahnya (deskripsi, tempat/tanggal, tanda tangan) — di atas 6 baris (header+total
+  // termasuk) baru mulai menciut, jadi sertifikat dengan sedikit materi tetap tampil sama seperti
+  // sebelumnya. Admin masih bisa menimpa lewat slider "Ukuran Font" per elemen kalau perlu.
+  const tableRowCount = materiJp.length + 2;
+  const tableAutoScale = tableRowCount > 6 ? Math.max(0.55, 6 / tableRowCount) : 1;
+  const tableScale = scale("table") * tableAutoScale;
+  const tablePad = (basePadV: number, basePadH: number) => `${(basePadV * tableAutoScale).toFixed(2)}rem ${(basePadH * tableAutoScale).toFixed(2)}rem`;
+
   return (
     <div
       className="cert-a4"
@@ -324,29 +333,29 @@ export default function CertificateSheet({
 
       {/* 7. Syllabus Table */}
       <div style={wrapperStyle("table", { width: "86%" })} onMouseDown={handleDown("table")}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: fs("clamp(.55rem, 1.5cqw, .7rem)", scale("table")) }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: fs("clamp(.55rem, 1.5cqw, .7rem)", tableScale) }}>
           <thead>
             <tr style={{ background: "rgba(0,0,0,0.03)" }}>
-              <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "center", width: "8%" }}>No</th>
-              <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "left" }}>Materi Pelatihan</th>
-              <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "center", width: "15%" }}>Teori</th>
-              <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "center", width: "15%" }}>Tugas</th>
-              <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "center", width: "15%" }}>Jumlah</th>
+              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.5, 0.3), textAlign: "center", width: "8%" }}>No</th>
+              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.5, 0.3), textAlign: "left" }}>Materi Pelatihan</th>
+              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.5, 0.3), textAlign: "center", width: "15%" }}>Teori</th>
+              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.5, 0.3), textAlign: "center", width: "15%" }}>Tugas</th>
+              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.5, 0.3), textAlign: "center", width: "15%" }}>Jumlah</th>
             </tr>
           </thead>
           <tbody>
             {materiJp.map((m, idx) => (
               <tr key={idx}>
-                <td style={{ borderBottom: "1px solid #eee", padding: ".45rem .3rem", textAlign: "center" }}>{idx + 1}</td>
-                <td style={{ borderBottom: "1px solid #eee", padding: ".45rem .3rem", textAlign: "left", fontWeight: 600 }}>{m.materi || "(Materi kosong)"}</td>
-                <td style={{ borderBottom: "1px solid #eee", padding: ".45rem .3rem", textAlign: "center" }}>{m.teori} JP</td>
-                <td style={{ borderBottom: "1px solid #eee", padding: ".45rem .3rem", textAlign: "center" }}>{m.tugas} JP</td>
-                <td style={{ borderBottom: "1px solid #eee", padding: ".45rem .3rem", textAlign: "center", fontWeight: 700 }}>{m.teori + m.tugas} JP</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.45, 0.3), textAlign: "center" }}>{idx + 1}</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.45, 0.3), textAlign: "left", fontWeight: 600 }}>{m.materi || "(Materi kosong)"}</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.45, 0.3), textAlign: "center" }}>{m.teori} JP</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.45, 0.3), textAlign: "center" }}>{m.tugas} JP</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.45, 0.3), textAlign: "center", fontWeight: 700 }}>{m.teori + m.tugas} JP</td>
               </tr>
             ))}
             <tr style={{ background: "rgba(0,0,0,0.015)" }}>
-              <td colSpan={2} style={{ padding: ".5rem .3rem", fontWeight: 800, textAlign: "right" }}>Jumlah Total JP</td>
-              <td colSpan={3} style={{ padding: ".5rem .3rem", fontWeight: 900, textAlign: "center", color: accentColor, fontSize: fs("clamp(.62rem, 1.8cqw, .8rem)", scale("table")) }}>
+              <td colSpan={2} style={{ padding: tablePad(0.5, 0.3), fontWeight: 800, textAlign: "right" }}>Jumlah Total JP</td>
+              <td colSpan={3} style={{ padding: tablePad(0.5, 0.3), fontWeight: 900, textAlign: "center", color: accentColor, fontSize: fs("clamp(.62rem, 1.8cqw, .8rem)", tableScale) }}>
                 {totalJp} JP
               </td>
             </tr>
