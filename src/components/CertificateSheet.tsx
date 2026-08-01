@@ -178,6 +178,10 @@ export default function CertificateSheet({
         fontFamily: "Georgia, serif",
         boxSizing: "border-box",
         overflow: "hidden",
+        // Semua font-size di komponen ini pakai satuan cqw (container query width), BUKAN vw —
+        // supaya skala teks mengikuti lebar sertifikat ini sendiri, konsisten baik dirender di
+        // kolom sempit editor admin, tab preview, maupun halaman publik lebar penuh.
+        containerType: "inline-size",
       }}
     >
       {/* Bingkai & watermark bawaan Jetschool Academy — dipakai kalau admin belum upload background sendiri */}
@@ -228,7 +232,7 @@ export default function CertificateSheet({
       <h2
         style={wrapperStyle("title", {
           width: "90%",
-          fontSize: fs("clamp(1.6rem, 4vw, 2.5rem)", scale("title")),
+          fontSize: fs("clamp(1.6rem, 4cqw, 2.5rem)", scale("title")),
           margin: 0,
           fontWeight: 900,
           letterSpacing: ".25em",
@@ -245,7 +249,7 @@ export default function CertificateSheet({
       <div
         style={wrapperStyle("subtitle", {
           width: "80%",
-          fontSize: fs("clamp(.55rem, 1.5vw, .75rem)", scale("subtitle")),
+          fontSize: fs("clamp(.55rem, 1.5cqw, .75rem)", scale("subtitle")),
           letterSpacing: ".1em",
           textTransform: "uppercase",
           fontWeight: 700,
@@ -265,7 +269,7 @@ export default function CertificateSheet({
           color: "var(--white)",
           padding: ".35rem 2rem",
           borderRadius: "20px",
-          fontSize: fs("clamp(.55rem, 1.5vw, .7rem)", scale("number")),
+          fontSize: fs("clamp(.55rem, 1.5cqw, .7rem)", scale("number")),
           fontWeight: 700,
           boxShadow: "0 2px 8px rgba(108, 92, 231, 0.2)",
         })}
@@ -279,12 +283,12 @@ export default function CertificateSheet({
         style={wrapperStyle("recipient", { width: "80%", display: "flex", flexDirection: "column", alignItems: "center" })}
         onMouseDown={handleDown("recipient")}
       >
-        <div style={{ fontSize: fs("clamp(.65rem, 1.8vw, .8rem)", scale("recipient")), color: "#555", fontStyle: "italic" }}>
+        <div style={{ fontSize: fs("clamp(.65rem, 1.8cqw, .8rem)", scale("recipient")), color: "#555", fontStyle: "italic" }}>
           Diberikan kepada :
         </div>
         <div
           style={{
-            fontSize: fs("clamp(1.2rem, 3.5vw, 1.8rem)", scale("recipient")),
+            fontSize: fs("clamp(1.2rem, 3.5cqw, 1.8rem)", scale("recipient")),
             fontWeight: 800,
             color: accentColor,
             borderBottom: `1px dashed ${accentColor}`,
@@ -297,7 +301,7 @@ export default function CertificateSheet({
           {recipientName}
         </div>
         {recipientInstitution && (
-          <div style={{ fontSize: fs("clamp(.75rem, 2vw, 1rem)", scale("recipient")), fontWeight: 700, color: "#333", textAlign: "center" }}>
+          <div style={{ fontSize: fs("clamp(.75rem, 2cqw, 1rem)", scale("recipient")), fontWeight: 700, color: "#333", textAlign: "center" }}>
             {recipientInstitution}
           </div>
         )}
@@ -307,7 +311,7 @@ export default function CertificateSheet({
       <p
         style={wrapperStyle("description", {
           width: "84%",
-          fontSize: fs("clamp(.62rem, 1.6vw, .78rem)", scale("description")),
+          fontSize: fs("clamp(.62rem, 1.6cqw, .78rem)", scale("description")),
           color: "#333",
           textAlign: "center",
           lineHeight: 1.6,
@@ -320,7 +324,7 @@ export default function CertificateSheet({
 
       {/* 7. Syllabus Table */}
       <div style={wrapperStyle("table", { width: "86%" })} onMouseDown={handleDown("table")}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: fs("clamp(.55rem, 1.5vw, .7rem)", scale("table")) }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: fs("clamp(.55rem, 1.5cqw, .7rem)", scale("table")) }}>
           <thead>
             <tr style={{ background: "rgba(0,0,0,0.03)" }}>
               <th style={{ borderBottom: "1.5px solid #ccc", padding: ".5rem .3rem", textAlign: "center", width: "8%" }}>No</th>
@@ -342,7 +346,7 @@ export default function CertificateSheet({
             ))}
             <tr style={{ background: "rgba(0,0,0,0.015)" }}>
               <td colSpan={2} style={{ padding: ".5rem .3rem", fontWeight: 800, textAlign: "right" }}>Jumlah Total JP</td>
-              <td colSpan={3} style={{ padding: ".5rem .3rem", fontWeight: 900, textAlign: "center", color: accentColor, fontSize: fs("clamp(.62rem, 1.8vw, .8rem)", scale("table")) }}>
+              <td colSpan={3} style={{ padding: ".5rem .3rem", fontWeight: 900, textAlign: "center", color: accentColor, fontSize: fs("clamp(.62rem, 1.8cqw, .8rem)", scale("table")) }}>
                 {totalJp} JP
               </td>
             </tr>
@@ -352,7 +356,7 @@ export default function CertificateSheet({
 
       {/* 8. Place & Date */}
       <div
-        style={wrapperStyle("placeDate", { fontSize: fs("clamp(.62rem, 1.8vw, .75rem)", scale("placeDate")), fontWeight: 700, color: "#444" })}
+        style={wrapperStyle("placeDate", { fontSize: fs("clamp(.62rem, 1.8cqw, .75rem)", scale("placeDate")), fontWeight: 700, color: "#444" })}
         onMouseDown={handleDown("placeDate")}
       >
         {placeDateResolved}
@@ -367,7 +371,7 @@ export default function CertificateSheet({
             justifyContent: "center",
             alignItems: "center",
             gap: "3rem",
-            fontSize: fs("clamp(.55rem, 1.5vw, .7rem)", scale("signatures")),
+            fontSize: fs("clamp(.55rem, 1.5cqw, .7rem)", scale("signatures")),
             position: "relative",
           }}
         >
@@ -390,7 +394,7 @@ export default function CertificateSheet({
                 <span style={{ fontSize: ".55rem", fontWeight: 800, color: "#777" }}>QR</span>
               </div>
             )}
-            <span style={{ fontSize: fs("clamp(.42rem, 1.2vw, .55rem)", scale("signatures")), marginTop: ".3rem", color: "#666", fontWeight: 700 }}>
+            <span style={{ fontSize: fs("clamp(.42rem, 1.2cqw, .55rem)", scale("signatures")), marginTop: ".3rem", color: "#666", fontWeight: 700 }}>
               ID: {qrIdLabel}
             </span>
           </div>
@@ -425,7 +429,7 @@ export default function CertificateSheet({
               )}
             </div>
             <b style={{ textDecoration: "underline", color: "#1B1710" }}>{s2Name}</b>
-            <span style={{ color: "#555", fontSize: fs("clamp(.48rem, 1.3vw, .62rem)", scale("signatures")), marginTop: ".1rem" }}>{s2Role}</span>
+            <span style={{ color: "#555", fontSize: fs("clamp(.48rem, 1.3cqw, .62rem)", scale("signatures")), marginTop: ".1rem" }}>{s2Role}</span>
           </div>
         </div>
 
@@ -446,7 +450,7 @@ export default function CertificateSheet({
             }}
           >
             <span style={{ color: "#10B981", fontWeight: 900, fontSize: ".8rem" }}>✓</span>
-            <span style={{ color: "#065F46", fontWeight: 700, fontSize: fs("clamp(.5rem, 1.5vw, .68rem)", scale("signatures")) }}>
+            <span style={{ color: "#065F46", fontWeight: 700, fontSize: fs("clamp(.5rem, 1.5cqw, .68rem)", scale("signatures")) }}>
               Registered on Komunitas Platform Merdeka Mengajar (PMM)
             </span>
           </div>
