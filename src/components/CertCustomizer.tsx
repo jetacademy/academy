@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import Link from "next/link";
 import { uploadFileAction, saveCertTemplate } from "@/app/webadmin/actions";
 import Icon from "@/components/Icon";
@@ -19,6 +19,13 @@ type ProgramData = {
 };
 
 const DEFAULT_ACCENT_COLOR = "#232176";
+
+// Lebar acuan render CertificateSheet — sama dengan max-width .cert-a4 di halaman pratinjau/publik
+// (lihat globals-cert.css). Sheet selalu di-render pada lebar tetap ini lalu diskalakan visual pakai
+// CSS transform, supaya font-size berbasis cqw menghitung terhadap lebar yang SAMA persis dengan
+// pratinjau/publik — apa pun lebar kolom editor ini di layar. Tanpa ini, font akan terlihat beda
+// proporsi di editor (kolom sempit) vs pratinjau (lebar penuh).
+const CERT_REF_WIDTH = 800;
 
 const DEFAULT_POSITIONS = {
   logo: { x: 50, y: 11 },
@@ -62,6 +69,22 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
   });
 
   const [activeDrag, setActiveDrag] = useState<string | null>(null);
+
+  // Skala visual kolom pratinjau live: sheet dirender tetap 800px lebar (CERT_REF_WIDTH), lalu
+  // di-scale ke lebar kolom sebenarnya lewat CSS transform (bukan resize elemen), supaya cqw di
+  // dalam CertificateSheet menghitung terhadap 800px persis seperti di halaman pratinjau/publik.
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [frameScale, setFrameScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const el = frameRef.current;
+    if (!el) return;
+    const updateScale = () => setFrameScale(el.clientWidth / CERT_REF_WIDTH);
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // JP weights table
   const initialMateriJp = Array.isArray(initialConfig.materiJp) ? initialConfig.materiJp : [];
@@ -576,31 +599,34 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
         </div>
 
         <div
+          ref={frameRef}
           className="cert-preview-wrapper"
-          style={{ width: "100%", position: "relative" }}
+          style={{ width: "100%", aspectRatio: "1 / 1.414", overflow: "hidden", position: "relative" }}
         >
-          <CertificateSheet
-            certBgUrl={bgUrl}
-            certConfig={{ positions } as unknown as CertConfig}
-            accentColor={accentColor}
-            title={title}
-            subtitle={subtitle}
-            numFormatted={previewNum}
-            recipientName="Syntia Bella, S.Pd."
-            recipientInstitution="SMP Negeri 234 Yogyakarta"
-            descResolved={previewDesc}
-            materiJp={materiJp}
-            totalJp={totalJp}
-            placeDateResolved={previewPlaceDate}
-            qrIdLabel="JSA-0042"
-            s2Name={sign2Name}
-            s2Role={sign2Role}
-            s2Img={sign2Img || undefined}
-            stampImg={stampImg || undefined}
-            editable
-            activeDragKey={activeDrag}
-            onElementMouseDown={handleDragStart}
-          />
+          <div style={{ width: `${CERT_REF_WIDTH}px`, position: "absolute", top: 0, left: 0, transformOrigin: "top left", transform: `scale(${frameScale})` }}>
+            <CertificateSheet
+              certBgUrl={bgUrl}
+              certConfig={{ positions } as unknown as CertConfig}
+              accentColor={accentColor}
+              title={title}
+              subtitle={subtitle}
+              numFormatted={previewNum}
+              recipientName="Syntia Bella, S.Pd."
+              recipientInstitution="SMP Negeri 234 Yogyakarta"
+              descResolved={previewDesc}
+              materiJp={materiJp}
+              totalJp={totalJp}
+              placeDateResolved={previewPlaceDate}
+              qrIdLabel="JSA-0042"
+              s2Name={sign2Name}
+              s2Role={sign2Role}
+              s2Img={sign2Img || undefined}
+              stampImg={stampImg || undefined}
+              editable
+              activeDragKey={activeDrag}
+              onElementMouseDown={handleDragStart}
+            />
+          </div>
         </div>
 
         <div style={{ marginTop: "1rem" }}>
