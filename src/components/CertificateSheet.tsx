@@ -96,7 +96,6 @@ export type CertificateSheetProps = {
   placeDateResolved: string;
   qrDataUrl?: string;
   qrIdLabel: string;
-  showPmm: boolean;
   s2Name: string;
   s2Role: string;
   s2Img?: string;
@@ -122,7 +121,6 @@ export default function CertificateSheet({
   placeDateResolved,
   qrDataUrl,
   qrIdLabel,
-  showPmm,
   s2Name,
   s2Role,
   s2Img,
@@ -336,26 +334,26 @@ export default function CertificateSheet({
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: fs("clamp(.55rem, 1.5cqw, .7rem)", tableScale) }}>
           <thead>
             <tr style={{ background: "rgba(0,0,0,0.03)" }}>
-              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.5, 0.3), textAlign: "center", width: "8%" }}>No</th>
-              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.5, 0.3), textAlign: "left" }}>Materi Pelatihan</th>
-              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.5, 0.3), textAlign: "center", width: "15%" }}>Teori</th>
-              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.5, 0.3), textAlign: "center", width: "15%" }}>Tugas</th>
-              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.5, 0.3), textAlign: "center", width: "15%" }}>Jumlah</th>
+              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.3, 0.3), textAlign: "center", width: "8%" }}>No</th>
+              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.3, 0.3), textAlign: "left" }}>Materi Pelatihan</th>
+              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.3, 0.3), textAlign: "center", width: "15%" }}>Teori</th>
+              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.3, 0.3), textAlign: "center", width: "15%" }}>Tugas</th>
+              <th style={{ borderBottom: "1.5px solid #ccc", padding: tablePad(0.3, 0.3), textAlign: "center", width: "15%" }}>Jumlah</th>
             </tr>
           </thead>
           <tbody>
             {materiJp.map((m, idx) => (
               <tr key={idx}>
-                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.45, 0.3), textAlign: "center" }}>{idx + 1}</td>
-                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.45, 0.3), textAlign: "left", fontWeight: 600 }}>{m.materi || "(Materi kosong)"}</td>
-                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.45, 0.3), textAlign: "center" }}>{m.teori} JP</td>
-                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.45, 0.3), textAlign: "center" }}>{m.tugas} JP</td>
-                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.45, 0.3), textAlign: "center", fontWeight: 700 }}>{m.teori + m.tugas} JP</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.25, 0.3), textAlign: "center" }}>{idx + 1}</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.25, 0.3), textAlign: "left", fontWeight: 600 }}>{m.materi || "(Materi kosong)"}</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.25, 0.3), textAlign: "center" }}>{m.teori} JP</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.25, 0.3), textAlign: "center" }}>{m.tugas} JP</td>
+                <td style={{ borderBottom: "1px solid #eee", padding: tablePad(0.25, 0.3), textAlign: "center", fontWeight: 700 }}>{m.teori + m.tugas} JP</td>
               </tr>
             ))}
             <tr style={{ background: "rgba(0,0,0,0.015)" }}>
-              <td colSpan={2} style={{ padding: tablePad(0.5, 0.3), fontWeight: 800, textAlign: "right" }}>Jumlah Total JP</td>
-              <td colSpan={3} style={{ padding: tablePad(0.5, 0.3), fontWeight: 900, textAlign: "center", color: accentColor, fontSize: fs("clamp(.62rem, 1.8cqw, .8rem)", tableScale) }}>
+              <td colSpan={2} style={{ padding: tablePad(0.3, 0.3), fontWeight: 800, textAlign: "right" }}>Jumlah Total JP</td>
+              <td colSpan={3} style={{ padding: tablePad(0.3, 0.3), fontWeight: 900, textAlign: "center", color: accentColor, fontSize: fs("clamp(.62rem, 1.8cqw, .8rem)", tableScale) }}>
                 {totalJp} JP
               </td>
             </tr>
@@ -441,29 +439,6 @@ export default function CertificateSheet({
             <span style={{ color: "#555", fontSize: fs("clamp(.48rem, 1.3cqw, .62rem)", scale("signatures")), marginTop: ".1rem" }}>{s2Role}</span>
           </div>
         </div>
-
-        {showPmm && (
-          <div
-            style={{
-              width: "100%",
-              background: "rgba(16, 185, 129, 0.08)",
-              border: "1px solid rgba(16, 185, 129, 0.2)",
-              borderRadius: "6px",
-              padding: ".4rem .8rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: ".5rem",
-              marginTop: "1.2rem",
-              boxSizing: "border-box",
-            }}
-          >
-            <span style={{ color: "#10B981", fontWeight: 900, fontSize: ".8rem" }}>✓</span>
-            <span style={{ color: "#065F46", fontWeight: 700, fontSize: fs("clamp(.5rem, 1.5cqw, .68rem)", scale("signatures")) }}>
-              Registered on Komunitas Platform Merdeka Mengajar (PMM)
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );

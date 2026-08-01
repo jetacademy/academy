@@ -65,7 +65,7 @@ export default function CertPreviewClient({ program }: { program: ProgramData })
     .replace(/\[month\]/g, "VIII")
     .replace(/\[year\]/g, "2026");
 
-  const previewPlaceDate = (config.placeDate || "Pangandaran, [date]").replace(/\[date\]/g, "02 Agustus 2026");
+  const previewPlaceDate = (config.placeDate || "Bekasi, [date]").replace(/\[date\]/g, "02 Agustus 2026");
 
   const configMateriJp: CertMateriJp[] = Array.isArray(config.materiJp) ? config.materiJp : [];
   const materiJp: CertMateriJp[] =
@@ -103,7 +103,6 @@ export default function CertPreviewClient({ program }: { program: ProgramData })
           totalJp={totalJp}
           placeDateResolved={previewPlaceDate}
           qrIdLabel="JSA-0042"
-          showPmm={config.showPmmBadge !== false}
           s2Name={config.sign2Name || "Najib"}
           s2Role={config.sign2Role || "Direktur PT Jetschool Academy Indonesia"}
           s2Img={config.sign2Img || undefined}

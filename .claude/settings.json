@@ -22,7 +22,15 @@
       "Bash(timeout 240 npx --yes playwright@1 install chromium)",
       "Bash(echo \"TSC EXIT:$?\")",
       "Bash(curl -s -b jsa_admin=__TRACKED_VAR__ http://localhost:3001/webadmin/program/cmrsglgvu0002uue8f8nzlgxg/cert -o /tmp/real_cert.html -w 'HTTP:%{http_code}\\\\n')",
-      "Bash(powershell -Command \"Stop-Process -Id 8000 -Force\")"
+      "Bash(powershell -Command \"Stop-Process -Id 8000 -Force\")",
+      "Bash(npm run *)",
+      "Bash(echo \"started pid $!\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3001/ --max-time 15)",
+      "Bash(cat /tmp/nextdev.log 2>&1 | tail -60)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3001/program/digital-marketing-pemula --max-time 15)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3001/webadmin/program --max-time 15)",
+      "Bash(tail -30 /tmp/nextdev.log)",
+      "Bash(taskkill //F //PID 4216)"
     ]
   }
 }

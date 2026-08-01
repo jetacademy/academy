@@ -26,7 +26,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
   try {
     cert = await prisma.certificate.findUnique({
       where: { number: decodeURIComponent(number) },
-      include: { registration: { include: { program: true } } },
+      include: { registration: { include: { program: true, batch: true } } },
     });
   } catch {
     notFound();
@@ -47,7 +47,9 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
     color: { dark: "#1B1710", light: "#FFFFFF" },
   });
 
-  const issuedDate = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(cert.issuedAt);
+  // Tanggal yang tampil di sertifikat mengikuti jadwal batch yang diikuti peserta (bukan tanggal cert diterbitkan)
+  const batchDate = cert.registration.batch?.scheduleAt ?? program.scheduleAt;
+  const batchDateFormatted = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(batchDate);
   const monthRoman = toRoman(cert.issuedAt.getMonth() + 1);
   const yearStr = String(cert.issuedAt.getFullYear());
 
@@ -64,7 +66,7 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
   const descResolved = descTemplate
     .replace(/{title}/g, program.title)
     .replace(/{name}/g, cert.registration.name)
-    .replace(/{date}/g, new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(program.scheduleAt))
+    .replace(/{date}/g, batchDateFormatted)
     .replace(/{institution}/g, cert.registration.institution || "");
 
   // Syllabus / JP breakdown
@@ -95,7 +97,6 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
   const s2Img = certConfig.sign2Img || "";
   const stImg = certConfig.stampImg || "";
 
-  const showPmm = certConfig.showPmmBadge !== false;
   const accentColor = certConfig.accentColor || "#232176";
 
   // Sub-judul default mengikuti jenis sertifikat program
@@ -135,10 +136,9 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
               descResolved={descResolved}
               materiJp={materiJp}
               totalJp={totalJp}
-              placeDateResolved={certConfig.placeDate ? certConfig.placeDate.replace(/\[date\]/g, issuedDate) : `Pangandaran, ${issuedDate}`}
+              placeDateResolved={certConfig.placeDate ? certConfig.placeDate.replace(/\[date\]/g, batchDateFormatted) : `Bekasi, ${batchDateFormatted}`}
               qrDataUrl={qrDataUrl}
               qrIdLabel={cert.number}
-              showPmm={showPmm}
               s2Name={s2Name}
               s2Role={s2Role}
               s2Img={s2Img || undefined}

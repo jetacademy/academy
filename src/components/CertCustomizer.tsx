@@ -47,7 +47,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
     initialConfig.description ||
       "Sebagai peserta dalam pelatihan nasional yang diadakan oleh PT Jetschool Academy Indonesia dengan tema: \"{title}\" yang dilaksanakan pada {date}."
   );
-  const [placeDate, setPlaceDate] = useState(initialConfig.placeDate || "Pangandaran, [date]");
+  const [placeDate, setPlaceDate] = useState(initialConfig.placeDate || "Bekasi, [date]");
   const [accentColor, setAccentColor] = useState(initialConfig.accentColor || DEFAULT_ACCENT_COLOR);
 
   // Tanda tangan — hanya Direktur (satu tanda tangan resmi, sesuai kebijakan terbaru)
@@ -55,8 +55,6 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
   const [sign2Role, setSign2Role] = useState(initialConfig.sign2Role || "Direktur PT Jetschool Academy Indonesia");
   const [sign2Img, setSig2Img] = useState(initialConfig.sign2Img || "");
   const [stampImg, setStampImg] = useState(initialConfig.stampImg || "");
-
-  const [showPmmBadge, setShowPmmBadge] = useState(initialConfig.showPmmBadge !== false);
 
   // Positions state
   const [positions, setPositions] = useState(() => {
@@ -149,7 +147,6 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
       sign2Role,
       sign2Img,
       stampImg,
-      showPmmBadge,
       materiJp,
       positions,
     };
@@ -247,7 +244,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
   function handlePreviewPdf() {
     const config = {
       title, subtitle, numberFormat, description, placeDate, accentColor,
-      sign2Name, sign2Role, sign2Img, stampImg, showPmmBadge, materiJp, positions,
+      sign2Name, sign2Role, sign2Img, stampImg, materiJp, positions,
     };
     sessionStorage.setItem(`certDraft:${program.id}`, JSON.stringify({ bgUrl, config }));
     window.open(`/webadmin/program/${program.id}/cert/preview`, "_blank");
@@ -351,9 +348,9 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           </div>
           <div className="field">
             <label>Tempat &amp; Tanggal Terbit</label>
-            <input value={placeDate} onChange={(e) => setPlaceDate(e.target.value)} placeholder="Pangandaran, [date]" />
+            <input value={placeDate} onChange={(e) => setPlaceDate(e.target.value)} placeholder="Bekasi, [date]" />
             <span style={{ fontSize: ".72rem", color: "var(--ink-soft)" }}>
-              Gunakan <code>[date]</code> untuk tanggal terbit otomatis. Ganti nama kota sesuai lokasi program.
+              Gunakan <code>[date]</code> untuk tanggal batch (jadwal pelatihan) peserta secara otomatis. Ganti nama kota sesuai lokasi program.
             </span>
           </div>
         </div>
@@ -548,23 +545,6 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           </div>
         </div>
 
-        {/* 6. Additional Settings */}
-        <div style={{ marginBottom: "2rem" }}>
-          <h4 style={{ display: "flex", alignItems: "center", gap: ".5rem", color: "var(--purple)", marginBottom: "1rem" }}>
-            <Icon name="settings" size={18} />
-            Opsi Tampilan
-          </h4>
-          <label style={{ display: "flex", alignItems: "center", gap: ".6rem", cursor: "pointer", fontSize: ".88rem" }}>
-            <input
-              type="checkbox"
-              checked={showPmmBadge}
-              onChange={(e) => setShowPmmBadge(e.target.checked)}
-              style={{ width: "auto" }}
-            />
-            Tampilkan Badge Komunitas PMM &amp; Logo Merdeka Mengajar
-          </label>
-        </div>
-
         {/* Save & Preview Buttons */}
         <button
           type="button"
@@ -613,7 +593,6 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
             totalJp={totalJp}
             placeDateResolved={previewPlaceDate}
             qrIdLabel="JSA-0042"
-            showPmm={showPmmBadge}
             s2Name={sign2Name}
             s2Role={sign2Role}
             s2Img={sign2Img || undefined}
