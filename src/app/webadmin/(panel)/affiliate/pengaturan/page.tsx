@@ -19,7 +19,7 @@ export default async function AdminAffiliateSettings({
 
       {ok === "1" && <div className="adm-alert ok">Pengaturan berhasil disimpan.</div>}
 
-      <form action={saveAffiliateSettings} className="adm-form" style={{ gridTemplateColumns: "1fr 1fr", maxWidth: "48rem" }}>
+      <form action={saveAffiliateSettings} className="adm-form" style={{ maxWidth: "48rem" }}>
         <div className="field">
           <label>Tipe Komisi Default (untuk affiliate baru)</label>
           <select name="defaultCommissionType" defaultValue={settings.defaultCommissionType}>

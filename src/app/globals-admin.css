@@ -132,6 +132,19 @@
 .field textarea:focus { border-color: var(--purple); background: var(--white); }
 .adm-note { font-size: .76rem; color: var(--ink-faint); margin-top: .35rem; font-weight: 600; }
 
+/* Editor sertifikat: form pengaturan (kiri) + pratinjau live (kanan) — susun vertikal di mobile
+   supaya kartu pengaturan tidak terjepit sempit berdampingan dengan pratinjau A4. */
+.cert-editor-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 2rem; align-items: start; margin-top: 1.5rem; }
+.cert-editor-preview-col { position: sticky; top: 1.5rem; }
+@media (max-width: 960px) {
+  .cert-editor-grid { grid-template-columns: 1fr; }
+  .cert-editor-preview-col { position: static; }
+}
+
+/* Mini-grid slider koordinat/skala per elemen sertifikat — auto-fit supaya label+slider tidak
+   terjepit jadi 2 kolom sempit di layar HP. */
+.cert-coord-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1rem; }
+
 /* ══════════════ ADMIN: EDITOR PROGRAM (LMS BUILDER) ══════════════ */
 
 .prog-editor-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem; }

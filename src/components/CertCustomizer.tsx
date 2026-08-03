@@ -274,7 +274,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: "2rem", alignItems: "start", marginTop: "1.5rem" }}>
+    <div className="cert-editor-grid">
       {/* LEFT COLUMN: EDIT FORM & COORDINATE ADJUSTERS */}
       <div className="reg-card" style={{ padding: "1.8rem", maxWidth: "none", margin: 0 }}>
         <h3 style={{ marginBottom: "1.5rem" }}>Pengaturan Elemen Sertifikat</h3>
@@ -401,7 +401,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
                     <span>{ELEMENT_LABELS[k as keyof typeof ELEMENT_LABELS]}</span>
                     <span style={{ color: "var(--purple)" }}>X: {pos.x}%, Y: {pos.y}%</span>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div className="cert-coord-grid">
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)" }}>Horisontal (X)</span>
                       <input
@@ -425,7 +425,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
                       />
                     </div>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "0.5rem" }}>
+                  <div className="cert-coord-grid" style={{ marginTop: "0.5rem" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", flexShrink: 0 }}>Ukuran Font ({Math.round(fontScale * 100)}%)</span>
                       <input
@@ -450,7 +450,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
                       />
                     </div>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "0.5rem" }}>
+                  <div className="cert-coord-grid" style={{ marginTop: "0.5rem" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                       <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", flexShrink: 0 }}>Font</span>
                       <select
@@ -589,7 +589,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
       </div>
 
       {/* RIGHT COLUMN: INTERACTIVE LIVE PREVIEW */}
-      <div style={{ position: "sticky", top: "1.5rem" }}>
+      <div className="cert-editor-preview-col">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: ".8rem" }}>
           <div>
             <h4 style={{ margin: 0 }}>Pratinjau Live (A4 Portrait)</h4>

@@ -30,7 +30,12 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3001/program/digital-marketing-pemula --max-time 15)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3001/webadmin/program --max-time 15)",
       "Bash(tail -30 /tmp/nextdev.log)",
-      "Bash(taskkill //F //PID 4216)"
+      "Bash(taskkill //F //PID 4216)",
+      "Bash(where chromium-cli *)",
+      "Bash(where npx *)",
+      "Bash(command -v chromium-cli)",
+      "Read(//c//**)",
+      "Read(//c/Users/Hubungan Alumni/**)"
     ]
   }
 }

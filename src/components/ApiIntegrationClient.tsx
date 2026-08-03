@@ -104,7 +104,7 @@ export default function ApiIntegrationClient({
         </header>
         <div className="fs-body">
           <div className="field full" style={{ overflowX: "auto" }}>
-            <table className="tbl" style={{ minWidth: "560px" }}>
+            <table className="tbl">
               <thead>
                 <tr>
                   <th>Method</th>
