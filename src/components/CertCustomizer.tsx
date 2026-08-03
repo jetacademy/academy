@@ -42,10 +42,12 @@ const DEFAULT_POSITIONS = {
 export default function CertCustomizer({ program }: { program: ProgramData }) {
   const materiList = Array.isArray(program.materi) ? (program.materi as string[]) : [];
   const bgInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Parse initial config
   const initialConfig = program.certConfig || {};
   const [bgUrl, setBgUrl] = useState(program.certBgUrl || "");
+  const [logoUrl, setLogoUrl] = useState(initialConfig.logoUrl || "");
 
   const [title, setTitle] = useState(initialConfig.title || "SERTIFIKAT");
   const [subtitle, setSubtitle] = useState(initialConfig.subtitle || "KETERANGAN SELESAI TOPIK PELATIHAN");
@@ -123,14 +125,14 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
   const totalJp = materiJp.reduce((acc, curr) => acc + curr.teori + curr.tugas, 0);
 
   // File upload handler
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, target: "bg" | "sig2" | "stamp") {
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, target: "bg" | "logo" | "sig2" | "stamp") {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setLoading(true);
     const fd = new FormData();
     fd.append("file", file);
-    fd.append("target", target === "bg" ? "certificate" : "signature");
+    fd.append("target", target === "bg" ? "certificate" : target === "logo" ? "logo" : "signature");
 
     try {
       const res = await uploadFileAction(fd);
@@ -140,6 +142,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
       }
       const url = res.url;
       if (target === "bg") setBgUrl(url);
+      if (target === "logo") setLogoUrl(url);
       if (target === "sig2") setSig2Img(url);
       if (target === "stamp") setStampImg(url);
     } catch {
@@ -170,6 +173,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
       sign2Role,
       sign2Img,
       stampImg,
+      logoUrl,
       materiJp,
       positions,
     };
@@ -267,7 +271,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
   function handlePreviewPdf() {
     const config = {
       title, subtitle, numberFormat, description, placeDate, accentColor,
-      sign2Name, sign2Role, sign2Img, stampImg, materiJp, positions,
+      sign2Name, sign2Role, sign2Img, stampImg, logoUrl, materiJp, positions,
     };
     sessionStorage.setItem(`certDraft:${program.id}`, JSON.stringify({ bgUrl, config }));
     window.open(`/webadmin/program/${program.id}/cert/preview`, "_blank");
@@ -316,6 +320,36 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               URL: <code>{bgUrl}</code>
             </div>
           )}
+
+          <div className="field" style={{ marginTop: "1rem" }}>
+            <label>Logo Header</label>
+            <p style={{ fontSize: ".8rem", color: "var(--ink-soft)", margin: ".2rem 0 .6rem" }}>
+              Kosongkan untuk pakai logo bawaan Jetschool Academy.
+            </p>
+            <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => handleFileUpload(e, "logo")}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="btn btn-sm btn-purple"
+                disabled={loading}
+                onClick={() => logoInputRef.current?.click()}
+              >
+                {loading ? "Mengunggah..." : "Pilih File Logo"}
+              </button>
+              {logoUrl && (
+                <button type="button" className="btn btn-sm btn-danger" onClick={() => setLogoUrl("")}>
+                  Hapus
+                </button>
+              )}
+            </div>
+          </div>
 
           <div className="field" style={{ marginTop: "1rem" }}>
             <label>Warna Aksen (judul, badge nomor, garis bingkai)</label>
@@ -606,7 +640,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           <div style={{ width: `${CERT_REF_WIDTH}px`, position: "absolute", top: 0, left: 0, transformOrigin: "top left", transform: `scale(${frameScale})` }}>
             <CertificateSheet
               certBgUrl={bgUrl}
-              certConfig={{ positions } as unknown as CertConfig}
+              certConfig={{ positions, logoUrl } as unknown as CertConfig}
               accentColor={accentColor}
               title={title}
               subtitle={subtitle}

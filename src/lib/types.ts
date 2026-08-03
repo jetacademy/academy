@@ -57,6 +57,8 @@ export interface CertConfig {
   sign2Role?: string;
   sign2Img?: string;
   stampImg?: string;
+  /** Logo header sertifikat — kosongkan untuk pakai logo bawaan Jetschool Academy */
+  logoUrl?: string;
   /** Warna aksen sertifikat (judul, badge nomor, garis bingkai) — hex, mis. "#232176" */
   accentColor?: string;
   positions?: CertPositions;

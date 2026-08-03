@@ -228,11 +228,13 @@ export default function CertificateSheet({
         onMouseDown={handleDown("logo")}
       >
         <div style={{ position: "relative", width: "48px", height: "48px" }}>
-          <Image src="/iconjetschool academy.png" alt="Jetschool Academy" fill style={{ objectFit: "contain" }} />
+          <Image src={certConfig?.logoUrl || "/iconjetschool academy.png"} alt="Logo" fill style={{ objectFit: "contain" }} />
         </div>
-        <div style={{ fontSize: fs(".75rem", scale("logo")), fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em" }}>
-          Jetschool <span style={{ color: accentColor }}>Academy</span>
-        </div>
+        {!certConfig?.logoUrl && (
+          <div style={{ fontSize: fs(".75rem", scale("logo")), fontWeight: 800, textTransform: "uppercase", letterSpacing: ".12em" }}>
+            Jetschool <span style={{ color: accentColor }}>Academy</span>
+          </div>
+        )}
       </div>
 
       {/* 2. Title */}
