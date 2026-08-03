@@ -11,9 +11,10 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 interface LmsPdfViewerProps {
   fileUrl: string;
   title: string;
+  allowDownload?: boolean;
 }
 
-export default function LmsPdfViewer({ fileUrl, title }: LmsPdfViewerProps) {
+export default function LmsPdfViewer({ fileUrl, title, allowDownload = false }: LmsPdfViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -117,11 +118,26 @@ export default function LmsPdfViewer({ fileUrl, title }: LmsPdfViewerProps) {
           <span className="lms-pdf-title-text" title={title}>
             {title}
           </span>
-          <span className="lms-pdf-shield">🔒 Hanya Baca</span>
+          <span className="lms-pdf-shield">{allowDownload ? "📥 Bisa Diunduh" : "🔒 Hanya Baca"}</span>
         </div>
 
-        {/* Action Controls: Zoom + Fullscreen */}
+        {/* Action Controls: Zoom + Fullscreen + Download */}
         <div className="lms-pdf-header-actions">
+          {allowDownload && (
+            <a
+              href={fileUrl}
+              download
+              className="lms-pdf-download-btn"
+              title="Unduh PDF"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>Unduh</span>
+            </a>
+          )}
           {/* Zoom controls (saat dokumen sudah termuat) */}
           {!loading && !error && (
             <div className="lms-pdf-zoom-group">
