@@ -5,8 +5,7 @@ import { useState, useRef, useLayoutEffect } from "react";
 import Link from "next/link";
 import { uploadFileAction, saveCertTemplate } from "@/app/webadmin/actions";
 import Icon from "@/components/Icon";
-import CertificateSheet, { ELEMENT_LABELS, FONT_FAMILY_OPTIONS } from "@/components/CertificateSheet";
-import type { CertConfig } from "@/lib/types";
+import CertificateSheet from "@/components/CertificateSheet";
 
 type ProgramData = {
   id: string;
@@ -26,18 +25,6 @@ const DEFAULT_ACCENT_COLOR = "#232176";
 // pratinjau/publik — apa pun lebar kolom editor ini di layar. Tanpa ini, font akan terlihat beda
 // proporsi di editor (kolom sempit) vs pratinjau (lebar penuh).
 const CERT_REF_WIDTH = 800;
-
-const DEFAULT_POSITIONS = {
-  logo: { x: 50, y: 11 },
-  title: { x: 50, y: 20 },
-  subtitle: { x: 50, y: 26 },
-  number: { x: 50, y: 31 },
-  recipient: { x: 50, y: 40 },
-  description: { x: 50, y: 51 },
-  table: { x: 50, y: 64 },
-  placeDate: { x: 50, y: 77 },
-  signatures: { x: 50, y: 84 },
-};
 
 export default function CertCustomizer({ program }: { program: ProgramData }) {
   const materiList = Array.isArray(program.materi) ? (program.materi as string[]) : [];
@@ -64,13 +51,6 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
   const [sign2Role, setSign2Role] = useState(initialConfig.sign2Role || "Direktur PT Jetschool Academy Indonesia");
   const [sign2Img, setSig2Img] = useState(initialConfig.sign2Img || "");
   const [stampImg, setStampImg] = useState(initialConfig.stampImg || "");
-
-  // Positions state
-  const [positions, setPositions] = useState(() => {
-    return initialConfig.positions || DEFAULT_POSITIONS;
-  });
-
-  const [activeDrag, setActiveDrag] = useState<string | null>(null);
 
   // Skala visual kolom pratinjau live: sheet dirender tetap 800px lebar (CERT_REF_WIDTH), lalu
   // di-scale ke lebar kolom sebenarnya lewat CSS transform (bukan resize elemen), supaya cqw di
@@ -159,10 +139,8 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
     setMateriJp(updated);
   }
 
-  // Save to DB
-  async function handleSave() {
-    setSaving(true);
-    const config = {
+  function buildConfig() {
+    return {
       title,
       subtitle,
       numberFormat,
@@ -175,11 +153,14 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
       stampImg,
       logoUrl,
       materiJp,
-      positions,
     };
+  }
 
+  // Save to DB
+  async function handleSave() {
+    setSaving(true);
     try {
-      await saveCertTemplate(program.id, bgUrl || null, config);
+      await saveCertTemplate(program.id, bgUrl || null, buildConfig());
       alert("Template sertifikat berhasil disimpan!");
     } catch (err: any) {
       alert("Gagal menyimpan: " + err.message);
@@ -187,71 +168,6 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
       setSaving(false);
     }
   }
-
-  // Drag handlers
-  const handleDragStart = (key: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    setActiveDrag(key);
-
-    const rect = e.currentTarget.parentElement?.getBoundingClientRect();
-    if (!rect) return;
-
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const initialPos = positions[key] || DEFAULT_POSITIONS[key as keyof typeof DEFAULT_POSITIONS];
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      const deltaY = moveEvent.clientY - startY;
-
-      const pctDeltaX = (deltaX / rect.width) * 100;
-      const pctDeltaY = (deltaY / rect.height) * 100;
-
-      const newX = Math.round(Math.max(0, Math.min(100, initialPos.x + pctDeltaX)));
-      const newY = Math.round(Math.max(0, Math.min(100, initialPos.y + pctDeltaY)));
-
-      setPositions((prev: any) => ({
-        ...prev,
-        [key]: { ...prev[key], x: newX, y: newY }
-      }));
-    };
-
-    const handleMouseUp = () => {
-      setActiveDrag(null);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  };
-
-  // Helper to change position via sliders
-  const updatePosition = (key: string, axis: "x" | "y", val: number) => {
-    setPositions((prev: any) => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        [axis]: val
-      }
-    }));
-  };
-
-  // Helper to change font scale / rotation / z-index of an element
-  const updateStyle = (key: string, field: "fontScale" | "rotation" | "zIndex", val: number | undefined) => {
-    setPositions((prev: any) => ({
-      ...prev,
-      [key]: { ...prev[key], [field]: val }
-    }));
-  };
-
-  // Helper to change font family of an element ("" = pakai bawaan)
-  const updateFontFamily = (key: string, val: string) => {
-    setPositions((prev: any) => ({
-      ...prev,
-      [key]: { ...prev[key], fontFamily: val }
-    }));
-  };
 
   // Resolve template variables for preview
   const previewDesc = description
@@ -269,28 +185,24 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
 
   // Preview cetak/PDF: simpan draft saat ini ke sessionStorage lalu buka tab pratinjau
   function handlePreviewPdf() {
-    const config = {
-      title, subtitle, numberFormat, description, placeDate, accentColor,
-      sign2Name, sign2Role, sign2Img, stampImg, logoUrl, materiJp, positions,
-    };
-    sessionStorage.setItem(`certDraft:${program.id}`, JSON.stringify({ bgUrl, config }));
+    sessionStorage.setItem(`certDraft:${program.id}`, JSON.stringify({ bgUrl, config: buildConfig() }));
     window.open(`/webadmin/program/${program.id}/cert/preview`, "_blank");
   }
 
   return (
     <div className="cert-editor-grid">
-      {/* LEFT COLUMN: EDIT FORM & COORDINATE ADJUSTERS */}
+      {/* LEFT COLUMN: EDIT FORM */}
       <div className="reg-card" style={{ padding: "1.8rem", maxWidth: "none", margin: 0 }}>
-        <h3 style={{ marginBottom: "1.5rem" }}>Pengaturan Elemen Sertifikat</h3>
+        <h3 style={{ marginBottom: "1.5rem" }}>Pengaturan Sertifikat</h3>
 
-        {/* 1. Background Design */}
+        {/* 1. Background & Logo */}
         <div style={{ borderBottom: "1px solid var(--line)", paddingBottom: "1.5rem", marginBottom: "1.5rem" }}>
           <h4 style={{ display: "flex", alignItems: "center", gap: ".5rem", color: "var(--purple)" }}>
             <Icon name="image" size={18} />
             Desain Background
           </h4>
           <p style={{ fontSize: ".8rem", color: "var(--ink-soft)", margin: ".3rem 0 .8rem" }}>
-            Upload desain template sertifikat kosong (A4 Portrait disarankan). Kosongkan untuk pakai desain bawaan Jetschool Academy di bawah.
+            Upload desain template sertifikat kosong (A4 Portrait disarankan). Kosongkan untuk pakai desain modern bawaan Jetschool Academy di bawah.
           </p>
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <input
@@ -352,7 +264,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           </div>
 
           <div className="field" style={{ marginTop: "1rem" }}>
-            <label>Warna Aksen (judul, badge nomor, garis bingkai)</label>
+            <label>Warna Aksen (judul, garis, bracket sudut, badge nomor)</label>
             <div style={{ display: "flex", gap: ".6rem", alignItems: "center" }}>
               <input
                 type="color"
@@ -412,109 +324,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           </div>
         </div>
 
-        {/* 3. Coordinate Sliders Accordion */}
-        <div style={{ borderBottom: "1px solid var(--line)", paddingBottom: "1.5rem", marginBottom: "1.5rem" }}>
-          <h4 style={{ display: "flex", alignItems: "center", gap: ".5rem", color: "var(--purple)", marginBottom: "0.5rem" }}>
-            <Icon name="settings" size={18} />
-            Posisi Koordinat Elemen (%)
-          </h4>
-          <p style={{ fontSize: ".8rem", color: "var(--ink-soft)", marginBottom: "1rem" }}>
-            Geser slider atau drag langsung kotak pada pratinjau sertifikat di sebelah kanan.
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem", background: "rgba(0,0,0,0.02)", padding: "1rem", borderRadius: "8px" }}>
-            {Object.keys(DEFAULT_POSITIONS).map((k) => {
-              const pos = positions[k] || DEFAULT_POSITIONS[k as keyof typeof DEFAULT_POSITIONS];
-              const fontScale = pos.fontScale ?? 1;
-              const rotation = pos.rotation ?? 0;
-              const zIndex = pos.zIndex;
-              const fontFamily = pos.fontFamily ?? "";
-              return (
-                <div key={k} style={{ borderBottom: "1px solid var(--line)", paddingBottom: "0.6rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", fontWeight: 700, marginBottom: "0.3rem" }}>
-                    <span>{ELEMENT_LABELS[k as keyof typeof ELEMENT_LABELS]}</span>
-                    <span style={{ color: "var(--purple)" }}>X: {pos.x}%, Y: {pos.y}%</span>
-                  </div>
-                  <div className="cert-coord-grid">
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)" }}>Horisontal (X)</span>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={pos.x}
-                        onChange={(e) => updatePosition(k, "x", Number(e.target.value))}
-                        style={{ height: "4px" }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)" }}>Vertikal (Y)</span>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={pos.y}
-                        onChange={(e) => updatePosition(k, "y", Number(e.target.value))}
-                        style={{ height: "4px" }}
-                      />
-                    </div>
-                  </div>
-                  <div className="cert-coord-grid" style={{ marginTop: "0.5rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", flexShrink: 0 }}>Ukuran Font ({Math.round(fontScale * 100)}%)</span>
-                      <input
-                        type="range"
-                        min="0.5"
-                        max="2"
-                        step="0.05"
-                        value={fontScale}
-                        onChange={(e) => updateStyle(k, "fontScale", Number(e.target.value))}
-                        style={{ height: "4px" }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", flexShrink: 0 }}>Rotasi ({rotation}&deg;)</span>
-                      <input
-                        type="range"
-                        min="-45"
-                        max="45"
-                        value={rotation}
-                        onChange={(e) => updateStyle(k, "rotation", Number(e.target.value))}
-                        style={{ height: "4px" }}
-                      />
-                    </div>
-                  </div>
-                  <div className="cert-coord-grid" style={{ marginTop: "0.5rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", flexShrink: 0 }}>Font</span>
-                      <select
-                        value={fontFamily}
-                        onChange={(e) => updateFontFamily(k, e.target.value)}
-                        style={{ fontSize: "0.75rem", padding: ".25rem .4rem" }}
-                      >
-                        {FONT_FAMILY_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ fontSize: "0.72rem", color: "var(--ink-faint)", flexShrink: 0 }}>Lapisan (Z-Index)</span>
-                      <input
-                        type="number"
-                        value={zIndex ?? ""}
-                        placeholder="otomatis"
-                        onChange={(e) => updateStyle(k, "zIndex", e.target.value === "" ? undefined : Number(e.target.value))}
-                        style={{ width: "5rem", padding: ".25rem .4rem", fontSize: "0.75rem" }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 4. Syllabus JP */}
+        {/* 3. Syllabus JP */}
         <div style={{ borderBottom: "1px solid var(--line)", paddingBottom: "1.5rem", marginBottom: "1.5rem" }}>
           <h4 style={{ display: "flex", alignItems: "center", gap: ".5rem", color: "var(--purple)", marginBottom: ".5rem" }}>
             <Icon name="list" size={18} />
@@ -573,7 +383,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           </div>
         </div>
 
-        {/* 5. Signature — Direktur saja (satu tanda tangan resmi) */}
+        {/* 4. Signature — Direktur saja (satu tanda tangan resmi) */}
         <div style={{ borderBottom: "1px solid var(--line)", paddingBottom: "1.5rem", marginBottom: "1.5rem" }}>
           <h4 style={{ display: "flex", alignItems: "center", gap: ".5rem", color: "var(--purple)", marginBottom: "1rem" }}>
             <Icon name="users" size={18} />
@@ -622,12 +432,12 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
         </button>
       </div>
 
-      {/* RIGHT COLUMN: INTERACTIVE LIVE PREVIEW */}
+      {/* RIGHT COLUMN: LIVE PREVIEW */}
       <div className="cert-editor-preview-col">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: ".8rem" }}>
           <div>
             <h4 style={{ margin: 0 }}>Pratinjau Live (A4 Portrait)</h4>
-            <small style={{ color: "var(--ink-soft)" }}>Drag langsung kotak di bawah untuk memindahkan posisinya</small>
+            <small style={{ color: "var(--ink-soft)" }}>Layout otomatis rapi mengikuti isi — tidak perlu diatur posisinya manual</small>
           </div>
           <span style={{ fontSize: ".8rem", color: "var(--purple)", fontWeight: 700 }}>✓ Sinkron Instan</span>
         </div>
@@ -640,7 +450,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           <div style={{ width: `${CERT_REF_WIDTH}px`, position: "absolute", top: 0, left: 0, transformOrigin: "top left", transform: `scale(${frameScale})` }}>
             <CertificateSheet
               certBgUrl={bgUrl}
-              certConfig={{ positions, logoUrl } as unknown as CertConfig}
+              certConfig={{ logoUrl }}
               accentColor={accentColor}
               title={title}
               subtitle={subtitle}
@@ -656,9 +466,6 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               s2Role={sign2Role}
               s2Img={sign2Img || undefined}
               stampImg={stampImg || undefined}
-              editable
-              activeDragKey={activeDrag}
-              onElementMouseDown={handleDragStart}
             />
           </div>
         </div>

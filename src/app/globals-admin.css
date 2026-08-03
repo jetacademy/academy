@@ -141,10 +141,6 @@
   .cert-editor-preview-col { position: static; }
 }
 
-/* Mini-grid slider koordinat/skala per elemen sertifikat — auto-fit supaya label+slider tidak
-   terjepit jadi 2 kolom sempit di layar HP. */
-.cert-coord-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1rem; }
-
 /* ══════════════ ADMIN: EDITOR PROGRAM (LMS BUILDER) ══════════════ */
 
 .prog-editor-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem; }

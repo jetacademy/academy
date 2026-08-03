@@ -35,7 +35,12 @@
       "Bash(where npx *)",
       "Bash(command -v chromium-cli)",
       "Read(//c//**)",
-      "Read(//c/Users/Hubungan Alumni/**)"
+      "Read(//c/Users/Hubungan Alumni/**)",
+      "Bash(npx -y playwright@1.62.1 install chromium --with-deps)",
+      "Bash(node \"C:/WINDOWS/TEMP/claude/c--Users-Hubungan-Alumni-OneDrive-Dokumen-APLIKASI-2026-academy/42b38cef-d15d-45e0-86c8-b7fc04504279/scratchpad/verify-cert.mjs\")",
+      "Bash(node verify-cert.mjs)",
+      "Bash(node verify-cert-2.mjs)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3001 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }; \"done\")"
     ]
   }
 }
