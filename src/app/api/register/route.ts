@@ -140,8 +140,30 @@ export async function POST(req: Request) {
       const batch = await prisma.programBatch.findFirst({ where: { id: batchIdInput, programId: program.id, isActive: true } });
       if (!batch) return NextResponse.json({ error: "Jadwal batch tidak valid. Silakan pilih ulang." }, { status: 400 });
 
+      // [FIX] Tolak batch yang jadwalnya sudah lewat
+      if (new Date(batch.scheduleAt) <= new Date()) {
+        return NextResponse.json({ error: "Jadwal batch yang dipilih sudah lewat. Silakan pilih jadwal berikutnya." }, { status: 400 });
+      }
+
       // [FIX C5] Kursus tidak ada batas kursi — seatsLeft diabaikan
       batchId = batch.id;
+    }
+
+    // ── [FIX 5 Agu 2026] Cek jadwal masih aktif — tolak pendaftaran kalau semua sudah lewat ──
+    // Kalau user tidak pilih batch: pastikan ada jadwal (program.scheduleAt atau batch aktif) yang masih di masa depan.
+    if (!batchId) {
+      const programScheduleFuture = program.scheduleAt && new Date(program.scheduleAt) > new Date();
+      const upcomingBatch = await prisma.programBatch.findFirst({
+        where: { programId: program.id, isActive: true, scheduleAt: { gt: new Date() } },
+        orderBy: { scheduleAt: "asc" },
+        select: { id: true },
+      });
+      if (!programScheduleFuture && !upcomingBatch) {
+        return NextResponse.json(
+          { error: "Pendaftaran untuk program ini sudah ditutup karena jadwal telah lewat." },
+          { status: 400 }
+        );
+      }
     }
 
     // ── HARGA TETAP: zero-human-company ──────────────────────
