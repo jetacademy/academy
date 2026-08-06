@@ -9,7 +9,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { issueCertificate, checkCertEligibility } from '@/lib/certificates';
+import { issueCertificate, checkCertEligibility, isScheduleGateOpen } from '@/lib/certificates';
 
 // ─── Hoisted mocks (vi.mock factories are hoisted; use vi.hoisted) ─
 
@@ -505,7 +505,7 @@ describe('checkCertEligibility', () => {
       expect(result.reason).toContain('Selesaikan semua materi');
     });
 
-    it('does not apply the time gate to non-WEBINAR program types', async () => {
+    it('blocks non-WEBINAR program types when the batch/program schedule has not started yet', async () => {
       mockPrisma.registration.findUnique.mockResolvedValue({ batchId: null, batch: null });
       mockPrisma.lesson.count.mockResolvedValue(0);
       const inTheFuture = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -513,12 +513,110 @@ describe('checkCertEligibility', () => {
       const result = await checkCertEligibility('reg-1', {
         id: 'prog-1',
         type: 'BOOTCAMP',
-        scheduleAt: inTheFuture, // non-WEBINAR tak pernah dicek terhadap scheduleAt
+        scheduleAt: inTheFuture,
+        completionCriteria: 'ALL_LESSONS',
+        certPublished: true,
+      });
+
+      expect(result.eligible).toBe(false);
+      expect(result.reason).toContain('setelah batch Anda dimulai');
+      // Gerbang jadwal diperiksa lebih dulu — tak perlu sampai query kurikulum
+      expect(mockPrisma.lesson.count).not.toHaveBeenCalled();
+    });
+
+    it('does not add the extra 24h delay for non-WEBINAR types once the schedule has started', async () => {
+      mockPrisma.registration.findUnique.mockResolvedValue({ batchId: null, batch: null });
+      mockPrisma.lesson.count.mockResolvedValue(0);
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+      const result = await checkCertEligibility('reg-1', {
+        id: 'prog-1',
+        type: 'BOOTCAMP',
+        scheduleAt: oneHourAgo, // sudah mulai 1 jam lalu — cukup, tak perlu tunggu 24 jam seperti WEBINAR
         completionCriteria: 'ALL_LESSONS',
         certPublished: true,
       });
 
       expect(result).toEqual({ eligible: true });
     });
+
+    it('blocks non-WEBINAR registration tied to a batch whose scheduleAt is in the future', async () => {
+      mockPrisma.registration.findUnique.mockResolvedValue({
+        batchId: 'batch-1',
+        batch: { scheduleAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+      });
+
+      const result = await checkCertEligibility('reg-1', {
+        id: 'prog-1',
+        type: 'KELAS',
+        scheduleAt: LONG_AGO, // program schedule sudah lewat, tapi batch peserta belum mulai
+        completionCriteria: 'ALL_LESSONS',
+        certPublished: true,
+      });
+
+      expect(result.eligible).toBe(false);
+      expect(result.reason).toContain('setelah batch Anda dimulai');
+    });
+  });
+});
+
+describe('isScheduleGateOpen', () => {
+  // Ini fungsi yang dipanggil admin actions (saveRegistration/toggleCertPublish) utk memastikan
+  // override manual "PASSED" tetap wajib tunggu batch mulai — bug yang dilaporkan: publish
+  // sertifikat program memblast WA ke SEMUA peserta termasuk batch yang belum mulai, karena
+  // sebelumnya override manual sama sekali tidak lewat gerbang jadwal ini.
+  beforeEach(() => {
+    resetMocks();
+  });
+
+  it('is closed when the registration batch has not started yet, even though the program schedule already passed', async () => {
+    mockPrisma.registration.findUnique.mockResolvedValue({
+      batch: { scheduleAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+    });
+
+    const result = await isScheduleGateOpen('reg-1', {
+      type: 'KELAS',
+      scheduleAt: new Date('2020-01-01T00:00:00.000Z'),
+    });
+
+    expect(result.open).toBe(false);
+    expect(result.reason).toContain('setelah batch Anda dimulai');
+  });
+
+  it('is open once the registration batch schedule has started', async () => {
+    mockPrisma.registration.findUnique.mockResolvedValue({
+      batch: { scheduleAt: new Date(Date.now() - 60 * 60 * 1000) },
+    });
+
+    const result = await isScheduleGateOpen('reg-1', {
+      type: 'KELAS',
+      scheduleAt: new Date('2020-01-01T00:00:00.000Z'),
+    });
+
+    expect(result.open).toBe(true);
+  });
+
+  it('falls back to the program schedule for registrations without a batch', async () => {
+    mockPrisma.registration.findUnique.mockResolvedValue({ batch: null });
+
+    const result = await isScheduleGateOpen('reg-1', {
+      type: 'BOOTCAMP',
+      scheduleAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+    expect(result.open).toBe(false);
+  });
+
+  it('still applies the extra 24h WEBINAR delay', async () => {
+    mockPrisma.registration.findUnique.mockResolvedValue({
+      batch: { scheduleAt: new Date(Date.now() - 60 * 60 * 1000) }, // mulai 1 jam lalu, belum 24 jam
+    });
+
+    const result = await isScheduleGateOpen('reg-1', {
+      type: 'WEBINAR',
+      scheduleAt: new Date('2020-01-01T00:00:00.000Z'),
+    });
+
+    expect(result.open).toBe(false);
   });
 });

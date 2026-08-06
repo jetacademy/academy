@@ -166,6 +166,37 @@ export async function hasPassedAllQuizzes(
   return { done: total > 0 && completed >= total, total, completed };
 }
 
+/** Bandingkan `now` terhadap kapan sertifikat boleh mulai terbit — murni fungsi tanggal, tanpa
+ *  DB. WEBINAR dapat jeda tambahan 1×24 jam (sesi harus selesai dulu, bukan cuma mulai); tipe
+ *  lain (KELAS/WORKSHOP/BOOTCAMP) cukup begitu jadwal batch/programnya mulai. */
+function scheduleGateStatus(programType: string, sessionAt: Date): { open: boolean; availableAt: Date; reason: string } {
+  const availableAt = programType === "WEBINAR" ? new Date(sessionAt.getTime() + CERT_CLAIM_DELAY_MS) : sessionAt;
+  const open = new Date() >= availableAt;
+  const reason =
+    programType === "WEBINAR"
+      ? `Sertifikat baru bisa diklaim mulai ${formatJadwal(availableAt)} (1×24 jam setelah sesi berakhir).`
+      : `Sertifikat baru bisa diklaim setelah batch Anda dimulai pada ${formatJadwal(availableAt)}.`;
+  return { open, availableAt, reason };
+}
+
+/**
+ * Gerbang jadwal MURNI (tanpa cek penyelesaian materi/kuis) — dipakai admin utk override manual
+ * (mis. tandai registrasi "PASSED" langsung tanpa lewat LMS). Override manual boleh melewati
+ * syarat penyelesaian materi, tapi TIDAK BOLEH melewati syarat jadwal batch — kalau tidak,
+ * publish sertifikat program bisa langsung memblast sertifikat + WA ke peserta batch yang
+ * belum mulai, hanya karena registrasi mereka sempat ditandai PASSED sebelum batch itu berjalan.
+ */
+export async function isScheduleGateOpen(
+  registrationId: string,
+  program: { type: string; scheduleAt: Date }
+): Promise<{ open: boolean; availableAt: Date; reason: string }> {
+  const reg = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    select: { batch: { select: { scheduleAt: true } } },
+  });
+  return scheduleGateStatus(program.type, reg?.batch?.scheduleAt ?? program.scheduleAt);
+}
+
 /**
  * Cek kelayakan sertifikat sesuai kriteria program.
  * Gerbang publish: `program.certPublished` harus true — admin sengaja menahan penerbitan
@@ -201,17 +232,9 @@ export async function checkCertEligibility(
     select: { batchId: true, batch: { select: { scheduleAt: true } } },
   });
 
-  // WEBINAR saja — sertifikat baru terbit 1×24 jam setelah acara berakhir (bukan tipe lain).
-  if (program.type === "WEBINAR") {
-    const sessionAt = reg?.batch?.scheduleAt ?? program.scheduleAt;
-    const availableAt = new Date(sessionAt.getTime() + CERT_CLAIM_DELAY_MS);
-    if (new Date() < availableAt) {
-      return {
-        eligible: false,
-        availableAt,
-        reason: `Sertifikat baru bisa diklaim mulai ${formatJadwal(availableAt)} (1×24 jam setelah sesi berakhir).`,
-      };
-    }
+  const gate = scheduleGateStatus(program.type, reg?.batch?.scheduleAt ?? program.scheduleAt);
+  if (!gate.open) {
+    return { eligible: false, availableAt: gate.availableAt, reason: gate.reason };
   }
 
   const batchId = reg?.batchId ?? null;

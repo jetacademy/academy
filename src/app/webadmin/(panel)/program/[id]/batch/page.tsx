@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { createBatch, toggleBatch, deleteBatch, updateBatchLinks } from "@/app/webadmin/actions";
 import { formatJadwal } from "@/lib/format";
@@ -82,7 +83,15 @@ export default async function AdminBatch({
                     {past && <div className="muted">Sudah lewat</div>}
                   </td>
                   <td data-label="Kuota">{b.seatsLeft ?? <span className="muted">Tak terbatas</span>}</td>
-                  <td data-label="Pendaftar">{b._count.registrations}</td>
+                  <td data-label="Pendaftar">
+                    {b._count.registrations > 0 ? (
+                      <Link href={`/webadmin/pendaftar?batchId=${b.id}`} className="btn btn-sm">
+                        {b._count.registrations} peserta →
+                      </Link>
+                    ) : (
+                      0
+                    )}
+                  </td>
                   <td data-label="Status">
                     <span className={`badge ${b.isActive ? "g" : "dim"}`}>{b.isActive ? "Aktif" : "Nonaktif"}</span>
                   </td>

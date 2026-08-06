@@ -11,7 +11,7 @@ import { sendWa, msgAccess, msgPaid, normalizeWa } from "@/lib/wa";
 import { formatJadwal, parseWIB } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml } from "@/lib/email";
 import { recordAffiliateConversion, voidAffiliateConversion } from "@/lib/affiliate";
-import { isCertIssuanceEnabled, issueCertificate, checkCertEligibility } from "@/lib/certificates";
+import { isCertIssuanceEnabled, issueCertificate, checkCertEligibility, isScheduleGateOpen } from "@/lib/certificates";
 import { createBunnyVideo, getBunnyUploadAuth, deleteBunnyVideo } from "@/lib/bunny";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { slugify } from "@/lib/slug";
@@ -638,11 +638,12 @@ export async function saveRegistration(formData: FormData) {
 
     // Admin menandai lulus manual → terbitkan sertifikat langsung (bukan cuma ubah status),
     // supaya "PASSED" selalu konsisten dengan sertifikat yang benar-benar ada. Tetap taat pada
-    // kedua gerbang keamanan (sakelar situs-wide + publish per-program) — kalau salah satu masih
-    // tertutup, sertifikat akan menyusul otomatis lewat backfill saat admin publish program ini.
+    // gerbang keamanan (sakelar situs-wide + publish per-program + jadwal batch) — kalau salah
+    // satu masih tertutup, sertifikat akan menyusul otomatis lewat backfill saat admin publish
+    // program ini (backfill itu sendiri tetap mengecek ulang jadwal batch, lihat toggleCertPublish).
     if (status === "PASSED") {
-      const program = await prisma.program.findUnique({ where: { id: programId }, select: { certPublished: true } });
-      if (program?.certPublished && (await isCertIssuanceEnabled())) {
+      const program = await prisma.program.findUnique({ where: { id: programId }, select: { type: true, scheduleAt: true, certPublished: true } });
+      if (program?.certPublished && (await isCertIssuanceEnabled()) && (await isScheduleGateOpen(regId, program)).open) {
         await issueCertificate(regId).catch((err) => console.error("[saveRegistration] Gagal menerbitkan sertifikat:", err));
       }
     }
@@ -691,12 +692,15 @@ export async function saveRegistration(formData: FormData) {
 export async function deleteCertificate(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
+  // Boleh dipanggil dari /webadmin/sertifikat (flat) maupun /webadmin/pendaftar (per batch) —
+  // kembalikan admin ke halaman+filter asalnya, bukan selalu lempar ke /webadmin/sertifikat.
+  const returnTo = optStr(formData, "returnTo") || "/webadmin/sertifikat";
 
   const cert = await prisma.certificate.findUnique({
     where: { id },
     include: { registration: { include: { payment: true } } },
   });
-  if (!cert) redirect("/webadmin/sertifikat?e=notfound");
+  if (!cert) redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}e=notfound`);
 
   const revertStatus = cert.registration.payment?.status === "PAID" ? "PAID" : "REGISTERED";
 
@@ -707,7 +711,7 @@ export async function deleteCertificate(formData: FormData) {
 
   revalidatePath("/webadmin/sertifikat");
   revalidatePath("/webadmin/pendaftar");
-  redirect("/webadmin/sertifikat?ok=dihapus");
+  redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}ok=dihapus`);
 }
 
 /** Sakelar global: nyalakan/matikan penerbitan sertifikat baru di seluruh situs. */
@@ -747,9 +751,14 @@ export async function toggleCertPublish(formData: FormData) {
       select: { id: true, status: true },
     });
     for (const reg of candidates) {
-      // Sudah ditandai admin "PASSED" manual → terbitkan langsung (tidak perlu cek ulang syarat LMS,
-      // itu sudah jadi keputusan admin sebelumnya). Selain itu → cek syarat kelulusan LMS seperti biasa.
-      const shouldIssue = reg.status === "PASSED" || (await checkCertEligibility(reg.id, updatedProgram)).eligible;
+      // Sudah ditandai admin "PASSED" manual → lewati cek penyelesaian materi/kuis (itu sudah jadi
+      // keputusan admin sebelumnya), TAPI tetap wajib lewat gerbang jadwal batch — supaya publish
+      // tidak memblast sertifikat+WA ke peserta di batch yang belum mulai. Selain itu → cek penuh
+      // via checkCertEligibility seperti biasa (materi/kuis + jadwal).
+      const shouldIssue =
+        reg.status === "PASSED"
+          ? (await isScheduleGateOpen(reg.id, updatedProgram)).open
+          : (await checkCertEligibility(reg.id, updatedProgram)).eligible;
       if (shouldIssue) {
         await issueCertificate(reg.id).catch((err) => console.error("[toggleCertPublish] Gagal menerbitkan sertifikat:", err));
         issuedCount++;

@@ -62,10 +62,12 @@ export default async function LmsPage({
     if (rows[0]) certClaimOpen = rows[0].certClaimOpen === 1;
   } catch { /* silent fallback */ }
 
-  // Akses LMS terbuka jika admin sudah buka (certClaimOpen), bukan webinar, atau jadwal sudah mulai
+  // Akses LMS terbuka jika admin sudah buka (certClaimOpen) atau jadwal batch/program sudah mulai.
+  // Berlaku utk semua tipe program (dulu KELAS/WORKSHOP/BOOTCAMP dikecualikan dari cek ini —
+  // itu yang bikin peserta bisa akses LMS & dapat sertifikat sebelum batch-nya mulai).
   const sessionAt = reg.batch?.scheduleAt ?? program.scheduleAt;
   const now = new Date();
-  const isLmsOpen = certClaimOpen || program.type !== "WEBINAR" || now >= sessionAt;
+  const isLmsOpen = certClaimOpen || now >= sessionAt;
 
   if (!isLmsOpen) {
     const formattedJadwal = new Intl.DateTimeFormat("id-ID", {
@@ -93,10 +95,10 @@ export default async function LmsPage({
             boxShadow: "var(--shadow-md)"
           }}>
             <span style={{ fontSize: "3.5rem" }}>📅</span>
-            <span className="type-tag type-webinar" style={{ display: "inline-block", margin: "1.5rem 0 0.8rem" }}>Sesi Belum Dimulai</span>
+            <span className="type-tag type-webinar" style={{ display: "inline-block", margin: "1.5rem 0 0.8rem" }}>{program.type === "WEBINAR" ? "Sesi Belum Dimulai" : "Batch Belum Dimulai"}</span>
             <h2 style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--ink)" }}>Akses LMS Belum Dibuka</h2>
             <p style={{ color: "var(--ink-soft)", fontSize: "1rem", lineHeight: 1.6, marginTop: "1rem" }}>
-              Halo <strong>{reg.name}</strong>, akses pembelajaran mandiri &amp; klaim sertifikat untuk program <strong>{program.title}</strong> akan terbuka secara otomatis setelah sesi live webinar dimulai pada:
+              Halo <strong>{reg.name}</strong>, akses pembelajaran mandiri &amp; klaim sertifikat untuk program <strong>{program.title}</strong> akan terbuka secara otomatis setelah {program.type === "WEBINAR" ? "sesi live webinar dimulai" : "batch Anda dimulai"} pada:
             </p>
             <div style={{
               background: "rgba(108, 92, 231, 0.05)",
@@ -110,9 +112,11 @@ export default async function LmsPage({
             }}>
               {formattedJadwal}
             </div>
-            <p style={{ color: "var(--ink-faint)", fontSize: "0.85rem", marginBottom: "2rem" }}>
-              Silakan pantau grup WhatsApp peserta untuk mendapatkan tautan Zoom Meeting live.
-            </p>
+            {program.type === "WEBINAR" && (
+              <p style={{ color: "var(--ink-faint)", fontSize: "0.85rem", marginBottom: "2rem" }}>
+                Silakan pantau grup WhatsApp peserta untuk mendapatkan tautan Zoom Meeting live.
+              </p>
+            )}
             <Link href="/member" className="btn btn-purple btn-lg" style={{ display: "inline-block" }}>Kembali ke Dashboard</Link>
           </div>
         </section>

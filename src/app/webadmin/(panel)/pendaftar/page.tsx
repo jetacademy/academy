@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { rupiah, formatHariTanggal } from "@/lib/format";
-import { markPaid, deleteRegistration } from "../../actions";
+import { markPaid, deleteRegistration, deleteCertificate } from "../../actions";
 import ConfirmButton from "@/components/ConfirmButton";
 import RefundButton from "@/components/RefundButton";
 
@@ -16,13 +16,23 @@ const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
 };
 
 export default async function AdminPendaftar({ searchParams }: {
-  searchParams: Promise<{ q?: string; program?: string; status?: string; batchId?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; program?: string; status?: string; batchId?: string; page?: string; ok?: string; e?: string }>;
 }) {
-  const { q, program, status, batchId, page } = await searchParams;
+  const { q, program, status, batchId, page, ok, e } = await searchParams;
 
   const currentPage = Number(page ?? "1") || 1;
   const limit = 50;
   const skip = (currentPage - 1) * limit;
+
+  // Dipakai sbg returnTo saat membatalkan sertifikat, supaya admin balik ke halaman+filter ini
+  // (bukan selalu dilempar ke /webadmin/sertifikat).
+  const returnTo = `/webadmin/pendaftar?${new URLSearchParams({
+    ...(q ? { q } : {}),
+    ...(program ? { program } : {}),
+    ...(status ? { status } : {}),
+    ...(batchId ? { batchId } : {}),
+    ...(page ? { page } : {}),
+  }).toString()}`;
 
   const where = {
     ...(q ? { OR: [{ name: { contains: q } }, { whatsapp: { contains: q } }, { email: { contains: q } }] } : {}),
@@ -57,6 +67,9 @@ export default async function AdminPendaftar({ searchParams }: {
         <Link href="/webadmin/pendaftar/new" className="btn btn-yellow btn-sm">+ Pendaftar Baru</Link>
       </div>
 
+      {ok === "dihapus" && <div className="adm-alert ok">Sertifikat berhasil dibatalkan. Status pendaftaran dikembalikan.</div>}
+      {e === "notfound" && <div className="adm-alert err">Sertifikat tidak ditemukan.</div>}
+
       {/* filter */}
       <form method="get" className="adm-filter-row">
         <input name="q" defaultValue={q} placeholder="Cari nama / WA / email..." style={{ flexBasis: "16rem" }} />
@@ -88,7 +101,7 @@ export default async function AdminPendaftar({ searchParams }: {
       <div className="tbl-wrap">
         <table className="tbl">
           <thead>
-            <tr><th>Nama</th><th>Kontak</th><th>Program</th><th>Batch</th><th>Status</th><th>Pembayaran</th><th>Aksi</th></tr>
+            <tr><th>Nama</th><th>Kontak</th><th>Program</th><th>Batch</th><th>Status</th><th>Sertifikat</th><th>Pembayaran</th><th>Aksi</th></tr>
           </thead>
           <tbody>
             {regs.map((r) => {
@@ -105,6 +118,28 @@ export default async function AdminPendaftar({ searchParams }: {
                     {r.batch ? formatHariTanggal(r.batch.scheduleAt) : <span className="muted">—</span>}
                   </td>
                   <td data-label="Status"><span className={`badge ${b.cls}`}>{b.label}</span></td>
+                  <td data-label="Sertifikat">
+                    {r.certificate ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: ".35rem", alignItems: "flex-start" }}>
+                        <span className="badge g">Sudah Terbit</span>
+                        <div style={{ display: "flex", gap: ".3rem", flexWrap: "wrap" }}>
+                          <a href={`/sertifikat/${r.certificate.number}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm">Lihat ↗</a>
+                          <form action={deleteCertificate}>
+                            <input type="hidden" name="id" value={r.certificate.id} />
+                            <input type="hidden" name="returnTo" value={returnTo} />
+                            <ConfirmButton
+                              className="btn btn-sm btn-danger"
+                              message={`Batalkan sertifikat "${r.certificate.number}" atas nama "${r.name}"? Sertifikat akan dihapus dan status pendaftaran dikembalikan ke sebelum lulus.`}
+                            >
+                              Batalkan
+                            </ConfirmButton>
+                          </form>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="badge dim">Belum Terbit</span>
+                    )}
+                  </td>
                   <td data-label="Pembayaran">
                     {r.payment
                       ? <>
@@ -171,9 +206,6 @@ export default async function AdminPendaftar({ searchParams }: {
                           title="Catat refund manual + cabut akses peserta"
                         />
                       )}
-                      {r.certificate && (
-                        <a href={`/sertifikat/${r.certificate.number}`} target="_blank" className="btn btn-sm">Sertifikat ↗</a>
-                      )}
                       <form action={deleteRegistration}>
                         <input type="hidden" name="id" value={r.id} />
                         <ConfirmButton className="btn btn-sm btn-danger" message={`Apakah Anda yakin ingin menghapus pendaftaran atas nama "${r.name}"? Semua histori pembayaran dan sertifikat terkait akan ikut terhapus.`}>
@@ -185,7 +217,7 @@ export default async function AdminPendaftar({ searchParams }: {
                 </tr>
               );
             })}
-            {regs.length === 0 && <tr><td colSpan={7} className="muted">Tidak ada pendaftar yang cocok.</td></tr>}
+            {regs.length === 0 && <tr><td colSpan={8} className="muted">Tidak ada pendaftar yang cocok.</td></tr>}
           </tbody>
         </table>
       </div>
