@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import CertificateSheet from "@/components/CertificateSheet";
-import PrintButton from "@/components/PrintButton";
+import DownloadCertButton from "@/components/DownloadCertButton";
 import type { CertConfig, CertMateriJp } from "@/lib/types";
 
 const noopSubscribe = () => () => {};
@@ -81,7 +81,7 @@ export default function CertPreviewClient({ program }: { program: ProgramData })
           <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Pratinjau Sertifikat (Uji Coba)</h2>
           <p className="muted" style={{ margin: ".3rem 0 0", fontSize: ".82rem" }}>
             {isDraft
-              ? "Menampilkan draf yang belum disimpan, dengan data contoh (bukan peserta asli). Klik “Cetak / Simpan PDF” untuk lihat hasil PDF-nya."
+              ? "Menampilkan draf yang belum disimpan, dengan data contoh (bukan peserta asli). Klik “Download Sertifikat (PNG)” untuk lihat hasilnya."
               : "Belum ada draf aktif di tab ini — menampilkan template tersimpan terakhir dengan data contoh."}
           </p>
         </div>
@@ -111,7 +111,7 @@ export default function CertPreviewClient({ program }: { program: ProgramData })
       </div>
 
       <div className="no-print" style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "2rem" }}>
-        <PrintButton />
+        <DownloadCertButton fileName={`sertifikat-uji-coba-${program.id}`} />
       </div>
     </section>
   );

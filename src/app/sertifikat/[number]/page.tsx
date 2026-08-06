@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WaFloat from "@/components/WaFloat";
-import PrintButton from "@/components/PrintButton";
+import DownloadCertButton from "@/components/DownloadCertButton";
 import CertificateSheet from "@/components/CertificateSheet";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
@@ -146,13 +146,13 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
             />
           </div>
 
-          {/* Action Buttons (Hide when printing) */}
+          {/* Action Buttons */}
           <div className="no-print" style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "2.5rem", flexWrap: "wrap" }}>
-            <PrintButton />
+            <DownloadCertButton fileName={`sertifikat-${cert.number}`} />
             <Link className="btn" href="/program">Ikut Kelas Berikutnya</Link>
           </div>
           <p className="reg-note no-print" style={{ textAlign: "center", marginTop: "1rem" }}>
-            Simpan sebagai PDF: klik &ldquo;Cetak / Simpan PDF&rdquo; lalu pilih tujuan &ldquo;Simpan sebagai PDF&rdquo; (Save as PDF).
+            Klik &ldquo;Download Sertifikat (PNG)&rdquo; untuk menyimpan gambar sertifikat ini ke perangkat Anda.
           </p>
 
         </div>

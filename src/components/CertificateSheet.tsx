@@ -13,6 +13,8 @@ function fs(value: string, scale: number): string {
 const IDENTITY_ENTRY: CertLayoutEntry = { dx: 0, dy: 0, scale: 1 };
 const MIN_SCALE = 0.4;
 const MAX_SCALE = 2.5;
+/** Jarak (px layar) dari tengah lembar supaya elemen "nempel" (snap) & garis bantu muncul. */
+const SNAP_PX = 6;
 
 /**
  * Bungkus satu elemen sertifikat supaya bisa digeser (drag) & diperbesar/perkecil (resize handle)
@@ -21,12 +23,18 @@ const MAX_SCALE = 2.5;
  * digeser. dx/dy disimpan sebagai fraksi lebar/tinggi lembar (bukan px) dan diterapkan lewat unit
  * cqw supaya proporsinya sama persis di editor (kolom sempit, di-scale CSS) maupun halaman publik
  * (lebar penuh) — lihat containerType: "inline-size" di root .cert-a4.
+ *
+ * Saat digeser, titik tengah elemen (bukan dx/dy mentah) dibandingkan terhadap titik tengah
+ * lembar — kalau selisihnya di bawah SNAP_PX, elemen ditarik pas ke tengah dan garis bantu magenta
+ * ditampilkan lewat onGuide. Ini berlaku untuk semua elemen apa pun posisi alaminya (mis. QR/tanda
+ * tangan yang aslinya berdampingan, bukan di tengah).
  */
 function Movable({
   id,
   editable,
   entry,
   onChange,
+  onGuide,
   sheetRef,
   style,
   children,
@@ -35,11 +43,13 @@ function Movable({
   editable?: boolean;
   entry?: CertLayoutEntry;
   onChange?: (id: string, entry: CertLayoutEntry) => void;
+  onGuide?: (v: boolean, h: boolean) => void;
   sheetRef: RefObject<HTMLDivElement | null>;
   style?: CSSProperties;
   children: React.ReactNode;
 }) {
   const [hover, setHover] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const val = entry || IDENTITY_ENTRY;
 
   function startDrag(e: ReactPointerEvent<HTMLDivElement>) {
@@ -47,18 +57,34 @@ function Movable({
     e.preventDefault();
     e.stopPropagation();
     const rect = sheetRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    const elRect = wrapperRef.current?.getBoundingClientRect();
+    if (!rect || !elRect) return;
     const startX = e.clientX;
     const startY = e.clientY;
     const startDx = val.dx;
     const startDy = val.dy;
+    // Titik tengah elemen & lembar saat drag dimulai (sudah termasuk transform saat ini).
+    const startCenterX = elRect.left + elRect.width / 2;
+    const startCenterY = elRect.top + elRect.height / 2;
+    const sheetCenterX = rect.left + rect.width / 2;
+    const sheetCenterY = rect.top + rect.height / 2;
 
     function onMove(ev: PointerEvent) {
-      const fracX = (ev.clientX - startX) / rect!.width;
-      const fracY = (ev.clientY - startY) / rect!.height;
+      let deltaPxX = ev.clientX - startX;
+      let deltaPxY = ev.clientY - startY;
+      const predictedCenterX = startCenterX + deltaPxX;
+      const predictedCenterY = startCenterY + deltaPxY;
+      const snapV = Math.abs(predictedCenterX - sheetCenterX) < SNAP_PX;
+      const snapH = Math.abs(predictedCenterY - sheetCenterY) < SNAP_PX;
+      if (snapV) deltaPxX -= predictedCenterX - sheetCenterX;
+      if (snapH) deltaPxY -= predictedCenterY - sheetCenterY;
+      onGuide?.(snapV, snapH);
+      const fracX = deltaPxX / rect!.width;
+      const fracY = deltaPxY / rect!.height;
       onChange?.(id, { dx: startDx + fracX, dy: startDy + fracY, scale: val.scale });
     }
     function onUp() {
+      onGuide?.(false, false);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
     }
@@ -96,6 +122,7 @@ function Movable({
 
   return (
     <div
+      ref={wrapperRef}
       style={{
         position: "relative",
         transform: `translate(${(val.dx * 100).toFixed(3)}cqw, ${(val.dy * 141.421).toFixed(3)}cqw) scale(${val.scale})`,
@@ -194,6 +221,9 @@ export default function CertificateSheet({
   const logoUrl = certConfig?.logoUrl;
   const layout: CertLayout = certConfig?.layout || {};
   const sheetRef = useRef<HTMLDivElement>(null);
+  // Garis bantu tengah (magenta) yang muncul sesaat saat elemen digeser mendekati tengah lembar.
+  const [guide, setGuide] = useState<{ v: boolean; h: boolean }>({ v: false, h: false });
+  const handleGuide = (v: boolean, h: boolean) => setGuide({ v, h });
 
   // Tabel JP menciut otomatis kalau baris materinya banyak, supaya layout tetap muat di tinggi
   // lembar A4 yang tetap tanpa perlu admin mengatur posisi manual.
@@ -240,6 +270,13 @@ export default function CertificateSheet({
           />
         ))}
 
+      {editable && guide.v && (
+        <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: "1px", background: "#ff3d81", pointerEvents: "none", zIndex: 60 }} />
+      )}
+      {editable && guide.h && (
+        <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "#ff3d81", pointerEvents: "none", zIndex: 60 }} />
+      )}
+
       <div
         style={{
           position: "absolute",
@@ -256,10 +293,10 @@ export default function CertificateSheet({
         {/* Grup atas: logo, judul, sub-judul, badge nomor */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
           {/* 1. Logo */}
-          <Movable id="logo" editable={editable} entry={layout.logo} onChange={onLayoutChange} sheetRef={sheetRef}>
+          <Movable id="logo" editable={editable} entry={layout.logo} onChange={onLayoutChange} onGuide={handleGuide} sheetRef={sheetRef}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: ".3rem" }}>
               <div style={{ position: "relative", width: "clamp(34px, 6.5cqw, 50px)", height: "clamp(34px, 6.5cqw, 50px)" }}>
-                <Image src={logoUrl || "/iconjetschool academy.png"} alt="Logo" fill style={{ objectFit: "contain" }} />
+                <Image src={logoUrl || "/iconjetschool academy.png"} alt="Logo" fill priority style={{ objectFit: "contain" }} />
               </div>
               {!logoUrl && (
                 <div style={{ fontSize: "clamp(.58rem, 1.4cqw, .7rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".14em", color: "#555" }}>
@@ -270,7 +307,7 @@ export default function CertificateSheet({
           </Movable>
 
           {/* 2. Title & Subtitle */}
-          <Movable id="titleBlock" editable={editable} entry={layout.titleBlock} onChange={onLayoutChange} sheetRef={sheetRef} style={{ marginTop: "clamp(.9rem, 3.6cqw, 1.6rem)" }}>
+          <Movable id="titleBlock" editable={editable} entry={layout.titleBlock} onChange={onLayoutChange} onGuide={handleGuide} sheetRef={sheetRef} style={{ marginTop: "clamp(.9rem, 3.6cqw, 1.6rem)" }}>
             <h2
               style={{
                 margin: 0,
@@ -312,6 +349,7 @@ export default function CertificateSheet({
             editable={editable}
             entry={layout.certNumber}
             onChange={onLayoutChange}
+            onGuide={handleGuide}
             sheetRef={sheetRef}
             style={{
               marginTop: "clamp(.7rem, 2.2cqw, 1.1rem)",
@@ -331,7 +369,7 @@ export default function CertificateSheet({
         {/* Grup tengah: penerima, deskripsi, tabel JP */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", flexShrink: 0 }}>
           {/* 4. Recipient */}
-          <Movable id="recipient" editable={editable} entry={layout.recipient} onChange={onLayoutChange} sheetRef={sheetRef} style={{ width: "88%" }}>
+          <Movable id="recipient" editable={editable} entry={layout.recipient} onChange={onLayoutChange} onGuide={handleGuide} sheetRef={sheetRef} style={{ width: "88%" }}>
             <div style={{ fontSize: "clamp(.6rem, 1.5cqw, .75rem)", color: "#888" }}>Diberikan kepada :</div>
             <div
               style={{
@@ -365,6 +403,7 @@ export default function CertificateSheet({
             editable={editable}
             entry={layout.description}
             onChange={onLayoutChange}
+            onGuide={handleGuide}
             sheetRef={sheetRef}
             style={{
               marginTop: "clamp(.8rem, 2.6cqw, 1.4rem)",
@@ -378,7 +417,7 @@ export default function CertificateSheet({
           </Movable>
 
           {/* 6. Syllabus table */}
-          <Movable id="table" editable={editable} entry={layout.table} onChange={onLayoutChange} sheetRef={sheetRef} style={{ marginTop: "clamp(.7rem, 2.2cqw, 1.2rem)", width: "88%" }}>
+          <Movable id="table" editable={editable} entry={layout.table} onChange={onLayoutChange} onGuide={handleGuide} sheetRef={sheetRef} style={{ marginTop: "clamp(.7rem, 2.2cqw, 1.2rem)", width: "88%" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: fs("clamp(.48rem, 1.25cqw, .64rem)", tableAutoScale) }}>
               <thead>
                 <tr>
@@ -413,7 +452,7 @@ export default function CertificateSheet({
         {/* Grup bawah: tempat/tanggal, QR & tanda tangan */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", flexShrink: 0 }}>
           {/* 7. Place & date */}
-          <Movable id="placeDate" editable={editable} entry={layout.placeDate} onChange={onLayoutChange} sheetRef={sheetRef} style={{ fontSize: "clamp(.58rem, 1.5cqw, .72rem)", fontWeight: 600, color: "#666" }}>
+          <Movable id="placeDate" editable={editable} entry={layout.placeDate} onChange={onLayoutChange} onGuide={handleGuide} sheetRef={sheetRef} style={{ fontSize: "clamp(.58rem, 1.5cqw, .72rem)", fontWeight: 600, color: "#666" }}>
             {placeDateResolved}
           </Movable>
 
@@ -428,7 +467,7 @@ export default function CertificateSheet({
               gap: "clamp(1.4rem, 4.6cqw, 2.8rem)",
             }}
           >
-            <Movable id="qr" editable={editable} entry={layout.qr} onChange={onLayoutChange} sheetRef={sheetRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "22%" }}>
+            <Movable id="qr" editable={editable} entry={layout.qr} onChange={onLayoutChange} onGuide={handleGuide} sheetRef={sheetRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "22%" }}>
               {qrDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={qrDataUrl} alt="Verification QR" style={{ width: "54px", height: "54px", border: "1px solid #eee", background: "#fff" }} />
@@ -442,36 +481,39 @@ export default function CertificateSheet({
               </span>
             </Movable>
 
-            <Movable id="signature" editable={editable} entry={layout.signature} onChange={onLayoutChange} sheetRef={sheetRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "42%" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "42%", position: "relative" }}>
+              {/* Bungkus tersendiri supaya stempel bisa digeser/diperbesar independen dari blok tanda tangan —
+                  centering pakai flex (bukan transform) supaya tidak bentrok dengan transform drag Movable. */}
               {stampImg && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={stampImg}
-                  alt="Official Stamp"
-                  style={{
-                    position: "absolute",
-                    height: "58px",
-                    width: "58px",
-                    objectFit: "contain",
-                    left: "50%",
-                    top: "-20px",
-                    transform: "translateX(-50%)",
-                    opacity: 0.85,
-                    pointerEvents: "none",
-                  }}
-                />
+                <div style={{ position: "absolute", left: 0, right: 0, top: "-20px", display: "flex", justifyContent: "center" }}>
+                  <Movable
+                    id="stamp"
+                    editable={editable}
+                    entry={layout.stamp}
+                    onChange={onLayoutChange}
+                    onGuide={handleGuide}
+                    sheetRef={sheetRef}
+                    style={{ pointerEvents: editable ? "auto" : "none" }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={stampImg} alt="Official Stamp" style={{ height: "58px", width: "58px", objectFit: "contain", opacity: 0.85 }} />
+                  </Movable>
+                </div>
               )}
-              <div style={{ height: "40px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                {s2Img && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s2Img} alt="Tanda tangan" style={{ maxHeight: "40px", objectFit: "contain" }} />
-                )}
-              </div>
-              <div style={{ width: "100%", borderTop: "1px solid #ccc", marginTop: ".2rem", paddingTop: ".3rem" }}>
-                <b style={{ fontSize: "clamp(.6rem, 1.5cqw, .75rem)", color: "#1B1710" }}>{s2Name}</b>
-                <div style={{ color: "#777", fontSize: "clamp(.46rem, 1.15cqw, .58rem)", marginTop: ".1rem" }}>{s2Role}</div>
-              </div>
-            </Movable>
+
+              <Movable id="signature" editable={editable} entry={layout.signature} onChange={onLayoutChange} onGuide={handleGuide} sheetRef={sheetRef} style={{ width: "100%" }}>
+                <div style={{ height: "40px", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+                  {s2Img && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s2Img} alt="Tanda tangan" style={{ maxHeight: "40px", objectFit: "contain" }} />
+                  )}
+                </div>
+                <div style={{ width: "100%", borderTop: "1px solid #ccc", marginTop: ".2rem", paddingTop: ".3rem" }}>
+                  <b style={{ fontSize: "clamp(.6rem, 1.5cqw, .75rem)", color: "#1B1710" }}>{s2Name}</b>
+                  <div style={{ color: "#777", fontSize: "clamp(.46rem, 1.15cqw, .58rem)", marginTop: ".1rem" }}>{s2Role}</div>
+                </div>
+              </Movable>
+            </div>
           </div>
         </div>
       </div>

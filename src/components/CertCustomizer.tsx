@@ -430,7 +430,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           className="btn btn-block"
           style={{ fontWeight: 700, marginBottom: ".7rem" }}
         >
-          Preview Sertifikat (Uji Coba) &amp; Cetak/PDF
+          Preview Sertifikat (Uji Coba) &amp; Download PNG
         </button>
         <button
           type="button"
