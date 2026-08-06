@@ -6,6 +6,7 @@ import Link from "next/link";
 import { uploadFileAction, saveCertTemplate } from "@/app/webadmin/actions";
 import Icon from "@/components/Icon";
 import CertificateSheet from "@/components/CertificateSheet";
+import type { CertLayout, CertLayoutEntry } from "@/lib/types";
 
 type ProgramData = {
   id: string;
@@ -51,6 +52,15 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
   const [sign2Role, setSign2Role] = useState(initialConfig.sign2Role || "Direktur PT Jetschool Academy Indonesia");
   const [sign2Img, setSig2Img] = useState(initialConfig.sign2Img || "");
   const [stampImg, setStampImg] = useState(initialConfig.stampImg || "");
+
+  // Posisi & skala custom per elemen sertifikat, diatur lewat drag/resize di pratinjau live
+  const [layout, setLayout] = useState<CertLayout>(initialConfig.layout || {});
+  function handleLayoutChange(id: string, entry: CertLayoutEntry) {
+    setLayout((prev) => ({ ...prev, [id]: entry }));
+  }
+  function resetLayout() {
+    if (confirm("Reset semua posisi elemen ke tata letak bawaan?")) setLayout({});
+  }
 
   // Skala visual kolom pratinjau live: sheet dirender tetap 800px lebar (CERT_REF_WIDTH), lalu
   // di-scale ke lebar kolom sebenarnya lewat CSS transform (bukan resize elemen), supaya cqw di
@@ -153,6 +163,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
       stampImg,
       logoUrl,
       materiJp,
+      layout,
     };
   }
 
@@ -437,9 +448,14 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: ".8rem" }}>
           <div>
             <h4 style={{ margin: 0 }}>Pratinjau Live (A4 Portrait)</h4>
-            <small style={{ color: "var(--ink-soft)" }}>Layout otomatis rapi mengikuti isi — tidak perlu diatur posisinya manual</small>
+            <small style={{ color: "var(--ink-soft)" }}>Arahkan kursor ke elemen lalu seret untuk pindah, atau seret kotak ungu di pojoknya untuk perbesar/perkecil. Klik dua kali untuk reset satu elemen.</small>
           </div>
-          <span style={{ fontSize: ".8rem", color: "var(--purple)", fontWeight: 700 }}>✓ Sinkron Instan</span>
+          <div style={{ display: "flex", alignItems: "center", gap: ".8rem", flexShrink: 0 }}>
+            <button type="button" className="btn btn-sm" onClick={resetLayout}>
+              Reset Posisi
+            </button>
+            <span style={{ fontSize: ".8rem", color: "var(--purple)", fontWeight: 700 }}>✓ Sinkron Instan</span>
+          </div>
         </div>
 
         <div
@@ -450,7 +466,7 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
           <div style={{ width: `${CERT_REF_WIDTH}px`, position: "absolute", top: 0, left: 0, transformOrigin: "top left", transform: `scale(${frameScale})` }}>
             <CertificateSheet
               certBgUrl={bgUrl}
-              certConfig={{ logoUrl }}
+              certConfig={{ logoUrl, layout }}
               accentColor={accentColor}
               title={title}
               subtitle={subtitle}
@@ -466,6 +482,8 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
               s2Role={sign2Role}
               s2Img={sign2Img || undefined}
               stampImg={stampImg || undefined}
+              editable
+              onLayoutChange={handleLayoutChange}
             />
           </div>
         </div>

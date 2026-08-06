@@ -1,13 +1,139 @@
 "use client";
 
 import Image from "next/image";
-import type { CSSProperties } from "react";
-import type { CertConfig, CertMateriJp } from "@/lib/types";
+import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+import type { CertConfig, CertLayout, CertLayoutEntry, CertMateriJp } from "@/lib/types";
 
 /** Kalikan sebuah nilai font-size (clamp() atau satuan tetap) dengan faktor skala. */
 function fs(value: string, scale: number): string {
   if (scale === 1) return value;
   return `calc(${value} * ${scale})`;
+}
+
+const IDENTITY_ENTRY: CertLayoutEntry = { dx: 0, dy: 0, scale: 1 };
+const MIN_SCALE = 0.4;
+const MAX_SCALE = 2.5;
+
+/**
+ * Bungkus satu elemen sertifikat supaya bisa digeser (drag) & diperbesar/perkecil (resize handle)
+ * saat editable=true. Posisi tetap dalam alur flex normal (tidak absolute) — dx/dy/scale hanya
+ * transform visual, jadi urutan & spacing antar elemen lain tidak ikut berantakan saat satu elemen
+ * digeser. dx/dy disimpan sebagai fraksi lebar/tinggi lembar (bukan px) dan diterapkan lewat unit
+ * cqw supaya proporsinya sama persis di editor (kolom sempit, di-scale CSS) maupun halaman publik
+ * (lebar penuh) — lihat containerType: "inline-size" di root .cert-a4.
+ */
+function Movable({
+  id,
+  editable,
+  entry,
+  onChange,
+  sheetRef,
+  style,
+  children,
+}: {
+  id: string;
+  editable?: boolean;
+  entry?: CertLayoutEntry;
+  onChange?: (id: string, entry: CertLayoutEntry) => void;
+  sheetRef: RefObject<HTMLDivElement | null>;
+  style?: CSSProperties;
+  children: React.ReactNode;
+}) {
+  const [hover, setHover] = useState(false);
+  const val = entry || IDENTITY_ENTRY;
+
+  function startDrag(e: ReactPointerEvent<HTMLDivElement>) {
+    if (!editable) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = sheetRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startDx = val.dx;
+    const startDy = val.dy;
+
+    function onMove(ev: PointerEvent) {
+      const fracX = (ev.clientX - startX) / rect!.width;
+      const fracY = (ev.clientY - startY) / rect!.height;
+      onChange?.(id, { dx: startDx + fracX, dy: startDy + fracY, scale: val.scale });
+    }
+    function onUp() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  function startResize(e: ReactPointerEvent<HTMLDivElement>) {
+    if (!editable) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = sheetRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startScale = val.scale;
+
+    function onMove(ev: PointerEvent) {
+      const deltaFrac = ((ev.clientX - startX) + (ev.clientY - startY)) / (rect!.width * 0.5);
+      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, startScale + deltaFrac));
+      onChange?.(id, { dx: val.dx, dy: val.dy, scale: newScale });
+    }
+    function onUp() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  function reset() {
+    if (!editable) return;
+    onChange?.(id, IDENTITY_ENTRY);
+  }
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        transform: `translate(${(val.dx * 100).toFixed(3)}cqw, ${(val.dy * 141.421).toFixed(3)}cqw) scale(${val.scale})`,
+        cursor: editable ? "move" : undefined,
+        outline: editable && hover ? "1px dashed rgba(108, 92, 231, 0.65)" : editable ? "1px dashed rgba(108, 92, 231, 0.22)" : undefined,
+        outlineOffset: "3px",
+        zIndex: editable && hover ? 5 : undefined,
+        ...style,
+      }}
+      onPointerDown={startDrag}
+      onPointerEnter={() => setHover(true)}
+      onPointerLeave={() => setHover(false)}
+      onDoubleClick={reset}
+      title={editable ? "Seret untuk pindah · klik-2x untuk reset" : undefined}
+    >
+      {children}
+      {editable && hover && (
+        <div
+          onPointerDown={startResize}
+          title="Seret untuk perbesar/perkecil"
+          style={{
+            position: "absolute",
+            right: "-7px",
+            bottom: "-7px",
+            width: "13px",
+            height: "13px",
+            borderRadius: "4px",
+            background: "#6c5ce7",
+            border: "2px solid #fff",
+            boxShadow: "0 1px 3px rgba(0,0,0,.4)",
+            cursor: "nwse-resize",
+            transform: `scale(${1 / val.scale})`,
+            transformOrigin: "bottom right",
+          }}
+        />
+      )}
+    </div>
+  );
 }
 
 export type CertificateSheetProps = {
@@ -29,6 +155,10 @@ export type CertificateSheetProps = {
   s2Role: string;
   s2Img?: string;
   stampImg?: string;
+  /** Aktifkan mode drag/resize per elemen (dipakai di live editor admin) */
+  editable?: boolean;
+  /** Callback saat posisi/skala satu elemen diubah lewat drag/resize */
+  onLayoutChange?: (id: string, entry: CertLayoutEntry) => void;
 };
 
 /** Bracket sudut dekoratif ala sertifikat modern-minimalis — hanya tampil kalau admin belum upload background sendiri. */
@@ -58,8 +188,12 @@ export default function CertificateSheet({
   s2Role,
   s2Img,
   stampImg,
+  editable,
+  onLayoutChange,
 }: CertificateSheetProps) {
   const logoUrl = certConfig?.logoUrl;
+  const layout: CertLayout = certConfig?.layout || {};
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   // Tabel JP menciut otomatis kalau baris materinya banyak, supaya layout tetap muat di tinggi
   // lembar A4 yang tetap tanpa perlu admin mengatur posisi manual.
@@ -70,6 +204,7 @@ export default function CertificateSheet({
 
   return (
     <div
+      ref={sheetRef}
       className="cert-a4"
       style={{
         width: "100%",
@@ -121,19 +256,21 @@ export default function CertificateSheet({
         {/* Grup atas: logo, judul, sub-judul, badge nomor */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
           {/* 1. Logo */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: ".3rem" }}>
-            <div style={{ position: "relative", width: "clamp(34px, 6.5cqw, 50px)", height: "clamp(34px, 6.5cqw, 50px)" }}>
-              <Image src={logoUrl || "/iconjetschool academy.png"} alt="Logo" fill style={{ objectFit: "contain" }} />
-            </div>
-            {!logoUrl && (
-              <div style={{ fontSize: "clamp(.58rem, 1.4cqw, .7rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".14em", color: "#555" }}>
-                Jetschool <span style={{ color: accentColor }}>Academy</span>
+          <Movable id="logo" editable={editable} entry={layout.logo} onChange={onLayoutChange} sheetRef={sheetRef}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: ".3rem" }}>
+              <div style={{ position: "relative", width: "clamp(34px, 6.5cqw, 50px)", height: "clamp(34px, 6.5cqw, 50px)" }}>
+                <Image src={logoUrl || "/iconjetschool academy.png"} alt="Logo" fill style={{ objectFit: "contain" }} />
               </div>
-            )}
-          </div>
+              {!logoUrl && (
+                <div style={{ fontSize: "clamp(.58rem, 1.4cqw, .7rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".14em", color: "#555" }}>
+                  Jetschool <span style={{ color: accentColor }}>Academy</span>
+                </div>
+              )}
+            </div>
+          </Movable>
 
           {/* 2. Title & Subtitle */}
-          <div style={{ marginTop: "clamp(.9rem, 3.6cqw, 1.6rem)" }}>
+          <Movable id="titleBlock" editable={editable} entry={layout.titleBlock} onChange={onLayoutChange} sheetRef={sheetRef} style={{ marginTop: "clamp(.9rem, 3.6cqw, 1.6rem)" }}>
             <h2
               style={{
                 margin: 0,
@@ -167,10 +304,15 @@ export default function CertificateSheet({
             >
               {subtitle}
             </div>
-          </div>
+          </Movable>
 
           {/* 3. Certificate number */}
-          <div
+          <Movable
+            id="certNumber"
+            editable={editable}
+            entry={layout.certNumber}
+            onChange={onLayoutChange}
+            sheetRef={sheetRef}
             style={{
               marginTop: "clamp(.7rem, 2.2cqw, 1.1rem)",
               fontSize: "clamp(.48rem, 1.2cqw, .6rem)",
@@ -183,13 +325,13 @@ export default function CertificateSheet({
             }}
           >
             {numFormatted}
-          </div>
+          </Movable>
         </div>
 
         {/* Grup tengah: penerima, deskripsi, tabel JP */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", flexShrink: 0 }}>
           {/* 4. Recipient */}
-          <div style={{ width: "88%" }}>
+          <Movable id="recipient" editable={editable} entry={layout.recipient} onChange={onLayoutChange} sheetRef={sheetRef} style={{ width: "88%" }}>
             <div style={{ fontSize: "clamp(.6rem, 1.5cqw, .75rem)", color: "#888" }}>Diberikan kepada :</div>
             <div
               style={{
@@ -215,10 +357,15 @@ export default function CertificateSheet({
                 {recipientInstitution}
               </div>
             )}
-          </div>
+          </Movable>
 
           {/* 5. Description */}
-          <p
+          <Movable
+            id="description"
+            editable={editable}
+            entry={layout.description}
+            onChange={onLayoutChange}
+            sheetRef={sheetRef}
             style={{
               marginTop: "clamp(.8rem, 2.6cqw, 1.4rem)",
               width: "82%",
@@ -228,10 +375,10 @@ export default function CertificateSheet({
             }}
           >
             {descResolved}
-          </p>
+          </Movable>
 
           {/* 6. Syllabus table */}
-          <div style={{ marginTop: "clamp(.7rem, 2.2cqw, 1.2rem)", width: "88%" }}>
+          <Movable id="table" editable={editable} entry={layout.table} onChange={onLayoutChange} sheetRef={sheetRef} style={{ marginTop: "clamp(.7rem, 2.2cqw, 1.2rem)", width: "88%" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: fs("clamp(.48rem, 1.25cqw, .64rem)", tableAutoScale) }}>
               <thead>
                 <tr>
@@ -260,15 +407,15 @@ export default function CertificateSheet({
                 </tr>
               </tbody>
             </table>
-          </div>
+          </Movable>
         </div>
 
         {/* Grup bawah: tempat/tanggal, QR & tanda tangan */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", flexShrink: 0 }}>
           {/* 7. Place & date */}
-          <div style={{ fontSize: "clamp(.58rem, 1.5cqw, .72rem)", fontWeight: 600, color: "#666" }}>
+          <Movable id="placeDate" editable={editable} entry={layout.placeDate} onChange={onLayoutChange} sheetRef={sheetRef} style={{ fontSize: "clamp(.58rem, 1.5cqw, .72rem)", fontWeight: 600, color: "#666" }}>
             {placeDateResolved}
-          </div>
+          </Movable>
 
           {/* 8. QR + Signature */}
           <div
@@ -281,7 +428,7 @@ export default function CertificateSheet({
               gap: "clamp(1.4rem, 4.6cqw, 2.8rem)",
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "22%" }}>
+            <Movable id="qr" editable={editable} entry={layout.qr} onChange={onLayoutChange} sheetRef={sheetRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "22%" }}>
               {qrDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={qrDataUrl} alt="Verification QR" style={{ width: "54px", height: "54px", border: "1px solid #eee", background: "#fff" }} />
@@ -293,9 +440,9 @@ export default function CertificateSheet({
               <span style={{ fontSize: "clamp(.4rem, 1.05cqw, .5rem)", marginTop: ".3rem", color: "#888", fontWeight: 700 }}>
                 ID: {qrIdLabel}
               </span>
-            </div>
+            </Movable>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "42%", position: "relative" }}>
+            <Movable id="signature" editable={editable} entry={layout.signature} onChange={onLayoutChange} sheetRef={sheetRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "42%" }}>
               {stampImg && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -324,7 +471,7 @@ export default function CertificateSheet({
                 <b style={{ fontSize: "clamp(.6rem, 1.5cqw, .75rem)", color: "#1B1710" }}>{s2Name}</b>
                 <div style={{ color: "#777", fontSize: "clamp(.46rem, 1.15cqw, .58rem)", marginTop: ".1rem" }}>{s2Role}</div>
               </div>
-            </div>
+            </Movable>
           </div>
         </div>
       </div>
