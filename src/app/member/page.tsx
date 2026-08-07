@@ -353,6 +353,11 @@ export default async function MemberDashboardPage() {
                       {/* ══ KASUS 3: SUDAH LUNAS (PAID) ══ */}
                       {reg.status === "PAID" && (
                         <>
+                          {batchWaLink && (
+                            <a href={batchWaLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
+                              Gabung Grup WA Pelatihan
+                            </a>
+                          )}
                           {batchZoomLink && (
                             <a href={batchZoomLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
                               Masuk Zoom Live
@@ -387,6 +392,11 @@ export default async function MemberDashboardPage() {
                           <Link href={`/sertifikat/${cert.number}`} target="_blank" className="btn btn-purple btn-block" style={{ textAlign: "center" }}>
                             🏆 Unduh e-Sertifikat
                           </Link>
+                          {batchWaLink && (
+                            <a href={batchWaLink} target="_blank" rel="noopener noreferrer" className="btn btn-line btn-block" style={{ textAlign: "center" }}>
+                              Gabung Grup WA Pelatihan
+                            </a>
+                          )}
                           {hasInternalLms && (
                             <Link href={`/member/lms/${reg.id}`} className="btn btn-line btn-block" style={{ textAlign: "center" }}>
                               Akses LMS Interaktif

@@ -112,6 +112,22 @@ export default async function LmsPage({
             }}>
               {formattedJadwal}
             </div>
+            {(() => {
+              const batchWaLink = reg.batch?.waGroupLink || program.waGroupLink;
+              return batchWaLink ? (
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <a
+                    href={batchWaLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-line"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}
+                  >
+                    💬 Gabung Grup WA Pelatihan
+                  </a>
+                </div>
+              ) : null;
+            })()}
             {program.type === "WEBINAR" && (
               <p style={{ color: "var(--ink-faint)", fontSize: "0.85rem", marginBottom: "2rem" }}>
                 Silakan pantau grup WhatsApp peserta untuk mendapatkan tautan Zoom Meeting live.
@@ -505,7 +521,7 @@ export default async function LmsPage({
               <LmsPdfViewer
                 fileUrl={currentLesson.fileUrl}
                 title={currentLesson.title}
-                allowDownload={currentLesson.allowDownload ?? false}
+                allowDownload={(currentLesson as unknown as { allowDownload?: boolean }).allowDownload ?? false}
               />
             )}
 
