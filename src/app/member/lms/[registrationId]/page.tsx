@@ -113,7 +113,7 @@ export default async function LmsPage({
               {formattedJadwal}
             </div>
             {(() => {
-              const batchWaLink = reg.batch?.waGroupLink || program.waGroupLink;
+              const batchWaLink = reg.batch ? (reg.batch.waGroupLink || null) : program.waGroupLink;
               return batchWaLink ? (
                 <div style={{ marginBottom: "1.5rem" }}>
                   <a

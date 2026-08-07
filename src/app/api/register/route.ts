@@ -274,9 +274,12 @@ export async function POST(req: Request) {
 
     // ── PROGRAM GRATIS (WEBINAR) ─────────────────────────────────
     if (program.price === 0) {
-      const activeScheduleAt = reg.batchId
-        ? (await prisma.programBatch.findUnique({ where: { id: reg.batchId } }))?.scheduleAt ?? program.scheduleAt
-        : program.scheduleAt;
+      const selectedBatch = reg.batchId
+        ? await prisma.programBatch.findUnique({ where: { id: reg.batchId } })
+        : null;
+      const activeScheduleAt = selectedBatch?.scheduleAt ?? program.scheduleAt;
+      const activeZoomLink = selectedBatch ? (selectedBatch.zoomLink || null) : program.zoomLink;
+      const activeWaGroupLink = selectedBatch ? (selectedBatch.waGroupLink || null) : program.waGroupLink;
       const formattedJadwal = formatJadwal(activeScheduleAt);
 
       // Gabung semua nama peserta untuk keperluan notifikasi
@@ -284,7 +287,7 @@ export async function POST(req: Request) {
 
       await sendWa(
         whatsapp,
-        msgWelcome(name, program.title, formattedJadwal, program.zoomLink, program.waGroupLink)
+        msgWelcome(name, program.title, formattedJadwal, activeZoomLink, activeWaGroupLink)
       );
 
       const pesertaInfo = participantCount > 1
@@ -294,13 +297,13 @@ export async function POST(req: Request) {
       await sendEmail({
         to: email,
         subject: `Pendaftaran Berhasil: ${program.title}`,
-        html: getWelcomeEmailHtml(name, program.title, formattedJadwal, program.waGroupLink ?? "")
+        html: getWelcomeEmailHtml(name, program.title, formattedJadwal, activeWaGroupLink ?? "")
           .replace("</div>", `${pesertaInfo}</div>`),
       }).catch((err) => console.error("Gagal mengirim email pendaftaran gratis:", err));
 
       return NextResponse.json({
         ok: true, paid: false, free: true,
-        waGroupLink: program.waGroupLink,
+        waGroupLink: activeWaGroupLink,
         participantCount,
         participants,
       });
@@ -310,10 +313,16 @@ export async function POST(req: Request) {
     // sudah lunas sebelumnya → langsung beri akses lagi (bukan sekadar "!= REGISTERED",
     // karena EXPIRED/FAILED/CANCELLED/REFUNDED juga bukan REGISTERED tapi HARUS bisa bayar ulang)
     if (reg.status === "PAID" || reg.status === "PASSED") {
+      const selectedBatch = reg.batchId
+        ? await prisma.programBatch.findUnique({ where: { id: reg.batchId } })
+        : null;
+      const activeWaGroupLink = selectedBatch ? (selectedBatch.waGroupLink || null) : program.waGroupLink;
+      const activeLmsLink = selectedBatch ? (selectedBatch.recordingLink || null) : program.lmsLink;
+
       return NextResponse.json({
         ok: true, paid: true,
-        waGroupLink: program.waGroupLink,
-        lmsLink: program.lmsLink,
+        waGroupLink: activeWaGroupLink,
+        lmsLink: activeLmsLink,
         participantCount,
         participants,
       });

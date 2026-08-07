@@ -81,7 +81,7 @@ export async function POST(req: Request) {
           { registrationId },
         ],
       },
-      include: { registration: { include: { program: true } } },
+      include: { registration: { include: { program: true, batch: true } } },
     });
     if (!payment) return NextResponse.json({ error: "Pembayaran tidak ditemukan." }, { status: 404 });
 
@@ -106,15 +106,20 @@ export async function POST(req: Request) {
 
         const reg = payment.registration;
         const memberUrl = `${baseUrl}/member`;
+        const scheduleStr = reg.batch ? formatJadwal(reg.batch.scheduleAt) : formatJadwal(reg.program.scheduleAt);
+        const zoomLinkVal = reg.batch ? (reg.batch.zoomLink || null) : reg.program.zoomLink;
+        const waGroupLinkVal = reg.batch ? (reg.batch.waGroupLink || null) : reg.program.waGroupLink;
+        const lmsLinkVal = reg.batch ? (reg.batch.recordingLink || null) : reg.program.lmsLink;
+
         if (reg.program.price > 0) {
           // program berbayar → kirim semua akses (grup, LMS, Zoom) + link post-test
           await sendWa(reg.whatsapp, msgAccess({
             name: reg.name,
             programTitle: reg.program.title,
-            schedule: formatJadwal(reg.program.scheduleAt),
-            zoomLink: reg.program.zoomLink,
-            waGroupLink: reg.program.waGroupLink,
-            lmsLink: reg.program.lmsLink,
+            schedule: scheduleStr,
+            zoomLink: zoomLinkVal,
+            waGroupLink: waGroupLinkVal,
+            lmsLink: lmsLinkVal,
             memberUrl,
           }));
         } else {
@@ -126,7 +131,7 @@ export async function POST(req: Request) {
         await sendEmail({
           to: reg.email,
           subject: `Pembayaran Berhasil: Akses Pelatihan ${reg.program.title}`,
-          html: getPaidEmailHtml(reg.name, reg.program.title, memberUrl, reg.program.zoomLink, reg.program.waGroupLink, reg.program.lmsLink),
+          html: getPaidEmailHtml(reg.name, reg.program.title, memberUrl, zoomLinkVal, waGroupLinkVal, lmsLinkVal),
         }).catch((err) => console.error("Gagal mengirim email webhook lunas:", err));
       }
     } else if (event.status === "EXPIRED" && payment.status !== "PAID" && isCurrentInvoice) {

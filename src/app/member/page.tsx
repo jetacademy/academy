@@ -205,10 +205,10 @@ export default async function MemberDashboardPage() {
                 const hasInternalLms = !!(prog.modules && prog.modules.length > 0);
                 const hasExternalLms = !!(prog.lmsLink || reg.batch?.recordingLink);
 
-                // Link per batch — fallback ke link program
-                const batchWaLink = reg.batch?.waGroupLink || prog.waGroupLink;
-                const batchZoomLink = reg.batch?.zoomLink || prog.zoomLink;
-                const batchRecordingLink = reg.batch?.recordingLink || prog.lmsLink;
+                // Link per batch — jika peserta terdaftar pada batch spesifik, gunakan link batch tersebut (jangan fallback ke prog.waGroupLink yang merupakan milik Batch 1)
+                const batchWaLink = reg.batch ? (reg.batch.waGroupLink || null) : prog.waGroupLink;
+                const batchZoomLink = reg.batch ? (reg.batch.zoomLink || null) : prog.zoomLink;
+                const batchRecordingLink = reg.batch ? (reg.batch.recordingLink || null) : prog.lmsLink;
                 const batchLabel = reg.batch ? formatJadwal(reg.batch.scheduleAt) : null;
 
                 // Gerbang admin: apakah klaim sertifikat sudah dibuka?
