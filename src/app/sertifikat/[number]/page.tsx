@@ -34,8 +34,10 @@ export default async function CertPage({ params }: { params: Promise<{ number: s
   if (!cert) notFound();
 
   const program = cert.registration.program;
-  const certConfig: CertConfig = program.certConfig ? (program.certConfig as CertConfig) : {};
-  const certBgUrl = program.certBgUrl;
+  const batch = cert.registration.batch;
+  const rawCertConfig = batch?.certConfig ?? program.certConfig;
+  const certConfig: CertConfig = rawCertConfig ? (rawCertConfig as CertConfig) : {};
+  const certBgUrl = batch?.certBgUrl ?? program.certBgUrl;
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
   const verifyUrl = `${baseUrl}/sertifikat/${cert.number}`;

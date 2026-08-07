@@ -115,6 +115,8 @@ model ProgramBatch {
   scheduleAt    DateTime
   seatsLeft     Int? // sisa kursi khusus batch ini (opsional)
   isActive      Boolean        @default(true) // nonaktifkan tanpa hapus (histori pendaftaran tetap utuh)
+  certBgUrl     String?        @db.Text
+  certConfig    Json?
   registrations Registration[]
   moduleLinks   BatchModule[]
   createdAt     DateTime       @default(now())
@@ -298,6 +300,20 @@ model Certificate {
 
   @@index([issuedAt])
   @@map("certificate")
+}
+
+// Master Template Sertifikat — dapat digunakan kembali di berbagai program & batch
+model CertificateTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  certBgUrl   String?  @db.Text
+  certConfig  Json
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("certificatetemplate")
 }
 
 // Sakelar global — satu baris (singleton, id tetap "singleton"). Dipakai utk menghentikan

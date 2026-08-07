@@ -18,6 +18,10 @@ export default async function AdminProgramCertPage({
   const program = await prisma.program.findUnique({ where: { id } });
   if (!program) notFound();
 
+  const templates = await prisma.certificateTemplate.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
   const published = program.certPublished;
 
   return (
@@ -69,7 +73,7 @@ export default async function AdminProgramCertPage({
         </form>
       </div>
 
-      <CertCustomizer program={program} />
+      <CertCustomizer program={program} templates={templates} />
     </>
   );
 }

@@ -3,7 +3,7 @@
 
 import { useState, useRef, useLayoutEffect } from "react";
 import Link from "next/link";
-import { uploadFileAction, saveCertTemplate } from "@/app/webadmin/actions";
+import { uploadFileAction, saveCertTemplate, saveNewCertTemplate } from "@/app/webadmin/actions";
 import Icon from "@/components/Icon";
 import CertificateSheet from "@/components/CertificateSheet";
 import type { CertLayout, CertLayoutEntry } from "@/lib/types";
@@ -27,10 +27,19 @@ const DEFAULT_ACCENT_COLOR = "#232176";
 // proporsi di editor (kolom sempit) vs pratinjau (lebar penuh).
 const CERT_REF_WIDTH = 800;
 
-export default function CertCustomizer({ program }: { program: ProgramData }) {
+export default function CertCustomizer({
+  program,
+  templates = [],
+}: {
+  program: ProgramData;
+  templates?: any[];
+}) {
   const materiList = Array.isArray(program.materi) ? (program.materi as string[]) : [];
   const bgInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Template Master Selector state
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
 
   // Parse initial config
   const initialConfig = program.certConfig || {};
@@ -167,14 +176,57 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
     };
   }
 
-  // Save to DB
+  // Save to DB (program cert)
   async function handleSave() {
     setSaving(true);
     try {
       await saveCertTemplate(program.id, bgUrl || null, buildConfig());
-      alert("Template sertifikat berhasil disimpan!");
+      alert("Sertifikat program berhasil disimpan!");
     } catch (err: any) {
       alert("Gagal menyimpan: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Terapkan Template Master ke Editor
+  function handleApplyMasterTemplate(tpl: any) {
+    if (!confirm(`Terapkan desain template "${tpl.name}" ke editor sertifikat ini? Pengaturan di editor akan diperbarui.`)) return;
+    const cfg = tpl.certConfig || {};
+    setBgUrl(tpl.certBgUrl || "");
+    if (cfg.logoUrl !== undefined) setLogoUrl(cfg.logoUrl);
+    if (cfg.title) setTitle(cfg.title);
+    if (cfg.subtitle) setSubtitle(cfg.subtitle);
+    if (cfg.numberFormat) setNumberFormat(cfg.numberFormat);
+    if (cfg.description) setDescription(cfg.description);
+    if (cfg.placeDate) setPlaceDate(cfg.placeDate);
+    if (cfg.accentColor) setAccentColor(cfg.accentColor);
+    if (cfg.sign2Name) setSign2Name(cfg.sign2Name);
+    if (cfg.sign2Role) setSign2Role(cfg.sign2Role);
+    if (cfg.sign2Img !== undefined) setSig2Img(cfg.sign2Img);
+    if (cfg.stampImg !== undefined) setStampImg(cfg.stampImg);
+    if (cfg.layout) setLayout(cfg.layout);
+    if (Array.isArray(cfg.materiJp)) {
+      setMateriJp(cfg.materiJp.map((r: any) => ({
+        materi: String(r.materi || ""),
+        teori: Number(r.teori) || 0,
+        tugas: Number(r.tugas) || 0,
+      })));
+    }
+  }
+
+  // Simpan sebagai Template Master Baru
+  async function handleSaveAsTemplateModal() {
+    const namePrompt = prompt("Masukkan nama untuk template sertifikat master ini:", `${program.title} - Template`);
+    if (!namePrompt || !namePrompt.trim()) return;
+    const descPrompt = prompt("Masukkan catatan/deskripsi singkat (opsional):", "");
+    setSaving(true);
+    try {
+      await saveNewCertTemplate(namePrompt.trim(), descPrompt || undefined, bgUrl || null, buildConfig());
+      alert(`Template "${namePrompt.trim()}" berhasil disimpan ke Pustaka Template Sertifikat!`);
+      window.location.reload();
+    } catch (err: any) {
+      alert("Gagal menyimpan template: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -205,6 +257,56 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
       {/* LEFT COLUMN: EDIT FORM */}
       <div className="reg-card" style={{ padding: "1.8rem", maxWidth: "none", margin: 0 }}>
         <h3 style={{ marginBottom: "1.5rem" }}>Pengaturan Sertifikat</h3>
+
+        {/* Master Template Selector Header */}
+        <div
+          style={{
+            background: "#F4F0FF",
+            border: "1px solid #D8C7FF",
+            borderRadius: "var(--r-md)",
+            padding: "1.1rem 1.2rem",
+            marginBottom: "1.5rem",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: ".5rem", flexWrap: "wrap", gap: ".5rem" }}>
+            <h4 style={{ margin: 0, color: "var(--purple)", display: "flex", alignItems: "center", gap: ".4rem", fontSize: "0.95rem" }}>
+              <Icon name="file-text" size={16} />
+              Gunakan Template Sertifikat Master
+            </h4>
+            <Link href="/webadmin/templates-sertifikat" target="_blank" style={{ fontSize: ".78rem", color: "var(--purple)", fontWeight: 600 }}>
+              Pustaka Template ↗
+            </Link>
+          </div>
+          <p style={{ fontSize: ".8rem", color: "var(--ink-soft)", margin: "0 0 .8rem", lineHeight: 1.4 }}>
+            Pilih template tersimpan dari program lain untuk diterapkan ke editor sertifikat ini.
+          </p>
+
+          <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap" }}>
+            <select
+              value={selectedTemplateId}
+              onChange={(e) => setSelectedTemplateId(e.target.value)}
+              style={{ flex: 1, minWidth: "180px", padding: ".4rem .6rem", borderRadius: "6px", border: "1px solid var(--line)" }}
+            >
+              <option value="">-- Pilih Template ({templates.length} Tersedia) --</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="btn btn-sm btn-purple"
+              disabled={!selectedTemplateId}
+              onClick={() => {
+                const tpl = templates.find((t) => t.id === selectedTemplateId);
+                if (tpl) handleApplyMasterTemplate(tpl);
+              }}
+            >
+              Terapkan ke Editor
+            </button>
+          </div>
+        </div>
 
         {/* 1. Background & Logo */}
         <div style={{ borderBottom: "1px solid var(--line)", paddingBottom: "1.5rem", marginBottom: "1.5rem" }}>
@@ -424,23 +526,37 @@ export default function CertCustomizer({ program }: { program: ProgramData }) {
         </div>
 
         {/* Save & Preview Buttons */}
-        <button
-          type="button"
-          onClick={handlePreviewPdf}
-          className="btn btn-block"
-          style={{ fontWeight: 700, marginBottom: ".7rem" }}
-        >
-          Preview Sertifikat (Uji Coba) &amp; Download PNG
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          className="btn btn-purple btn-block btn-lg"
-          style={{ fontWeight: 700 }}
-          disabled={saving || loading}
-        >
-          {saving ? "Menyimpan Perubahan..." : "Simpan Template Sertifikat"}
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: ".7rem" }}>
+          <button
+            type="button"
+            onClick={handlePreviewPdf}
+            className="btn btn-block"
+            style={{ fontWeight: 600 }}
+          >
+            Preview Sertifikat (Uji Coba) &amp; Download PNG
+          </button>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".6rem" }}>
+            <button
+              type="button"
+              onClick={handleSaveAsTemplateModal}
+              className="btn btn-block"
+              style={{ fontWeight: 600, border: "1px solid var(--purple)", color: "var(--purple)" }}
+              disabled={saving || loading}
+            >
+              ➕ Simpan sbg Template Baru
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="btn btn-purple btn-block"
+              style={{ fontWeight: 700 }}
+              disabled={saving || loading}
+            >
+              {saving ? "Menyimpan..." : "Simpan ke Program Ini"}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* RIGHT COLUMN: LIVE PREVIEW */}

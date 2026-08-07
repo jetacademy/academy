@@ -967,6 +967,63 @@ export async function saveCertTemplate(programId: string, certBgUrl: string | nu
   revalidatePath(`/webadmin/program/${programId}/cert`);
 }
 
+// ─── Master Template Sertifikat (Reusable) ─────────────────────
+
+export async function saveNewCertTemplate(name: string, description: string | undefined, certBgUrl: string | null, certConfig: unknown) {
+  await requireAdmin();
+  const template = await prisma.certificateTemplate.create({
+    data: {
+      name: name.trim() || "Template Tanpa Nama",
+      description: description?.trim() || null,
+      certBgUrl,
+      certConfig: (certConfig ? JSON.parse(JSON.stringify(certConfig)) : {}) as Prisma.InputJsonValue,
+    },
+  });
+  revalidatePath("/webadmin/templates-sertifikat");
+  return template;
+}
+
+export async function updateMasterCertTemplate(id: string, name: string, description: string | undefined, certBgUrl: string | null, certConfig: unknown) {
+  await requireAdmin();
+  const updated = await prisma.certificateTemplate.update({
+    where: { id },
+    data: {
+      name: name.trim(),
+      description: description?.trim() || null,
+      certBgUrl,
+      certConfig: (certConfig ? JSON.parse(JSON.stringify(certConfig)) : {}) as Prisma.InputJsonValue,
+    },
+  });
+  revalidatePath("/webadmin/templates-sertifikat");
+  return updated;
+}
+
+export async function deleteMasterCertTemplate(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  await prisma.certificateTemplate.delete({ where: { id } }).catch((err: unknown) => console.error("[deleteMasterCertTemplate] Gagal:", err));
+  revalidatePath("/webadmin/templates-sertifikat");
+}
+
+export async function getCertTemplatesList() {
+  await requireAdmin();
+  return prisma.certificateTemplate.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function saveBatchCertConfig(batchId: string, certBgUrl: string | null, certConfig: unknown) {
+  await requireAdmin();
+  const batch = await prisma.programBatch.update({
+    where: { id: batchId },
+    data: {
+      certBgUrl,
+      certConfig: certConfig ? (JSON.parse(JSON.stringify(certConfig)) as Prisma.InputJsonValue) : Prisma.JsonNull,
+    },
+  });
+  revalidatePath(`/webadmin/program/${batch.programId}/batch`);
+}
+
 // ─── Kategori ────────────────────────────────────────────────────
 
 export async function saveCategory(formData: FormData) {
