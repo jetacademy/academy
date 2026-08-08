@@ -10,6 +10,7 @@ import OfferTimer from "@/components/OfferTimer";
 import Testimonials from "@/components/Testimonials";
 import Icon from "@/components/Icon";
 import ProgramContentBlocks from "@/components/ProgramContentBlocks";
+import VibesLandingSections from "@/components/VibesLandingSections";
 import { getProgramBySlug } from "@/lib/programs";
 import { TYPE_LABEL, type ProgramType } from "@/lib/fallback";
 import Image from "next/image";
@@ -68,6 +69,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const isTeacherProgram = program.slug === "modul-ajar-ai-untuk-guru";
   const isAiForTeachers = program.slug === "ai-for-teachers";
   const isZeroHuman = program.slug === "zero-human-company";
+  const isVibesCoding = program.slug === "vibes-coding";
   const jadwal = formatJadwal(program.scheduleAt);
 
   // Prioritaskan batch aktif mendatang untuk jadwal display
@@ -96,6 +98,33 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         {
           q: "Apa saja yang perlu disiapkan?",
           a: "Cukup HP atau laptop dengan koneksi internet. Tidak perlu install software khusus — semua tools berbasis web.",
+        },
+      ]
+    : isVibesCoding
+    ? [
+        {
+          q: "Saya gak bisa coding sama sekali, bisa ikut?",
+          a: "Bisa — justru itu targetnya 😄 Kamu gak nulis kode manual. Kamu ngomong ke AI (Antigravity), AI yang bikin kodenya, kamu yang arahin. Tinggal bisa pakai laptop & internet, kamu sudah bisa ikut.",
+        },
+        {
+          q: "2 jam doang, beneran langsung bisa bikin?",
+          a: "Beneran. Bukan teori, bukan nonton demo doang — kamu praktik langsung bareng instruktur, step by step. Di akhir sesi kamu bawa pulang 4 produk jadi: 2 game 3D, aplikasi keuangan, dan website.",
+        },
+        {
+          q: "Laptop biasa kuat gak?",
+          a: "Kuat. Yang kamu butuhkan cuma laptop/komputer + internet stabil. Semua pakai tools berbasis web — gak perlu spesifikasi tinggi.",
+        },
+        {
+          q: "Hasilnya beneran bisa dipakai atau cuma latihan?",
+          a: "Beneran dipakai. Aplikasinya dibangun pakai Next.js — framework kelas enterprise yang dipakai Netflix, TikTok, Uber. Website bisa langsung diisi konten bisnismu, aplikasi keuangan bisa langsung buat catat pemasukan/pengeluaran.",
+        },
+        {
+          q: "Sertifikat dapat?",
+          a: "Ya. Lunas = dapat. e-Sertifikat resmi dikirim manual oleh admin per batch setelah sesi selesai.",
+        },
+        {
+          q: "Kapan grup WhatsApp & link Zoom dikirim?",
+          a: "Paling lambat H-1 (satu hari sebelum workshop), grup WhatsApp dan link Zoom dikirim ke nomor yang kamu daftarkan. Pastikan nomormu aktif ya.",
         },
       ]
     : isZeroHuman
@@ -230,6 +259,13 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                   </p>
                 </div>
               )}
+              {isVibesCoding && (
+                <div style={{ marginTop: "1.2rem", padding: "0.7rem 1.2rem", background: "rgba(46, 204, 113, 0.08)", borderLeft: "4px solid #27ae60", borderRadius: "0 12px 12px 0", display: "inline-block" }}>
+                  <p style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#27ae60" }}>
+                    💤 Gak bisa coding? Justru itu alasan kamu ikut.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Kolom kanan — Gambar Program (upload admin) atau ilustrasi bawaan */}
@@ -283,14 +319,14 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               <div className="prg-cta-meta-list" style={{ marginTop: "0.5rem" }}>
                 <div className="cta-meta-item">
                   <Icon name="calendar" size={14} />
-                  <span>{displayHari}, {formatJam(program.scheduleAt)}</span>
+                  <span>{displayHari}, {formatJam(displayScheduleAt)}</span>
                 </div>
                 <div className="cta-meta-item">
                   <Icon name="award" size={14} />
-                  <span>{isAiForTeachers ? "Live Zoom 2 jam · 6 Demo Langsung" : isZeroHuman ? "Live Zoom 3 jam · 6 AI Agent" : "Komunitas + Rekaman + Sertifikat 32 JP"}</span>
+                  <span>{isAiForTeachers ? "Live Zoom 2 jam · 6 Demo Langsung" : isZeroHuman ? "Live Zoom 3 jam · 6 AI Agent" : isVibesCoding ? "Live Zoom 2 jam · 4 Produk Jadi" : "Komunitas + Rekaman + Sertifikat"}</span>
                 </div>
               </div>
-              <OfferTimer target={program.scheduleAt.toISOString()} note="Sesi dimulai dalam" />
+              <OfferTimer target={displayScheduleAt.toISOString()} note="Sesi dimulai dalam" />
             </div>
           </div>
         </div>
@@ -305,6 +341,10 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         </section>
       ) : (
       <>
+      {/* ===== KHUSUS VIBES CODING: PERSUASIF & RELEVAN ===== */}
+      {isVibesCoding && (
+        <VibesLandingSections program={program} />
+      )}
       {/* ===== KHUSUS GURU: PERSUASIF & RELEVAN ===== */}
       {isTeacherProgram && (
         <>
@@ -984,6 +1024,8 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             </div>
           </div>
         </section>
+      ) : isVibesCoding ? (
+        <section className="section" id="kenapa-pilih" style={{ paddingBottom: 0 }} />
       ) : (
         <Testimonials limit={3} />
       )}
@@ -1075,7 +1117,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
 
       {/* Bar CTA lengket di mobile */}
       <div className="sticky-cta">
-        <div><b>{priceLabel}</b><small>{displayHari}, {formatJam(program.scheduleAt)}</small></div>
+        <div><b>{priceLabel}</b><small>{displayHari}, {formatJam(displayScheduleAt)}</small></div>
         <a href="#daftar" className="btn btn-lime">{isZeroHuman ? "Rp 225.000 — Sekali" : (isFree ? "Daftar Gratis" : "Daftar")}</a>
       </div>
 
