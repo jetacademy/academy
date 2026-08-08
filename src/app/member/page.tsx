@@ -13,6 +13,7 @@ import BonusCountdown from "@/components/BonusCountdown";
 import FreeWebinarClaimSection from "@/components/FreeWebinarClaimSection";
 import EditProfileModal from "@/components/EditProfileModal";
 import { rupiah, formatJadwal } from "@/lib/format";
+import { issueCertificate } from "@/lib/certificates";
 import { Registration, Program, Payment, Certificate, ProgramBatch } from "@prisma/client";
 
 interface LocalLmsModule {
@@ -54,6 +55,27 @@ export default async function MemberDashboardPage() {
     },
     orderBy: { createdAt: "desc" },
   }) as unknown as RegistrationWithDetails[];
+
+  // ── AUTO-TERBIT SERTIFIKAT: peserta LUNAS + batch-nya SUDAH SELESAI → sertifikat
+  // langsung terbit tanpa syarat lain (tanpa harus PASSED/menyelesaikan materi).
+  // Sesuai keputusan owner (8 Agu 2026): "selesai batch + sudah bayar → auto terbit".
+  const now = new Date();
+  for (const reg of registrations) {
+    const prog = reg.program;
+    if (reg.status === "PAID" && !reg.certificate && (prog as unknown as { certPublished?: boolean }).certPublished) {
+      const eventTime = reg.batch ? new Date(reg.batch.scheduleAt) : new Date(prog.scheduleAt);
+      const eventEndTime = new Date(eventTime.getTime() + 3 * 60 * 60 * 1000);
+      if (now >= eventEndTime) {
+        try {
+          const result = await issueCertificate(reg.id);
+          reg.certificate = { number: result.number } as unknown as Certificate;
+          reg.status = "PASSED";
+        } catch (e) {
+          console.error(`[member] Auto-issue sertifikat gagal untuk ${reg.id}:`, e);
+        }
+      }
+    }
+  }
 
   // Ambil certClaimOpen via raw SQL (field baru, mungkin belum ada di Prisma client cache)
   const programIds = [...new Set(registrations.map((r) => r.program.id))];
