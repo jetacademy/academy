@@ -119,6 +119,14 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           a: "Beneran dipakai. Aplikasinya dibangun pakai Next.js — framework kelas enterprise yang dipakai Netflix, TikTok, Uber. Website bisa langsung diisi konten bisnismu, aplikasi keuangan bisa langsung buat catat pemasukan/pengeluaran.",
         },
         {
+          q: "Aplikasinya bisa online / di-publish ke hosting?",
+          a: "Bisa — dan itu bagian dari workshop. Dari 0 sampai online: siapin hosting, deploy/upload aplikasi, setting domain, aktifkan HTTPS, sampai aplikasi & game-mu kebuka lewat link. Semua dibimbing step by step, tanpa istilah rumit.",
+        },
+        {
+          q: "Hosting & domain itu mahal gak?",
+          a: "Gak wajib sewa hari itu juga — kamu bisa pakai hosting gratis dulu buat latihan. Kalau mau online permanen, hosting & domain terjangkau (mulai ratusan ribu per tahun) dan ditanggung peserta. Yang penting ilmunya kamu bawa pulang.",
+        },
+        {
           q: "Sertifikat dapat?",
           a: "Ya. Lunas = dapat. e-Sertifikat resmi dikirim manual oleh admin per batch setelah sesi selesai.",
         },

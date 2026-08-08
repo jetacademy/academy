@@ -191,6 +191,43 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
         </div>
       </section>
 
+      {/* ── DARI 0 SAMPAI PUBLISH: HOSTING & DOMAIN ── */}
+      <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
+        <div className="container">
+          <div className="section-head center" style={{ marginBottom: "2.5rem" }}>
+            <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Bonus: Deploy & Publish</span>
+            <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>Dari 0 Sampai Online — Dibimbing Publish Beneran</h2>
+            <p className="lead" style={{ maxWidth: "38rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+              Banyak yang bikin aplikasi, tapi berhenti di laptop sendiri. Di workshop ini kamu
+              dibimbing sampai aplikasi & game-mu beneran online — bisa dibuka orang lain lewat link.
+            </p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1rem" }}>
+            {[
+              { step: "01", icon: "🎨", t: "Bikin Aplikasinya", d: "2 game 3D + aplikasi keuangan + website — pakai vibe coding (Antigravity + Next.js)." },
+              { step: "02", icon: "☁️", t: "Siapkan Hosting", d: "Pilih hosting yang pas & terjangkau. Diajarin cara setup dari panel hosting — tanpa istilah rumit." },
+              { step: "03", icon: "🚀", t: "Deploy / Upload", d: "Cara naikin aplikasi dari laptop ke hosting — build, upload, jalan. Tinggal follow step by step." },
+              { step: "04", icon: "🌐", t: "Setting Domain", d: "Beli domain, arahkan DNS, sambungkan ke aplikasi. Dari 0 sampai nama domainmu kebuka di browser." },
+              { step: "05", icon: "🔒", t: "Aktifkan HTTPS", d: "Gembok hijau & koneksi aman — syarat standar biar aplikasi layak dibuka publik." },
+              { step: "06", icon: "🎉", t: "Online & Dibagikan", d: "Aplikasi/game live — kirim linknya ke siapa aja. Website bisa dipakai bisnis, game bisa dimainin orang." },
+            ].map((x, i) => (
+              <div key={i} className="bento" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <span style={{ fontSize: "1.6rem" }}>{x.icon}</span>
+                  <span style={{ fontSize: "0.78rem", fontWeight: 900, color: "var(--purple)", letterSpacing: "0.06em" }}>LANGKAH {x.step}</span>
+                </div>
+                <b style={{ fontSize: "1.02rem" }}>{x.t}</b>
+                <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", lineHeight: 1.55, margin: 0 }}>{x.d}</p>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: "0.8rem", color: "var(--ink-faint)", textAlign: "center", marginTop: "1.4rem", lineHeight: 1.6, maxWidth: "40rem", marginInline: "auto" }}>
+            Hasilnya versi pertama yang berarsitektur industri — siap dikembangkan lebih jauh.
+            Hosting & domain ditanggung peserta (opsional, mulai dari harga terjangkau) — ilmunya yang kamu bawa pulang.
+          </p>
+        </div>
+      </section>
+
       {/* ── SKILL: Sekali Belajar ── */}
       <section className="section" style={{ background: "var(--chip)", paddingTop: "3rem", paddingBottom: "3rem" }}>
         <div className="container">
