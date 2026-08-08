@@ -93,6 +93,24 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
               Framework yang dipakai perusahaan besar — Netflix, TikTok, Uber. Bukan drag-and-drop, bukan toy project.
             </p>
           </div>
+
+          {/* HIGHLIGHT: Bukan mainan — portofolio kelas industri */}
+          <div
+            style={{
+              marginTop: "1.2rem",
+              padding: "1.6rem 2rem",
+              background: "linear-gradient(135deg, rgba(124, 92, 255, 0.08), rgba(46, 204, 113, 0.06))",
+              border: "1.5px solid rgba(124, 92, 255, 0.35)",
+              borderRadius: "var(--r-md)",
+              textAlign: "center",
+            }}
+          >
+            <p style={{ fontSize: "clamp(1.05rem, 2.5vw, 1.35rem)", fontWeight: 800, margin: 0, lineHeight: 1.5 }}>
+              🏆 Bukan mainan. Ini portofolio kelas industri —{" "}
+              <span style={{ color: "var(--purple)" }}>dibangun dengan standar perusahaan besar</span>,{" "}
+              jadi bisa langsung dipakai, ditunjukkan ke klien, bahkan ditawarkan jadi layanan.
+            </p>
+          </div>
         </div>
       </section>
 
