@@ -74,10 +74,9 @@ export default async function AdminDashboard({
     ? (Number(hari) as DayRange)
     : 30;
 
-  const [regCount, revenue, certCount, programs, latest, statsRaw, dailyRevenue] = await Promise.all([
+  const [regCount, revenue, programs, latest, statsRaw, dailyRevenue] = await Promise.all([
     prisma.registration.count(),
     prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
-    prisma.certificate.count(),
     prisma.program.findMany({
       orderBy: { scheduleAt: "asc" },
       take: 200, // batas aman — tidak ada platform dengan >200 program aktif
@@ -123,6 +122,8 @@ export default async function AdminDashboard({
     };
   });
 
+  const todayRevenue = dailyRevenue.length > 0 ? dailyRevenue[dailyRevenue.length - 1].amount : 0;
+
   return (
     <>
       <div className="adm-head">
@@ -133,7 +134,7 @@ export default async function AdminDashboard({
       <div className="adm-stats">
         <div className="adm-stat"><b>{regCount}</b><span>Total Pendaftar</span></div>
         <div className="adm-stat"><b>{rupiah(revenue._sum.amount ?? 0)}</b><span>Pendapatan Lunas</span></div>
-        <div className="adm-stat"><b>{certCount}</b><span>Sertifikat Terbit</span></div>
+        <div className="adm-stat"><b>{rupiah(todayRevenue)}</b><span>Pendapatan Hari Ini</span></div>
         <div className="adm-stat"><b>{programs.filter((p) => p.isActive).length}</b><span>Program Aktif</span></div>
       </div>
 
