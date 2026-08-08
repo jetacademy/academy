@@ -112,7 +112,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
         },
         {
           q: "Laptop biasa kuat gak?",
-          a: "Kuat. Yang kamu butuhkan cuma laptop/komputer + internet stabil. Semua pakai tools berbasis web — gak perlu spesifikasi tinggi.",
+          a: "Kuat. Gak perlu spesifikasi tinggi — laptop standar yang bisa buka browser & internet stabil sudah cukup untuk ikut.",
         },
         {
           q: "Hasilnya beneran bisa dipakai atau cuma latihan?",
