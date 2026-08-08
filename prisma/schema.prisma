@@ -117,6 +117,7 @@ model ProgramBatch {
   isActive      Boolean        @default(true) // nonaktifkan tanpa hapus (histori pendaftaran tetap utuh)
   certBgUrl     String?        @db.Text
   certConfig    Json?
+  certPublished Boolean        @default(false) // kontrol rilis sertifikat per batch (toggle admin)
   registrations Registration[]
   moduleLinks   BatchModule[]
   createdAt     DateTime       @default(now())

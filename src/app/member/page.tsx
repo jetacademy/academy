@@ -56,13 +56,15 @@ export default async function MemberDashboardPage() {
     orderBy: { createdAt: "desc" },
   }) as unknown as RegistrationWithDetails[];
 
-  // ── AUTO-TERBIT SERTIFIKAT: peserta LUNAS + batch-nya SUDAH SELESAI → sertifikat
-  // langsung terbit tanpa syarat lain (tanpa harus PASSED/menyelesaikan materi).
-  // Sesuai keputusan owner (8 Agu 2026): "selesai batch + sudah bayar → auto terbit".
+  // ── AUTO-TERBIT SERTIFIKAT (keputusan owner 8 Agu 2026): peserta LUNAS + batch SELESAI
+  // + admin sudah RILIS sertifikat batch (batch.certPublished) → sertifikat langsung terbit.
+  // Tidak perlu PASSED, tidak perlu menyelesaikan materi, tidak peduli hadir/tidak.
   const now = new Date();
   for (const reg of registrations) {
     const prog = reg.program;
-    if (reg.status === "PAID" && !reg.certificate && (prog as unknown as { certPublished?: boolean }).certPublished) {
+    const batchPublished = reg.batch?.certPublished ?? false;
+    const programPublished = (prog as unknown as { certPublished?: boolean }).certPublished;
+    if (reg.status === "PAID" && !reg.certificate && programPublished && batchPublished) {
       const eventTime = reg.batch ? new Date(reg.batch.scheduleAt) : new Date(prog.scheduleAt);
       const eventEndTime = new Date(eventTime.getTime() + 3 * 60 * 60 * 1000);
       if (now >= eventEndTime) {

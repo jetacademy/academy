@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { createBatch, toggleBatch, deleteBatch, updateBatchLinks } from "@/app/webadmin/actions";
+import { createBatch, toggleBatch, deleteBatch, updateBatchLinks, toggleBatchCertPublish } from "@/app/webadmin/actions";
 import { formatJadwal } from "@/lib/format";
 import ConfirmButton from "@/components/ConfirmButton";
 
@@ -10,10 +10,10 @@ export default async function AdminBatch({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string; e?: string; deleted?: string }>;
+  searchParams: Promise<{ ok?: string; e?: string; deleted?: string; cert?: string; issued?: string }>;
 }) {
   const { id } = await params;
-  const { ok, e, deleted } = await searchParams;
+  const { ok, e, deleted, cert, issued } = await searchParams;
 
   const program = await prisma.program.findUnique({ where: { id } });
   if (!program) notFound();
@@ -30,6 +30,16 @@ export default async function AdminBatch({
     <>
       {ok === "1" && <div className="adm-alert ok">Batch baru berhasil ditambahkan.</div>}
       {deleted === "1" && <div className="adm-alert ok">Batch dihapus.</div>}
+      {cert === "published" && (
+        <div className="adm-alert ok">
+          Sertifikat batch dipublikasikan. {issued && Number(issued) > 0
+            ? `${issued} peserta lunas langsung diterbitkan sertifikatnya.`
+            : "Belum ada peserta lunas baru yang perlu diterbitkan — sertifikat akan otomatis terbit saat batch selesai & peserta lunas."}
+        </div>
+      )}
+      {cert === "unpublished" && (
+        <div className="adm-alert warn">Rilis sertifikat batch dibatalkan. Sertifikat baru tidak terbit ke peserta batch ini sampai dipublikasikan lagi — yang sudah terbit tidak terpengaruh.</div>
+      )}
       {e === "lengkapi" && <div className="adm-alert err">Tanggal jadwal wajib diisi.</div>}
       {e === "tanggal" && <div className="adm-alert err">Format tanggal tidak valid.</div>}
 
@@ -94,6 +104,18 @@ export default async function AdminBatch({
                   </td>
                   <td data-label="Status">
                     <span className={`badge ${b.isActive ? "g" : "dim"}`}>{b.isActive ? "Aktif" : "Nonaktif"}</span>
+                  </td>
+                  <td data-label="Sertifikat">
+                    <span className={`badge ${b.certPublished ? "g" : "dim"}`}>
+                      {b.certPublished ? "Sertifikat Rilis" : "Sertifikat Ditahan"}
+                    </span>
+                    <form action={toggleBatchCertPublish} style={{ marginTop: "0.35rem" }}>
+                      <input type="hidden" name="id" value={b.id} />
+                      <input type="hidden" name="programId" value={program.id} />
+                      <button type="submit" className={`btn btn-sm ${b.certPublished ? "btn-danger" : "btn-purple"}`}>
+                        {b.certPublished ? "Batalkan Rilis" : "Rilis Sertifikat"}
+                      </button>
+                    </form>
                   </td>
                   <td data-label="Link">
                     <form action={updateBatchLinks} style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>

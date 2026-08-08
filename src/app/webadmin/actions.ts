@@ -1265,6 +1265,51 @@ export async function toggleBatch(formData: FormData) {
   revalidatePath(`/webadmin/program/${programId}/batch`);
 }
 
+/**
+ * Toggle rilis sertifikat per batch (keputusan owner 8 Agu 2026).
+ * - PUBLISH: set certPublished=true → langsung issue otomatis untuk semua peserta
+ *   LUNAS (PAID) di batch itu yang belum punya sertifikat. Tidak peduli hadir/tidak,
+ *   tidak peduli status PASSED — yang penting lunas & batch sudah selesai.
+ * - UNPUBLISH: set certPublished=false → sertifikat baru tidak terbit (yang sudah
+ *   terbit sebelumnya tidak dihapus).
+ */
+export async function toggleBatchCertPublish(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const programId = String(formData.get("programId"));
+  const batch = await prisma.programBatch.findUnique({
+    where: { id },
+    include: { program: { select: { certPublished: true } } },
+  });
+  if (!batch) {
+    revalidatePath(`/webadmin/program/${programId}/batch`);
+    return;
+  }
+
+  const next = !batch.certPublished;
+  await prisma.programBatch.update({ where: { id }, data: { certPublished: next } });
+
+  // Saat publish: issue sertifikat untuk semua peserta LUNAS batch ini yang belum punya.
+  let issued = 0;
+  if (next && batch.program.certPublished) {
+    const regs = await prisma.registration.findMany({
+      where: { batchId: id, status: "PAID", certificate: { is: null } },
+      select: { id: true },
+    });
+    for (const r of regs) {
+      try {
+        await issueCertificate(r.id);
+        issued++;
+      } catch (err) {
+        console.error(`[toggleBatchCertPublish] Gagal issue ${r.id}:`, err);
+      }
+    }
+  }
+
+  revalidatePath(`/webadmin/program/${programId}/batch`);
+  redirect(`/webadmin/program/${programId}/batch?cert=${next ? "published" : "unpublished"}&issued=${issued}`);
+}
+
 export async function deleteBatch(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));

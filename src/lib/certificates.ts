@@ -47,6 +47,15 @@ export async function issueCertificate(registrationId: string): Promise<{ number
   });
   if (!reg) throw new Error("Registrasi tidak ditemukan.");
 
+  // 🔒 GUARD (keputusan owner 8 Agu 2026): sertifikat TIDAK BOLEH terbit sebelum
+  // sesi selesai. Berlaku untuk SEMUA jalur — auto member, webadmin manual,
+  // toggle publish. Mencegah "batch belum mulai tapi sertifikat sudah muncul"
+  // (kejadian 6 Agu: 8 sertifikat B002 terbit sebelum batch 8 Agu).
+  const sessionAt = reg.batch?.scheduleAt ?? reg.program.scheduleAt;
+  if (sessionAt && new Date() < new Date(sessionAt.getTime() + 3 * 60 * 60 * 1000)) {
+    throw new Error("Sertifikat hanya bisa diterbitkan setelah sesi pelatihan selesai.");
+  }
+
   if (reg.certificate) {
     return { number: reg.certificate.number, url: `${baseUrl}/sertifikat/${reg.certificate.number}` };
   }
