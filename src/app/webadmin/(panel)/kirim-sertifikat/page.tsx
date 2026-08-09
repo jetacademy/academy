@@ -10,18 +10,44 @@ export default async function AdminKirimSertifikat({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
+  const step = params.step ?? "awal";
+  const programId = params.programId ?? "";
 
-  const [programs, recentCerts] = await Promise.all([
-    prisma.program.findMany({
-      orderBy: { createdAt: "desc" },
+  // Program terpilih (untuk step desain) — termasuk program offline tersembunyi
+  let selectedProgram = null;
+  if (programId) {
+    selectedProgram = await prisma.program.findUnique({
+      where: { id: programId },
       select: {
         id: true,
-        title: true,
         slug: true,
+        title: true,
+        mentorName: true,
+        materi: true,
         certBgUrl: true,
         certConfig: true,
+        isActive: true,
       },
-    }),
+    });
+  }
+
+  // Daftar program offline (untuk lanjut desain/kirim)
+  const offlinePrograms = await prisma.program.findMany({
+    where: { isActive: false, slug: { startsWith: "offline-" } },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      mentorName: true,
+      materi: true,
+      certBgUrl: true,
+      certConfig: true,
+    },
+  });
+
+  const [recentCerts] = await Promise.all([
     prisma.certificate.findMany({
       orderBy: { issuedAt: "desc" },
       take: 50,
@@ -31,10 +57,37 @@ export default async function AdminKirimSertifikat({
     }),
   ]);
 
+  const activeStep = step === "desain" && selectedProgram ? "desain" : step;
+
   return (
     <>
       <div className="adm-head">
         <h1>Kirim Sertifikat</h1>
+      </div>
+
+      {/* Wizard steps indicator */}
+      <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", marginBottom: "1.2rem" }}>
+        {[
+          { key: "awal", label: "1️⃣ Nama Acara" },
+          { key: "desain", label: "2️⃣ Desain" },
+          { key: "kontak", label: "3️⃣ Kontak" },
+          { key: "kirim", label: "4️⃣ Kirim" },
+        ].map((s) => (
+          <span
+            key={s.key}
+            style={{
+              padding: ".45rem 1rem",
+              borderRadius: 999,
+              fontSize: ".8rem",
+              fontWeight: 700,
+              background: activeStep === s.key ? "var(--purple)" : "var(--surface)",
+              color: activeStep === s.key ? "#fff" : "var(--ink-soft)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            {s.label}
+          </span>
+        ))}
       </div>
 
       {params.ok === "1" && (
@@ -47,8 +100,9 @@ export default async function AdminKirimSertifikat({
       {params.e && (
         <div className="adm-alert err">
           Gagal:{" "}
+          {params.e === "title" && "Nama acara wajib diisi."}
           {params.e === "invalid" && "Data tidak valid. Pastikan kolom terisi benar."}
-          {params.e === "empty" && "Tidak ada peserta di Excel."}
+          {params.e === "empty" && "Tidak ada peserta."}
           {params.e === "program" && "Program tidak ditemukan."}
           {params.e === "hold" && "Penerbitan sertifikat sedang di-hold. Aktifkan dulu di menu Sertifikat."}
           {params.e === "notfound" && "Sertifikat tidak ditemukan."}
@@ -57,7 +111,12 @@ export default async function AdminKirimSertifikat({
         </div>
       )}
 
-      <KirimCertClient programs={programs} recentCerts={recentCerts} />
+      <KirimCertClient
+        activeStep={activeStep}
+        selectedProgram={selectedProgram}
+        offlinePrograms={offlinePrograms}
+        recentCerts={recentCerts}
+      />
     </>
   );
 }

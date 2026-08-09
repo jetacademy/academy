@@ -7,6 +7,48 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { sendWa, msgCertificate, normalizeWa } from "@/lib/wa";
 import { sendEmail, getCertEmailHtml } from "@/lib/email";
 import { isCertIssuanceEnabled, issueCertificate } from "@/lib/certificates";
+import { slugify } from "@/lib/slug";
+
+/**
+ * Buat program "offline" tersembunyi (isActive=false → tidak muncul di katalog publik,
+ * tapi sertifikat + halaman verifikasi tetap jalan). Dipanggil dari Step 1 wizard
+ * Kirim Sertifikat. Return programId via query param.
+ */
+export async function createOfflineProgram(formData: FormData) {
+  await requireAdmin();
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) redirect("/webadmin/kirim-sertifikat?e=title");
+
+  const slugBase = slugify(title) || "offline";
+  let slug = `offline-${slugBase}`;
+  // Pastikan slug unik
+  let n = 1;
+  while (await prisma.program.findUnique({ where: { slug }, select: { id: true } })) {
+    n += 1;
+    slug = `offline-${slugBase}-${n}`;
+  }
+
+  const program = await prisma.program.create({
+    data: {
+      title,
+      slug,
+      type: "WORKSHOP",
+      tagline: "Program offline (tidak dipublikasikan)",
+      description: "Program untuk penerbitan sertifikat offline.",
+      emoji: "🏅",
+      mentorName: "Jetschool Academy",
+      mentorBio: "Program offline.",
+      materi: [],
+      deliverables: [],
+      scheduleAt: new Date(),
+      durationLabel: "Offline",
+      price: 0,
+      isActive: false,
+    },
+  });
+
+  redirect(`/webadmin/kirim-sertifikat?step=desain&programId=${program.id}`);
+}
 
 /**
  * Import peserta offline dari Excel → buat registrasi + terbitkan sertifikat.
