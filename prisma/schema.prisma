@@ -298,6 +298,8 @@ model Certificate {
   registration   Registration @relation(fields: [registrationId], references: [id])
   registrationId String       @unique
   issuedAt       DateTime     @default(now())
+  sentWaAt       DateTime? // waktu terakhir dikirim via WhatsApp (manual, menu Kirim Sertifikat)
+  sentEmailAt    DateTime? // waktu terakhir dikirim via email (manual, menu Kirim Sertifikat)
 
   @@index([issuedAt])
   @@map("certificate")
