@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Script from "next/script";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import WaFloat from "@/components/WaFloat";
@@ -239,6 +240,17 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
+      {/* Facebook Pixel — khusus halaman Vibes Coding */}
+      {isVibesCoding && (
+        <>
+          <Script id="fb-pixel-init" strategy="afterInteractive">
+            {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js'); fbq('init', '918646724014939'); fbq('track', 'PageView');`}
+          </Script>
+          <noscript>
+            <img height="1" width="1" style={{ display: "none" }} src="https://www.facebook.com/tr?id=918646724014939&ev=PageView&noscript=1" />
+          </noscript>
+        </>
+      )}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
