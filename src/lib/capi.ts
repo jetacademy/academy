@@ -7,7 +7,7 @@
  * Docs: https://developers.facebook.com/docs/marketing-api/conversions-api
  */
 
-const PIXEL_ID = "1747505876271184";
+const PIXEL_ID = "2178835656022057";
 const ACCESS_TOKEN = process.env.META_CAPI_ACCESS_TOKEN || "EAAObNu52dZBsBSEz4vD7ZBkfAGJp4ZCWeuBcBoSArsWaZADOuhzxe6XB2Q2FSSzlMj4oodyKVOpf4eouVN7u4f9mw6gHC0lbLyeGo6pRTOsJiCxJef00vERZCDv6UzkO2xR3fmGLN5HFs0EI2FqrMtLKZAr2a9PeVUn0KujfZCfqsOG9ZCwzytnbrFWE5FjV62cSTgZDZD";
 const API_VERSION = "v21.0";
 const ENDPOINT = `https://graph.facebook.com/${API_VERSION}/${PIXEL_ID}/events`;
