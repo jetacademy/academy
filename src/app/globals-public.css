@@ -846,8 +846,10 @@
 }
 .prg-top { display: flex; justify-content: space-between; align-items: center; gap: .8rem; }
 .type-tag {
+  display: inline-block;
   font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
   padding: .5em 1.1em; border-radius: 999px;
+  margin-bottom: 1.2rem;
 }
 .type-webinar { background: var(--purple-soft); color: var(--purple-deep); }
 .type-kelas { background: var(--purple); color: #fff; }

@@ -360,7 +360,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           <section className="section" style={{ background: "var(--chip)", paddingBottom: "3.5rem" }}>
             <div className="container">
               <div className="section-head center">
-                <span className="type-tag type-kelas" style={{ marginBottom: "0.8rem" }}>Masalah &amp; Tantangan</span>
+                <span className="type-tag type-kelas" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Masalah &amp; Tantangan</span>
                 <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Administrasi Mengajar Menyita Waktu Anda?</h2>
                 <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
                   Sebagai pendidik, waktu berharga Anda seharusnya fokus mendampingi siswa, bukan habis di depan laptop untuk administrasi Kurikulum Merdeka.
@@ -400,7 +400,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             <div className="container">
               <div className="hero-card" style={{ alignItems: "center", gap: "3rem" }}>
                 <div style={{ flex: 1 }}>
-                  <span className="type-tag type-webinar" style={{ marginBottom: "0.8rem" }}>Demo Aplikasi</span>
+                  <span className="type-tag type-webinar" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Demo Aplikasi</span>
                   <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)", marginBottom: "1rem" }}>
                     Intip Kemudahan Membuat Modul Ajar RPP
                   </h2>
@@ -442,7 +442,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             <div className="container">
               <div className="bento pmm-validation-box" style={{ background: "var(--white)", border: "1px solid var(--border)", padding: "2.5rem" }}>
                 <div className="section-head" style={{ marginBottom: "2rem" }}>
-                  <span className="type-tag type-kelas" style={{ marginBottom: "0.8rem", background: "rgba(35, 33, 118, 0.08)", color: "var(--purple)" }}>Validasi PMM</span>
+                  <span className="type-tag type-kelas" style={{ marginBottom: "1.2rem", display: "inline-block", background: "rgba(35, 33, 118, 0.08)", color: "var(--purple)" }}>Validasi PMM</span>
                   <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.4rem)", marginBottom: "0.8rem" }}>
                     Sertifikat Pelatihan Nasional 32 JP Resmi &amp; Valid
                   </h2>
@@ -482,7 +482,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           <section className="section" style={{ paddingBottom: "3.5rem" }}>
             <div className="container">
               <div className="section-head center">
-                <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>6 Demo Langsung</span>
+                <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>6 Demo Langsung</span>
                 <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Dalam 2 Jam, Kuasai 6 Metode AI untuk Mengajar</h2>
                 <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
                   Sesi live Zoom interaktif — lihat langsung, praktikkan sendiri, hasil instan.
@@ -522,7 +522,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           <section className="section" style={{ background: "var(--chip)", paddingBottom: "3.5rem" }}>
             <div className="container">
               <div className="section-head center">
-                <span className="type-tag" style={{ marginBottom: "0.8rem", background: "rgba(231, 76, 60, 0.1)", color: "#e74c3c" }}>Rasanya, Kan?</span>
+                <span className="type-tag" style={{ marginBottom: "1.2rem", display: "inline-block", background: "rgba(231, 76, 60, 0.1)", color: "#e74c3c" }}>Rasanya, Kan?</span>
                 <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Pernah Ngerasain Ini?</h2>
                 <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
                   Bukan salah kamu. Bisnis emang gitu. Tapi sekarang ada jalannya.
@@ -581,7 +581,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           <section className="section" style={{ paddingBottom: "3.5rem" }}>
             <div className="container">
               <div className="section-head center">
-                <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Kata Mereka</span>
+                <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Kata Mereka</span>
                 <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Yang Udah Ikut Bilang...</h2>
               </div>
               <div style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
@@ -607,7 +607,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           <section className="section" style={{ paddingBottom: "3.5rem" }}>
             <div className="container">
               <div className="section-head center">
-                <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>6 AI Agent Siap Pakai</span>
+                <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>6 AI Agent Siap Pakai</span>
                 <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Dalam 3 Jam, Praktekkan Langsung 6 AI Agent untuk Bisnis Anda</h2>
                 <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
                   Bukan teori — Anda yang membangun sendiri, dipandu langkah demi langkah. Agent Anda terhubung ke WhatsApp sebelum workshop selesai.
@@ -650,7 +650,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem", background: "var(--chip)" }}>
             <div className="container">
               <div className="section-head center" style={{ marginBottom: "1.5rem" }}>
-                <span className="type-tag type-mentoring" style={{ marginBottom: "0.8rem", background: "rgba(108, 92, 231, 0.08)", color: "var(--purple)" }}>Cocok Untuk Siapa</span>
+                <span className="type-tag type-mentoring" style={{ marginBottom: "1.2rem", display: "inline-block", background: "rgba(108, 92, 231, 0.08)", color: "var(--purple)" }}>Cocok Untuk Siapa</span>
                 <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)" }}>Siapa Aja Bisa. Semua Dapet 6 Agent</h2>
                 <p style={{ maxWidth: "30rem", marginInline: "auto", color: "var(--ink-soft)", fontSize: "0.9rem" }}>
                   Pilih kategori kamu — 6 Agent langsung menyesuaikan. No coding, no ribet.
@@ -771,7 +771,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               <div className="bento" style={{ padding: "2rem", border: "1px solid var(--border)", borderRadius: "var(--r-md)", background: "var(--white)" }}>
                 {/* Hook */}
                 <div className="section-head center" style={{ marginBottom: "1.5rem" }}>
-                  <span className="type-tag type-webinar" style={{ marginBottom: "0.8rem", background: "rgba(155, 89, 182, 0.08)", color: "var(--purple)" }}>Perbandingan Biaya</span>
+                  <span className="type-tag type-webinar" style={{ marginBottom: "1.2rem", display: "inline-block", background: "rgba(155, 89, 182, 0.08)", color: "var(--purple)" }}>Perbandingan Biaya</span>
                   <h2 style={{ fontSize: "clamp(1.3rem, 2.8vw, 1.8rem)", lineHeight: 1.3 }}>
                     Hire 6 Karyawan? Siapkan <span style={{ color: "var(--red, #e74c3c)" }}>Rp29jt per Bulan</span>.
                     <br />
@@ -834,7 +834,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             <div className="container">
               <div className="bento" style={{ padding: "2rem", border: "1px solid var(--border)" }}>
                 <div className="section-head center" style={{ marginBottom: "1.5rem" }}>
-                  <span className="type-tag type-webinar" style={{ marginBottom: "0.8rem", background: "rgba(230, 126, 34, 0.08)", color: "#e67e22" }}>Persiapan</span>
+                  <span className="type-tag type-webinar" style={{ marginBottom: "1.2rem", display: "inline-block", background: "rgba(230, 126, 34, 0.08)", color: "#e67e22" }}>Persiapan</span>
                   <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)" }}>Yang Perlu Disiapkan</h2>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", maxWidth: "40rem", marginInline: "auto" }}>
@@ -858,7 +858,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           <section className="section" style={{ background: "var(--chip)", paddingTop: "3rem", paddingBottom: "3rem" }}>
             <div className="container">
               <div className="section-head center">
-                <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem", background: "rgba(108, 92, 231, 0.08)", color: "var(--purple)" }}>Bayangkan Jika</span>
+                <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block", background: "rgba(108, 92, 231, 0.08)", color: "var(--purple)" }}>Bayangkan Jika</span>
                 <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Bisnis Anda Tanpa vs Dengan 6 AI Agent</h2>
                 <p style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
                   Perubahan kecil — dampak besar. Lihat sendiri perbedaan sebelum dan sesudah.
@@ -908,7 +908,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             <div className="container">
               <div className="bento" style={{ padding: "2.5rem", border: "1px solid var(--border)", background: "var(--white)", borderRadius: "var(--r-md)" }}>
                 <div className="section-head center" style={{ marginBottom: "2rem" }}>
-                  <span className="type-tag type-kelas" style={{ marginBottom: "0.8rem", background: "rgba(35, 33, 118, 0.08)", color: "var(--purple)" }}>Gelombang Global</span>
+                  <span className="type-tag type-kelas" style={{ marginBottom: "1.2rem", display: "inline-block", background: "rgba(35, 33, 118, 0.08)", color: "var(--purple)" }}>Gelombang Global</span>
                   <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2.2rem)" }}>China Menargetkan 70% Perusahaan Gunakan AI Agent pada 2027</h2>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>

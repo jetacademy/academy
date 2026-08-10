@@ -13,7 +13,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
       <section className="section" style={{ background: "var(--chip)", paddingBottom: "3.5rem" }}>
         <div className="container">
           <div className="section-head center" style={{ marginBottom: "2.5rem" }}>
-            <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Pernah Ngerasain Ini?</span>
+            <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Pernah Ngerasain Ini?</span>
             <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Pengen Bikin Aplikasi, Tapi Gak Bisa Coding?</h2>
           </div>
           <div className="pain-points-grid">
@@ -41,7 +41,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
       <section className="section" style={{ paddingBottom: "3.5rem" }}>
         <div className="container">
           <div className="section-head center" style={{ marginBottom: "2.5rem" }}>
-            <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Workshop Ini Buat Kamu, Kalau...</span>
+            <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Workshop Ini Buat Kamu, Kalau...</span>
             <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)" }}>Gak Perlu Jago Teknologi</h2>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
@@ -68,7 +68,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
         <div className="container">
           <div className="bento" style={{ padding: "2.5rem", border: "1px solid var(--border)", background: "var(--white)", borderRadius: "var(--r-md)" }}>
             <div className="section-head center" style={{ marginBottom: "2rem" }}>
-              <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Vibe Coding</span>
+              <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Vibe Coding</span>
               <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>Kamu yang Ngomong, AI yang Bikin</h2>
               <p className="lead" style={{ maxWidth: "38rem", marginInline: "auto", color: "var(--ink-soft)" }}>
                 Kamu jelasin maunya ke AI (Antigravity), AI yang nulis kodenya, kamu yang arahin.
@@ -131,7 +131,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
             <div className="section-head center" style={{ marginBottom: "1.8rem" }}>
               <span
                 className="type-tag type-workshop"
-                style={{ marginBottom: "0.8rem", background: "var(--purple)", color: "#fff" }}
+                style={{ marginBottom: "1.2rem", display: "inline-block", background: "var(--purple)", color: "#fff" }}
               >
                 🛠️ Hasil Nyata
               </span>
@@ -209,7 +209,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
       <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
         <div className="container">
           <div className="section-head center" style={{ marginBottom: "2rem" }}>
-            <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Alur Workshop</span>
+            <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Alur Workshop</span>
             <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>2 Jam Padat Praktik</h2>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
@@ -236,7 +236,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
         <div className="container">
           <div className="bento" style={{ padding: "2.5rem", border: "1px solid var(--border)", background: "var(--white)", borderRadius: "var(--r-md)" }}>
             <div className="section-head center" style={{ marginBottom: "2rem" }}>
-              <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Hitung-Hitungannya</span>
+              <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Hitung-Hitungannya</span>
               <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>Sekali Bayar, Bisa Bikin Sendiri</h2>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem" }}>
@@ -262,7 +262,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
       <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
         <div className="container">
           <div className="section-head center" style={{ marginBottom: "2rem" }}>
-            <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Sebelum vs Sesudah</span>
+            <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Sebelum vs Sesudah</span>
             <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>Bedanya Jauh Banget</h2>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
@@ -304,7 +304,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
       <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
         <div className="container">
           <div className="section-head center" style={{ marginBottom: "2.5rem" }}>
-            <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Bonus: Deploy & Publish</span>
+            <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Bonus: Deploy & Publish</span>
             <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>Dari 0 Sampai Online — Dibimbing Publish Beneran</h2>
             <p className="lead" style={{ maxWidth: "38rem", marginInline: "auto", color: "var(--ink-soft)" }}>
               Banyak yang bikin aplikasi, tapi berhenti di laptop sendiri. Di workshop ini kamu
@@ -342,7 +342,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
         <div className="container">
           <div className="bento" style={{ padding: "2.5rem", border: "1px solid var(--border)", background: "var(--white)", borderRadius: "var(--r-md)" }}>
             <div className="section-head center" style={{ marginBottom: "2rem" }}>
-              <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem" }}>Bukan Cuma 4 Produk</span>
+              <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Bukan Cuma 4 Produk</span>
               <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>Sekali Belajar, Dipakai Selamanya</h2>
               <p className="lead" style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
                 4 produk itu cuma hasil sampingan. Yang kamu bawa pulang beneran adalah skill:
