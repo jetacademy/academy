@@ -320,6 +320,113 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
         </div>
       </section>
 
+      {/* ── TESTIMONIAL: Bukti Nyata Alumni ── */}
+      <section
+        className="section"
+        style={{
+          paddingTop: "4rem",
+          paddingBottom: "4rem",
+          background: "var(--chip)",
+          borderTop: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border)",
+        }}
+      >
+        <div className="container">
+          <div className="section-head center" style={{ marginBottom: "2.2rem" }}>
+            <span
+              className="type-tag type-workshop"
+              style={{ marginBottom: "0.8rem", background: "#c8465e", color: "#fff" }}
+            >
+              💬 Kata Mereka
+            </span>
+            <h2 style={{ fontSize: "clamp(1.7rem, 3.5vw, 2.5rem)", marginBottom: "0.6rem" }}>
+              Alumni yang Sudah <span style={{ color: "#c8465e" }}>Praktik Beneran</span>
+            </h2>
+            <p className="lead" style={{ maxWidth: "34rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+              Mereka bukan cuma belajar — langsung bikin dan pakai hasilnya di dunia nyata.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+              gap: "1rem",
+              maxWidth: "64rem",
+              marginInline: "auto",
+            }}
+          >
+            {[
+              {
+                quote:
+                  "Sejak belajar vibe coding dari Jetschool saya menjadi freelancer, banyak website dan aplikasi yang sudah menghasilkan uang untuk saya.",
+                name: "Naufal",
+                role: "Freelancer",
+              },
+              {
+                quote:
+                  "Setelah ikut pelatihan vibe coding saya mengembangkan aplikasi keuangan di kantor saya sendiri.",
+                name: "Aura",
+                role: "Karyawan",
+              },
+              {
+                quote:
+                  "Saya berhasil mengembangkan game 3D untuk ditayangkan di TV Merah Putih di sekolah saya.",
+                name: "Kholid",
+                role: "Mahasiswa UNJ",
+              },
+              {
+                quote:
+                  "Setelah ikut pelatihan ini saya membuat aplikasi KPI untuk internal kantor.",
+                name: "Tama",
+                role: "ASN",
+              },
+            ].map((t, i) => (
+              <div
+                key={i}
+                style={{
+                  background: "var(--white)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--r-md)",
+                  padding: "1.5rem 1.4rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                  boxShadow: "0 12px 28px -18px rgba(0,0,0,0.12)",
+                }}
+              >
+                <span style={{ fontSize: "1.6rem", lineHeight: 1, color: "#c8465e" }}>“</span>
+                <p style={{ fontSize: ".88rem", lineHeight: 1.65, color: "var(--ink-soft)", margin: 0, flex: 1 }}>
+                  {t.quote}
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: ".7rem", borderTop: "1px solid var(--border)", paddingTop: ".9rem" }}>
+                  <div
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: 999,
+                      background: "linear-gradient(135deg, #5B55EA, #2fd4c4)",
+                      color: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 800,
+                      fontSize: ".95rem",
+                    }}
+                  >
+                    {t.name.charAt(0)}
+                  </div>
+                  <div>
+                    <b style={{ fontSize: ".9rem", display: "block" }}>{t.name}</b>
+                    <span style={{ fontSize: ".78rem", color: "var(--ink-faint)" }}>{t.role}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── ALUR WORKSHOP ── */}
       <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
         <div className="container">
