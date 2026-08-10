@@ -2165,3 +2165,13 @@
   .cdc-digit-wrap { padding: .5rem .6rem; min-width: 3.2rem; }
   .cdc-sep { font-size: 1.2rem; }
 }
+
+/* ============================================================
+   VIBES CODING — Demo Cards (hover lift, CSS-only)
+   ============================================================ */
+.vibes-demo-card:hover {
+  transform: translateY(-6px);
+}
+.vibes-demo-card:hover {
+  box-shadow: 0 32px 64px -24px rgba(124, 92, 255, 0.5);
+}

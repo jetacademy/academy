@@ -158,6 +158,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
               href="https://demo.jetschool.id/games/tetris-3d"
               target="_blank"
               rel="noreferrer"
+              className="vibes-demo-card"
               style={{
                 display: "block",
                 textDecoration: "none",
@@ -169,8 +170,6 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
                 boxShadow: "0 24px 48px -24px rgba(124, 92, 255, 0.35)",
                 transition: "transform .25s ease, box-shadow .25s ease",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = "0 32px 64px -24px rgba(124, 92, 255, 0.5)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 24px 48px -24px rgba(124, 92, 255, 0.35)"; }}
             >
               <div
                 style={{
@@ -220,6 +219,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
               href="https://demo.jetschool.id/apps/keuangan"
               target="_blank"
               rel="noreferrer"
+              className="vibes-demo-card"
               style={{
                 display: "block",
                 textDecoration: "none",
@@ -231,8 +231,6 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
                 boxShadow: "0 24px 48px -24px rgba(255, 138, 122, 0.35)",
                 transition: "transform .25s ease, box-shadow .25s ease",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = "0 32px 64px -24px rgba(255, 138, 122, 0.5)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 24px 48px -24px rgba(255, 138, 122, 0.35)"; }}
             >
               <div
                 style={{
