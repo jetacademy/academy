@@ -114,6 +114,177 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
         </div>
       </section>
 
+      {/* ── DEMO LIVE: Hasil Nyata Bisa Dicoba — SANGAT MENONJOL ── */}
+      <section
+        className="section"
+        style={{
+          paddingTop: "4.5rem",
+          paddingBottom: "4.5rem",
+          background:
+            "radial-gradient(1200px 500px at 50% -100px, rgba(124, 92, 255, 0.18), transparent 60%), var(--white)",
+          borderTop: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border)",
+        }}
+      >
+        <div className="container">
+          <div className="section-head center" style={{ marginBottom: "2.5rem" }}>
+            <span
+              className="type-tag type-workshop"
+              style={{ marginBottom: "0.8rem", background: "var(--purple)", color: "#fff" }}
+            >
+              🕹️ Langsung Dicoba — Live Demo
+            </span>
+            <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)", marginBottom: "0.6rem" }}>
+              Ini Hasilnya. <span style={{ color: "var(--purple)" }}>Coba Sekarang.</span>
+            </h2>
+            <p className="lead" style={{ maxWidth: "38rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+              Dua produk yang kamu akan buat di workshop Vibes Coding —{" "}
+              <b>game 3D &amp; aplikasi keuangan</b> — sudah jalan beneran dan bisa kamu mainkan sekarang.
+              Gak perlu nebak, langsung rasakan.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gap: "1.6rem",
+              maxWidth: "56rem",
+              marginInline: "auto",
+            }}
+          >
+            {/* Card 1: Game 3D */}
+            <a
+              href="https://demo.jetschool.id/games/tetris-3d"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "block",
+                textDecoration: "none",
+                color: "inherit",
+                position: "relative",
+                borderRadius: "var(--r-md)",
+                overflow: "hidden",
+                border: "1px solid rgba(124, 92, 255, 0.25)",
+                boxShadow: "0 24px 48px -24px rgba(124, 92, 255, 0.35)",
+                transition: "transform .25s ease, box-shadow .25s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = "0 32px 64px -24px rgba(124, 92, 255, 0.5)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 24px 48px -24px rgba(124, 92, 255, 0.35)"; }}
+            >
+              <div
+                style={{
+                  height: "220px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "linear-gradient(135deg, #0a0620 0%, #1a1140 55%, #2fd4c4 160%)",
+                  fontSize: "4.5rem",
+                }}
+              >
+                🪐
+              </div>
+              <div style={{ padding: "1.5rem 1.6rem 1.8rem", background: "var(--white)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.5rem" }}>
+                  <span style={{ background: "rgba(47, 212, 196, 0.15)", color: "#0f7d8c", borderRadius: 999, padding: ".2rem .7rem", fontSize: ".72rem", fontWeight: 700 }}>
+                    🎮 GAME 3D
+                  </span>
+                  <span style={{ background: "rgba(124, 92, 255, 0.12)", color: "var(--purple)", borderRadius: 999, padding: ".2rem .7rem", fontSize: ".72rem", fontWeight: 700 }}>
+                    ★ MINDBLOWING
+                  </span>
+                </div>
+                <h3 style={{ margin: "0 0 .4rem", fontSize: "1.4rem", fontWeight: 800 }}>Tetris 3D — Space Odyssey</h3>
+                <p style={{ fontSize: ".85rem", color: "var(--ink-soft)", margin: "0 0 1.2rem", lineHeight: 1.6 }}>
+                  Galaksi berputar, blok kristal neon, ledakan partikel tiap baris bersih. Game 3D beneran yang kamu bangun dari nol.
+                </p>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: ".4rem",
+                    background: "linear-gradient(135deg, #2fd4c4, #0f7d8c)",
+                    color: "#fff",
+                    fontWeight: 800,
+                    padding: ".7rem 1.4rem",
+                    borderRadius: 999,
+                    fontSize: ".9rem",
+                  }}
+                >
+                  🕹️ Mainkan Sekarang ↗
+                </span>
+              </div>
+            </a>
+
+            {/* Card 2: Aplikasi Keuangan */}
+            <a
+              href="https://demo.jetschool.id/apps/keuangan"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "block",
+                textDecoration: "none",
+                color: "inherit",
+                position: "relative",
+                borderRadius: "var(--r-md)",
+                overflow: "hidden",
+                border: "1px solid rgba(255, 138, 122, 0.25)",
+                boxShadow: "0 24px 48px -24px rgba(255, 138, 122, 0.35)",
+                transition: "transform .25s ease, box-shadow .25s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = "0 32px 64px -24px rgba(255, 138, 122, 0.5)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 24px 48px -24px rgba(255, 138, 122, 0.35)"; }}
+            >
+              <div
+                style={{
+                  height: "220px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "linear-gradient(135deg, #2a0f14 0%, #4a1622 55%, #ff8a7a 160%)",
+                  fontSize: "4.5rem",
+                }}
+              >
+                📊
+              </div>
+              <div style={{ padding: "1.5rem 1.6rem 1.8rem", background: "var(--white)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.5rem" }}>
+                  <span style={{ background: "rgba(255, 138, 122, 0.15)", color: "#c8465e", borderRadius: 999, padding: ".2rem .7rem", fontSize: ".72rem", fontWeight: 700 }}>
+                    💰 APP KEUANGAN
+                  </span>
+                  <span style={{ background: "rgba(47, 212, 196, 0.15)", color: "#0f7d8c", borderRadius: 999, padding: ".2rem .7rem", fontSize: ".72rem", fontWeight: 700 }}>
+                    LENGKAP
+                  </span>
+                </div>
+                <h3 style={{ margin: "0 0 .4rem", fontSize: "1.4rem", fontWeight: 800 }}>Aplikasi Keuangan — KasKu</h3>
+                <p style={{ fontSize: ".85rem", color: "var(--ink-soft)", margin: "0 0 1.2rem", lineHeight: 1.6 }}>
+                  Kelola transaksi, invoice, laporan laba rugi, sampai pajak PPN/PPh. Lengkap kayak aplikasi bisnis beneran.
+                </p>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: ".4rem",
+                    background: "linear-gradient(135deg, #ff8a7a, #c8465e)",
+                    color: "#fff",
+                    fontWeight: 800,
+                    padding: ".7rem 1.4rem",
+                    borderRadius: 999,
+                    fontSize: ".9rem",
+                  }}
+                >
+                  💻 Coba Sekarang ↗
+                </span>
+              </div>
+            </a>
+          </div>
+
+          <p style={{ textAlign: "center", fontSize: ".82rem", color: "var(--ink-faint)", marginTop: "2.2rem" }}>
+            Dibangun dengan Next.js + React + Three.js — stack yang sama persis yang kamu pakai di workshop.{" "}
+            <b style={{ color: "var(--purple)" }}>Hasil ini 100% bikinan peserta dengan bimbingan mentor.</b>
+          </p>
+        </div>
+      </section>
+
       {/* ── ALUR WORKSHOP ── */}
       <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
         <div className="container">
