@@ -205,6 +205,32 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
         </div>
       </section>
 
+      {/* ── ALUR WORKSHOP ── */}
+      <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
+        <div className="container">
+          <div className="section-head center" style={{ marginBottom: "2rem" }}>
+            <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Alur Workshop</span>
+            <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>2,5 Jam Padat Praktik</h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
+            {[
+              { jam: "13.00–13.15", t: "Kenalan Sama Vibe Coding", d: "Apa itu vibe coding & Antigravity (AI IDE). Setup akun, siap-siap praktik." },
+              { jam: "13.15–13.45", t: "Praktik 1: Game 3D #1", d: "Bikin game 3D pertama — jadi & bisa langsung dimainkan." },
+              { jam: "13.45–14.15", t: "Praktik 2: Game 3D #2", d: "Variasi seru — kamu lihat polanya, makin pede bikin sendiri." },
+              { jam: "14.15–14.45", t: "Praktik 3: Aplikasi Keuangan", d: "Catat pemasukan/pengeluaran — aplikasi beneran yang bisa kamu pakai." },
+              { jam: "14.45–15.15", t: "Praktik 4: Website", d: "Company profile / UMKM — tinggal isi konten, langsung online." },
+              { jam: "15.15–15.30", t: "Deploy & Next Steps", d: "Cara publish aplikasimu & lanjut pakai skill ini ke depan." },
+            ].map((x, i) => (
+              <div key={i} className="bento" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <span style={{ fontSize: "0.75rem", fontWeight: 900, color: "var(--purple)", letterSpacing: "0.04em" }}>{x.jam}</span>
+                <b style={{ fontSize: "1.02rem" }}>{x.t}</b>
+                <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", lineHeight: 1.55, margin: 0 }}>{x.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── POTENSI PENGHASILAN: Skill yang Bisa Jadi Cuan ── */}
       <section
         className="section"
@@ -421,32 +447,6 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
                     <span style={{ fontSize: ".78rem", color: "var(--ink-faint)" }}>{t.role}</span>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── ALUR WORKSHOP ── */}
-      <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
-        <div className="container">
-          <div className="section-head center" style={{ marginBottom: "2rem" }}>
-            <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Alur Workshop</span>
-            <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>2,5 Jam Padat Praktik</h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
-            {[
-              { jam: "13.00–13.15", t: "Kenalan Sama Vibe Coding", d: "Apa itu vibe coding & Antigravity (AI IDE). Setup akun, siap-siap praktik." },
-              { jam: "13.15–13.45", t: "Praktik 1: Game 3D #1", d: "Bikin game 3D pertama — jadi & bisa langsung dimainkan." },
-              { jam: "13.45–14.15", t: "Praktik 2: Game 3D #2", d: "Variasi seru — kamu lihat polanya, makin pede bikin sendiri." },
-              { jam: "14.15–14.45", t: "Praktik 3: Aplikasi Keuangan", d: "Catat pemasukan/pengeluaran — aplikasi beneran yang bisa kamu pakai." },
-              { jam: "14.45–15.15", t: "Praktik 4: Website", d: "Company profile / UMKM — tinggal isi konten, langsung online." },
-              { jam: "15.15–15.30", t: "Deploy & Next Steps", d: "Cara publish aplikasimu & lanjut pakai skill ini ke depan." },
-            ].map((x, i) => (
-              <div key={i} className="bento" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: 900, color: "var(--purple)", letterSpacing: "0.04em" }}>{x.jam}</span>
-                <b style={{ fontSize: "1.02rem" }}>{x.t}</b>
-                <p style={{ fontSize: "0.85rem", color: "var(--ink-soft)", lineHeight: 1.55, margin: 0 }}>{x.d}</p>
               </div>
             ))}
           </div>

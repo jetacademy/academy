@@ -80,7 +80,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   const displayHari = nextBatch ? formatHari(nextBatch.scheduleAt) : formatHari(program.scheduleAt);
   const displayJam = nextBatch ? formatJam(nextBatch.scheduleAt) : formatJam(program.scheduleAt);
   const priceLabel = isFree ? "GRATIS" : rupiah(program.price);
-  const ebCtaNavLabel = isZeroHuman ? "Rp 225.000 — Sekali" : (isFree ? "Daftar Gratis" : "Daftar");
+  const ebCtaNavLabel = isZeroHuman ? "Rp 225.000 — Sekali" : isVibesCoding ? "Rp 365.000 — 4 Produk" : (isFree ? "Daftar Gratis" : "Daftar");
 
   const faqItems = isAiForTeachers
     ? [
@@ -329,7 +329,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             )}
             <div className="prg-cta-col">
               <a href="#daftar" className="btn btn-purple btn-lg btn-block" style={{ width: "100%", textAlign: "center" }}>
-                {isZeroHuman ? `Rp 225.000 — Sekali` : (isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`)}
+                {isZeroHuman ? `Rp 225.000 — Sekali` : isVibesCoding ? "Rp 365.000 — Bikin 4 Produk" : (isFree ? "Daftar Gratis Sekarang" : `Daftar — ${priceLabel}`)}
               </a>
               {!isFree && program.priceOld && (
                 <span className="prg-hero-strike" style={{ color: "var(--ink-soft)", textDecoration: "line-through", display: "block", textAlign: "center", marginTop: "0.2rem" }}>
@@ -1057,10 +1057,14 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
             <div className="hero-card" style={{ alignItems: "center" }}>
               <div>
                 <h2 style={{ fontSize: "clamp(1.9rem, 4.5vw, 3rem)", marginBottom: ".8rem" }}>
-                  {isZeroHuman ? "Rp 225.000 — Sekali" : "Amankan kursi Anda."}
+                  {isZeroHuman ? "Rp 225.000 — Sekali" : isVibesCoding ? "Rp 365.000 — Bikin 4 Produk Jadi" : "Amankan kursi Anda."}
                 </h2>
                 <p style={{ fontWeight: 700, opacity: .85 }}>
-                  {isZeroHuman ? "Rp 225.000 diskon dari Rp 490.000. Isi data di bawah, konfirmasi melalui WhatsApp." : "Pendaftaran satu menit. Akses instan di web &amp; dikirim via WhatsApp."}
+                  {isZeroHuman
+                    ? "Rp 225.000 diskon dari Rp 490.000. Isi data di bawah, konfirmasi melalui WhatsApp."
+                    : isVibesCoding
+                      ? "Harga spesial — ~~Rp 860.000~~. Isi data di bawah, konfirmasi melalui WhatsApp."
+                      : "Pendaftaran satu menit. Akses instan di web &amp; dikirim via WhatsApp."}
                 </p>
               </div>
               <RegisterForm
@@ -1138,7 +1142,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
       {/* Bar CTA lengket di mobile */}
       <div className="sticky-cta">
         <div><b>{priceLabel}</b><small>{displayHari}, {formatJam(displayScheduleAt)}</small></div>
-        <a href="#daftar" className="btn btn-lime">{isZeroHuman ? "Rp 225.000 — Sekali" : (isFree ? "Daftar Gratis" : "Daftar")}</a>
+        <a href="#daftar" className="btn btn-lime">{isZeroHuman ? "Rp 225.000 — Sekali" : isVibesCoding ? "Rp 365.000 — Bikin 4 Produk" : (isFree ? "Daftar Gratis" : "Daftar")}</a>
       </div>
 
       <WaFloat text={`Halo, saya ingin bertanya mengenai program ${program.title}`} />
