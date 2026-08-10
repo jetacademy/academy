@@ -231,6 +231,51 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
         </div>
       </section>
 
+      {/* ── KENAPA CEPAT: Prompt & Workflow yang Benar ── */}
+      <section
+        className="section"
+        style={{
+          paddingTop: "3rem",
+          paddingBottom: "3rem",
+          background: "var(--white)",
+          borderBottom: "1px solid var(--border)",
+        }}
+      >
+        <div className="container">
+          <div className="bento" style={{ padding: "clamp(1.6rem, 4vw, 2.6rem)", border: "1px solid var(--border)", background: "var(--white)", borderRadius: "var(--r-md)" }}>
+            <div className="section-head center" style={{ marginBottom: "1.4rem" }}>
+              <span className="type-tag type-workshop" style={{ marginBottom: "1rem", display: "inline-block", background: "var(--purple)", color: "#fff" }}>
+                ⚡ Kok Cuma 2,5 Jam?
+              </span>
+              <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)", marginBottom: "0.5rem" }}>
+                Bukan Kamu yang Nulis Kode.{" "}
+                <span style={{ color: "var(--purple)" }}>AI yang Bikin.</span>
+              </h2>
+              <p className="lead" style={{ maxWidth: "36rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+                Butuh 3–6 bulan belajar coding? Nggak. Kamu cukup arahin AI dengan{" "}
+                <b>prompt yang benar</b> & ikutin <b>workflow langkah demi langkah</b> yang
+                sudah disiapkan — AI yang nulis semua kodenya.
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem", maxWidth: "52rem", marginInline: "auto" }}>
+              {[
+                { icon: "🎯", t: "Prompt yang Benar", d: "Kamu bilang mau bikin apa — AI paham & langsung kerjain." },
+                { icon: "🛠️", t: "Workflow Siap Pakai", d: "Langkah demi langkah yang udah disiapin — tinggal ikutin." },
+                { icon: "🤖", t: "Antigravity (AI IDE)", d: "AI yang nulis kode, kamu yang desain & arahin." },
+                { icon: "⚡", t: "4 Produk Jadi ±2,5 Jam", d: "Bukan teori — hasil nyata yang bisa langsung dipakai." },
+              ].map((x, i) => (
+                <div key={i} style={{ textAlign: "center", padding: "1.4rem 1rem", background: "var(--chip)", borderRadius: "var(--r-md)" }}>
+                  <span style={{ fontSize: "1.8rem", display: "block" }}>{x.icon}</span>
+                  <b style={{ display: "block", marginTop: "0.5rem", fontSize: "0.95rem" }}>{x.t}</b>
+                  <p style={{ fontSize: "0.8rem", color: "var(--ink-soft)", marginTop: "0.3rem", lineHeight: 1.55 }}>{x.d}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── POTENSI PENGHASILAN: Skill yang Bisa Jadi Cuan ── */}
       <section
         className="section"
@@ -447,6 +492,70 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
                     <span style={{ fontSize: ".78rem", color: "var(--ink-faint)" }}>{t.role}</span>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── VALUE STACK: Yang Dibawa Pulang ── */}
+      <section
+        className="section"
+        style={{
+          paddingTop: "3.5rem",
+          paddingBottom: "3.5rem",
+          background:
+            "radial-gradient(900px 400px at 50% -80px, rgba(124, 92, 255, 0.12), transparent 60%), var(--white)",
+          borderTop: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border)",
+        }}
+      >
+        <div className="container">
+          <div className="section-head center" style={{ marginBottom: "2rem" }}>
+            <span className="type-tag type-workshop" style={{ marginBottom: "0.8rem", background: "var(--purple)", color: "#fff" }}>
+              🎁 Yang Dibawa Pulang
+            </span>
+            <h2 style={{ fontSize: "clamp(1.7rem, 3.5vw, 2.5rem)", marginBottom: "0.6rem" }}>
+              4 Produk Jadi + <span style={{ color: "var(--purple)" }}>4 Fasilitas</span>
+            </h2>
+            <p className="lead" style={{ maxWidth: "34rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+              Cuma ±2,5 jam — tapi yang kamu bawa pulang lengkap banget.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+              gap: "1rem",
+              maxWidth: "60rem",
+              marginInline: "auto",
+            }}
+          >
+            {[
+              { icon: "🎓", t: "e-Sertifikat", d: "Lunas = dapat. Dikirim resmi setelah batch selesai." },
+              { icon: "📹", t: "Rekaman Workshop", d: "Bisa diputar ulang — ketinggalan dikit tinggal mundurin." },
+              { icon: "📘", t: "Buku Panduan", d: "Langkah-langkah lengkap, pegangan setelah workshop." },
+              { icon: "👥", t: "Grup Alumni", d: "Diskusi & tanya-jawab bareng peserta lain." },
+            ].map((x, i) => (
+              <div
+                key={i}
+                style={{
+                  background: "var(--white)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--r-md)",
+                  padding: "1.5rem 1.4rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: ".5rem",
+                  textAlign: "center",
+                  boxShadow: "0 12px 28px -18px rgba(0,0,0,0.15)",
+                }}
+              >
+                <span style={{ fontSize: "2rem" }}>{x.icon}</span>
+                <b style={{ fontSize: "1.05rem" }}>{x.t}</b>
+                <p style={{ fontSize: ".82rem", color: "var(--ink-soft)", lineHeight: 1.55, margin: 0 }}>{x.d}</p>
               </div>
             ))}
           </div>
