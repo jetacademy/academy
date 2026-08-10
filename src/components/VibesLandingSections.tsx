@@ -51,7 +51,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
               { icon: "🎓", t: "Mahasiswa / Siswa", d: "Mau portofolio bikin aplikasi & game buat lamaran." },
               { icon: "🧑‍💻", t: "Penasaran AI", d: "Denger vibe coding, bingung mulai dari mana." },
               { icon: "🎮", t: "Gamer", d: "Mau bisa bikin game sendiri buat seru-seruan." },
-              { icon: "✨", t: "Praktis & Cepat", d: "Gak mau 6 bulan belajar coding — 2 jam langsung bisa." },
+              { icon: "✨", t: "Praktis & Cepat", d: "Gak mau 6 bulan belajar coding — 2,5 jam langsung bisa." },
             ].map((x, i) => (
               <div key={i} className="bento" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <span style={{ fontSize: "2rem" }}>{x.icon}</span>
@@ -432,7 +432,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
         <div className="container">
           <div className="section-head center" style={{ marginBottom: "2rem" }}>
             <span className="type-tag type-workshop" style={{ marginBottom: "1.2rem", display: "inline-block" }}>Alur Workshop</span>
-            <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>2 Jam Padat Praktik</h2>
+            <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>2,5 Jam Padat Praktik</h2>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
             {[
@@ -466,7 +466,7 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
                 { icon: "💸", t: "Bayar developer", v: "Rp5–20 juta", d: "sekali, gak ngerti dia ngapain" },
                 { icon: "📉", t: "Langganan SaaS", v: "Rp200rb–2jt/bln", d: "terus bayar, fitur terbatas" },
                 { icon: "📚", t: "Kursus coding", v: "Rp1–5jt, 3–6 bulan", d: "belum tentu jadi" },
-                { icon: "✨", t: "Vibes Coding", v: "Rp365rb", d: "2 jam, langsung bisa" },
+                { icon: "✨", t: "Vibes Coding", v: "Rp365rb", d: "2,5 jam, langsung bisa" },
               ].map((x, i) => (
                 <div key={i} style={{ textAlign: "center", padding: "1.5rem 1rem", background: "var(--chip)", borderRadius: "var(--r-md)", border: x.t === "Vibes Coding" ? "2px solid #2ecc71" : "none" }}>
                   <span style={{ fontSize: "1.8rem", display: "block" }}>{x.icon}</span>

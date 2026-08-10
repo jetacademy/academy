@@ -108,7 +108,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
           a: "Bisa — justru itu targetnya 😄 Kamu gak nulis kode manual. Kamu ngomong ke AI (Antigravity), AI yang bikin kodenya, kamu yang arahin. Tinggal bisa pakai laptop & internet, kamu sudah bisa ikut.",
         },
         {
-          q: "2 jam doang, beneran langsung bisa bikin?",
+          q: "2,5 jam doang, beneran langsung bisa bikin?",
           a: "Beneran. Bukan teori, bukan nonton demo doang — kamu praktik langsung bareng instruktur, step by step. Di akhir sesi kamu bawa pulang 4 produk jadi: 2 game 3D, aplikasi keuangan, dan website.",
         },
         {
@@ -343,7 +343,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                 </div>
                 <div className="cta-meta-item">
                   <Icon name="award" size={14} />
-                  <span>{isAiForTeachers ? "Live Zoom 2 jam · 6 Demo Langsung" : isZeroHuman ? "Live Zoom 3 jam · 6 AI Agent" : isVibesCoding ? "Live Zoom 2 jam · 4 Produk Jadi" : "Komunitas + Rekaman + Sertifikat"}</span>
+                  <span>{isAiForTeachers ? "Live Zoom 2 jam · 6 Demo Langsung" : isZeroHuman ? "Live Zoom 3 jam · 6 AI Agent" : isVibesCoding ? "Live Zoom 2,5 jam · 4 Produk Jadi" : "Komunitas + Rekaman + Sertifikat"}</span>
                 </div>
               </div>
               <OfferTimer target={displayScheduleAt.toISOString()} note="Sesi dimulai dalam" />
