@@ -5,6 +5,7 @@ import { sendWa, msgPaid, msgAccess } from "@/lib/wa";
 import { formatJadwal } from "@/lib/format";
 import { sendEmail, getPaidEmailHtml, getInvoiceExpiredEmailHtml, getInvoiceFailedEmailHtml } from "@/lib/email";
 import { recordAffiliateConversion, settleWithdrawalConversions, notifyWithdrawalResult } from "@/lib/affiliate";
+import { sendCapiEvent, buildPurchaseEvent } from "@/lib/capi";
 
 /**
  * POST /api/webhooks/xendit — dipanggil server Xendit untuk 2 jenis event yang beda bentuk payload:
@@ -104,7 +105,16 @@ export async function POST(req: Request) {
 
         await recordAffiliateConversion(payment.id);
 
+        // Kirim Purchase event ke Meta Conversions API (server-side)
         const reg = payment.registration;
+        sendCapiEvent(buildPurchaseEvent(
+          reg.email,
+          reg.whatsapp,
+          payment.amount,
+          reg.program.title,
+          payment.id,
+        )).catch((err) => console.error("[CAPI] Gagal kirim event:", err));
+
         const memberUrl = `${baseUrl}/member`;
         const scheduleStr = reg.batch ? formatJadwal(reg.batch.scheduleAt) : formatJadwal(reg.program.scheduleAt);
         const zoomLinkVal = reg.batch ? (reg.batch.zoomLink || null) : reg.program.zoomLink;

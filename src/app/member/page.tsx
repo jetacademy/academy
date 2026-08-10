@@ -12,6 +12,7 @@ import MemberPayCertButton from "@/components/MemberPayCertButton";
 import BonusCountdown from "@/components/BonusCountdown";
 import FreeWebinarClaimSection from "@/components/FreeWebinarClaimSection";
 import EditProfileModal from "@/components/EditProfileModal";
+import PurchaseTracker from "@/components/PurchaseTracker";
 import { rupiah, formatJadwal } from "@/lib/format";
 import { issueCertificate } from "@/lib/certificates";
 import { Registration, Program, Payment, Certificate, ProgramBatch } from "@prisma/client";
@@ -468,6 +469,15 @@ export default async function MemberDashboardPage() {
           )}
         </div>
       </section>
+
+      <PurchaseTracker
+        registrations={registrations.map((r) => ({
+          payment: r.payment
+            ? { id: r.payment.id, status: r.payment.status, amount: r.payment.amount }
+            : null,
+          program: { title: r.program.title },
+        }))}
+      />
 
       <Footer />
       <WaFloat />
