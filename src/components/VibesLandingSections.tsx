@@ -205,6 +205,121 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
         </div>
       </section>
 
+      {/* ── POTENSI PENGHASILAN: Skill yang Bisa Jadi Cuan ── */}
+      <section
+        className="section"
+        style={{
+          paddingTop: "4rem",
+          paddingBottom: "4rem",
+          background:
+            "radial-gradient(900px 400px at 50% -80px, rgba(47, 212, 196, 0.12), transparent 60%), var(--white)",
+          borderTop: "1px solid var(--border)",
+          borderBottom: "1px solid var(--border)",
+        }}
+      >
+        <div className="container">
+          <div className="section-head center" style={{ marginBottom: "2rem" }}>
+            <span
+              className="type-tag type-workshop"
+              style={{ marginBottom: "0.8rem", background: "#0f7d8c", color: "#fff" }}
+            >
+              💰 Potensi Penghasilan
+            </span>
+            <h2 style={{ fontSize: "clamp(1.7rem, 3.5vw, 2.5rem)", marginBottom: "0.6rem" }}>
+              Skill yang Bisa <span style={{ color: "#0f7d8c" }}>Jadi Cuan</span>
+            </h2>
+            <p className="lead" style={{ maxWidth: "34rem", marginInline: "auto", color: "var(--ink-soft)" }}>
+              4 produk yang kamu buat = 4 jenis jasa yang bisa kamu tawarkan ke pasar.
+              Ini kisaran harga pasar di Indonesia:
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+              gap: "1rem",
+              maxWidth: "60rem",
+              marginInline: "auto",
+            }}
+          >
+            {[
+              {
+                emoji: "🕸️",
+                label: "Bikin Website",
+                desc: "Company profile, toko online, landing page untuk UMKM & bisnis lokal.",
+                range: "Rp 2–15 jt / proyek",
+                note: "1–2 minggu kerja",
+              },
+              {
+                emoji: "📊",
+                label: "Bikin Aplikasi",
+                desc: "Aplikasi keuangan, kasir, inventori, atau tool internal bisnis.",
+                range: "Rp 10–50 jt / proyek",
+                note: "2–6 minggu kerja",
+              },
+              {
+                emoji: "🎮",
+                label: "Bikin Game 3D",
+                desc: "Game edukasi, game promosi brand, atau game mobile indie.",
+                range: "Rp 15–100 jt / proyek",
+                note: "tergantung skala",
+              },
+              {
+                emoji: "🤖",
+                label: "Implementasi AI",
+                desc: "Chatbot, AI agent, otomasi bisnis — paling dicari sekarang.",
+                range: "Rp 5–50 jt / proyek",
+                note: "pasar sedang naik",
+              },
+            ].map((x) => (
+              <div
+                key={x.label}
+                style={{
+                  background: "var(--white)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--r-md)",
+                  padding: "1.5rem 1.4rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: ".5rem",
+                  boxShadow: "0 12px 28px -18px rgba(0,0,0,0.15)",
+                }}
+              >
+                <span style={{ fontSize: "2rem" }}>{x.emoji}</span>
+                <b style={{ fontSize: "1.05rem" }}>{x.label}</b>
+                <p style={{ fontSize: ".82rem", color: "var(--ink-soft)", lineHeight: 1.55, margin: 0 }}>
+                  {x.desc}
+                </p>
+                <div style={{ marginTop: "auto" }}>
+                  <div
+                    style={{
+                      fontSize: "1.15rem",
+                      fontWeight: 900,
+                      color: "#0f7d8c",
+                      background: "rgba(47, 212, 196, 0.1)",
+                      borderRadius: "var(--r-md)",
+                      padding: ".6rem .9rem",
+                      textAlign: "center",
+                    }}
+                  >
+                    {x.range}
+                  </div>
+                  <p style={{ fontSize: ".72rem", color: "var(--ink-faint)", textAlign: "center", marginTop: ".5rem" }}>
+                    {x.note}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p style={{ textAlign: "center", fontSize: ".8rem", color: "var(--ink-faint)", maxWidth: "42rem", margin: "1.8rem auto 0", lineHeight: 1.6 }}>
+            *Kisaran harga pasar umum jasa freelance di Indonesia (per 2026) — bukan jaminan penghasilan.
+            Satu proyek saja sudah bisa menutup biaya workshop berkali-kali lipat.
+          </p>
+        </div>
+      </section>
+
       {/* ── ALUR WORKSHOP ── */}
       <section className="section" style={{ paddingTop: "3rem", paddingBottom: "3rem" }}>
         <div className="container">
