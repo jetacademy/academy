@@ -2175,3 +2175,19 @@
 .vibes-demo-card:hover {
   box-shadow: 0 32px 64px -24px rgba(124, 92, 255, 0.5);
 }
+
+/* ============================================================
+   VIBES CODING — Demo CTA (standout)
+   ============================================================ */
+.vibes-demo-cta {
+  animation: vibes-cta-pulse 2.2s ease-in-out infinite;
+}
+.vibes-demo-cta:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 28px 56px -14px rgba(124, 92, 255, 0.8), 0 0 0 8px rgba(124, 92, 255, 0.2);
+  animation-play-state: paused;
+}
+@keyframes vibes-cta-pulse {
+  0%, 100% { box-shadow: 0 20px 40px -12px rgba(124, 92, 255, 0.65), 0 0 0 6px rgba(124, 92, 255, 0.15); }
+  50% { box-shadow: 0 24px 48px -12px rgba(124, 92, 255, 0.85), 0 0 0 12px rgba(124, 92, 255, 0.25); }
+}

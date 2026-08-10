@@ -145,47 +145,58 @@ export default function VibesLandingSections({ program }: { program: VibesProgra
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: ".8rem", justifyContent: "center", flexWrap: "wrap", marginBottom: "1.6rem" }}>
+            <div style={{ display: "flex", gap: ".7rem", justifyContent: "center", flexWrap: "wrap", marginBottom: "2rem" }}>
               {[
-                { emoji: "🪐", label: "Game 3D" },
+                { emoji: "🕸️", label: "Website Profesional" },
                 { emoji: "📊", label: "Aplikasi Keuangan" },
-                { emoji: "🕸️", label: "Website" },
+                { emoji: "🎮", label: "2 Games 3D" },
+                { emoji: "🤖", label: "Aplikasi Terintegrasi AI" },
               ].map((x) => (
                 <span
                   key={x.label}
                   style={{
                     display: "inline-flex", alignItems: "center", gap: ".45rem",
                     background: "var(--chip)", border: "1px solid var(--border)",
-                    borderRadius: 999, padding: ".5rem 1.1rem", fontSize: ".85rem", fontWeight: 700,
+                    borderRadius: 999, padding: ".55rem 1.2rem", fontSize: ".88rem", fontWeight: 700,
                   }}
                 >
-                  <span style={{ fontSize: "1.2rem" }}>{x.emoji}</span> {x.label}
+                  <span style={{ fontSize: "1.25rem" }}>{x.emoji}</span> {x.label}
                 </span>
               ))}
             </div>
 
-            <a
-              href="https://demo.jetschool.id"
-              target="_blank"
-              rel="noreferrer"
-              className="vibes-demo-card"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: ".6rem",
-                background: "linear-gradient(135deg, #5B55EA, #7c5cff)",
-                color: "#fff",
-                fontWeight: 800,
-                padding: "1rem 2.4rem",
-                borderRadius: 999,
-                fontSize: "1.05rem",
-                textDecoration: "none",
-                boxShadow: "0 16px 32px -12px rgba(124, 92, 255, 0.55)",
-                transition: "transform .2s ease, box-shadow .2s ease",
-              }}
-            >
-              👀 Lihat Demo — demo.jetschool.id ↗
-            </a>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <a
+                href="https://demo.jetschool.id"
+                target="_blank"
+                rel="noreferrer"
+                className="vibes-demo-cta"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: ".7rem",
+                  background: "linear-gradient(135deg, #5B55EA, #8b5cf6, #2fd4c4)",
+                  backgroundSize: "200% 200%",
+                  color: "#fff",
+                  fontWeight: 900,
+                  padding: "1.1rem 2.6rem",
+                  borderRadius: 999,
+                  fontSize: "1.15rem",
+                  letterSpacing: ".01em",
+                  textDecoration: "none",
+                  boxShadow: "0 20px 40px -12px rgba(124, 92, 255, 0.65), 0 0 0 6px rgba(124, 92, 255, 0.15)",
+                  transition: "transform .2s ease, box-shadow .2s ease",
+                  position: "relative",
+                }}
+              >
+                <span style={{ fontSize: "1.5rem", lineHeight: 1 }}>👀</span>
+                Lihat Demo Sekarang
+                <span style={{ fontSize: "1.3rem", lineHeight: 1 }}>↗</span>
+              </a>
+            </div>
+            <p style={{ fontSize: ".85rem", color: "var(--purple)", fontWeight: 700, marginTop: "1rem" }}>
+              demo.jetschool.id — coba langsung di HP atau laptop kamu
+            </p>
 
             <p style={{ fontSize: ".78rem", color: "var(--ink-faint)", marginTop: "1.4rem" }}>
               Dibangun dengan Next.js + React + Three.js — stack yang sama persis yang kamu pakai di workshop.
