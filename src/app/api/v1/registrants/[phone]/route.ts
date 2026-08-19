@@ -39,6 +39,12 @@ export async function GET(
     return NextResponse.json({ found: false });
   }
 
+  // Alumni = status PAID/PASSED + batch sudah lewat (keputusan owner 18 Agu)
+  const now = new Date();
+  const batchEnded = reg.batch ? new Date(reg.batch.scheduleAt) < now : false;
+  const paid = reg.status === "PAID" || reg.status === "PASSED";
+  const isAlumni = paid && batchEnded;
+
   return NextResponse.json({
     found: true,
     name: reg.name,
@@ -58,6 +64,10 @@ export async function GET(
           timeZone: "Asia/Jakarta",
         })
       : null,
+    // 🔴 Auto-alumni detection (keputusan owner 18 Agu)
+    isPaid: paid,
+    batchEnded,
+    isAlumni,
     registeredAt: reg.createdAt,
   });
 }
